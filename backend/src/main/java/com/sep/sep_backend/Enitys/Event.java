@@ -1,7 +1,7 @@
 package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,6 +20,9 @@ public class Event {
 
     @ManyToOne
     @JoinColumn(name = "trip_id")
+    // TO avoid infinite loop
+    @JsonIgnore
+
     private Trip trip;
 
     public Event() {
