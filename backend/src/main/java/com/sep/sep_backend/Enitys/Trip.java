@@ -10,6 +10,9 @@ public class Trip {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
+    @Column (nullable = false)
+    private String name;
+
     @OneToMany(mappedBy = "trip")
     private List<Event> events;
 
@@ -19,13 +22,26 @@ public class Trip {
     public Trip() {
     }
 
-    public Trip(List<Event> events, List<Ausgabe> ausgaben) {
+    public Trip(String name) {
+        this.name = name;
+    }
+
+    public Trip(String name, List<Event> events, List<Ausgabe> ausgaben) {
+        this.name = name;
         this.events = events;
         this.ausgaben = ausgaben;
     }
 
     public long getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setId(long id) {

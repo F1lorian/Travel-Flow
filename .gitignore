@@ -1,0 +1,22 @@
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Build outputs
+build/
+out/
+target/
+node_modules/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Gradle
+.gradle/
