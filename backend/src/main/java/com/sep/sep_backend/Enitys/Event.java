@@ -2,11 +2,20 @@ package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private LocalDateTime dateTime;
+
     private int kosten;
 
     @ManyToOne
@@ -16,7 +25,9 @@ public class Event {
     public Event() {
     }
 
-    public Event(int kosten, Trip trip) {
+    public Event(String name, LocalDateTime dateTime, int kosten, Trip trip) {
+        this.name = name;
+        this.dateTime = dateTime;
         this.kosten = kosten;
         this.trip = trip;
     }
@@ -27,6 +38,23 @@ public class Event {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
+
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
     }
 
     public int getKosten() {
