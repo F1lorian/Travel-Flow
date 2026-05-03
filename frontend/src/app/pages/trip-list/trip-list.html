@@ -1,0 +1,35 @@
+<div class="container">
+  <h1>My Trips</h1>
+
+  <!-- Create form -->
+  <div class="create-form">
+    <input
+      type="text"
+      [(ngModel)]="newTripName"
+      placeholder="Trip name (e.g. Paris Vacation)"
+      (keyup.enter)="createTrip()"
+    />
+    <button (click)="createTrip()">Create Trip</button>
+  </div>
+
+  <!-- Error message -->
+  @if (errorMessage) {
+    <div class="error">{{ errorMessage }}</div>
+  }
+
+  <!-- Trip list -->
+  @if (trips().length === 0) {
+    <p class="empty">No trips yet. Create your first one above!</p>
+  } @else {
+    <ul class="trip-list">
+      @for (trip of trips(); track trip.id) {
+        <li>
+          <a [routerLink]="['/trips', trip.id]">
+            <strong>{{ trip.name }}</strong>
+            <span class="event-count">{{ trip.events.length }} events</span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>
