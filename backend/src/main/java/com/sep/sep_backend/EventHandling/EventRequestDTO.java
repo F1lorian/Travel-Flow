@@ -1,19 +1,17 @@
 package com.sep.sep_backend.EventHandling;
 
-import com.sep.sep_backend.Enitys.Trip;
-
 public class EventRequestDTO {
     private String name;
     private int kosten;
-    private Trip trip;
+    private Long tripId;
 
     public EventRequestDTO() {
     }
 
-    public EventRequestDTO(String name, int kosten, Trip trip) {
+    public EventRequestDTO(String name, int kosten, Long tripId) {
         this.name = name;
         this.kosten = kosten;
-        this.trip = trip;
+        this.tripId = tripId;
     }
 
     public String getName() {
@@ -32,11 +30,11 @@ public class EventRequestDTO {
         this.kosten = kosten;
     }
 
-    public Trip getTrip() {
-        return trip;
+    public Long getTripId() {
+        return tripId;
     }
 
-    public void setTrip(Trip trip) {
-        this.trip = trip;
+    public void setTripId(Long tripId) {
+        this.tripId = tripId;
     }
 }
