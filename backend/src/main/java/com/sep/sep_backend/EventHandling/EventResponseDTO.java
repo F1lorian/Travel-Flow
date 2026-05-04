@@ -1,16 +1,17 @@
 package com.sep.sep_backend.EventHandling;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public class EventResponseDTO {
     private String name;
     private int kosten;
-    private LocalTime uhrzeit;
+    private LocalDateTime uhrzeit;
 
     public EventResponseDTO() {
     }
 
-    public EventResponseDTO(String name, int kosten, LocalTime uhrzeit) {
+    public EventResponseDTO(String name, int kosten, LocalDateTime uhrzeit) {
         this.name = name;
         this.kosten = kosten;
         this.uhrzeit = uhrzeit;
@@ -32,11 +33,11 @@ public class EventResponseDTO {
         this.kosten = kosten;
     }
 
-    public LocalTime getUhrzeit() {
+    public LocalDateTime getUhrzeit() {
         return uhrzeit;
     }
 
-    public void setUhrzeit(LocalTime uhrzeit) {
+    public void setUhrzeit(LocalDateTime uhrzeit) {
         this.uhrzeit = uhrzeit;
     }
 }

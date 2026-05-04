@@ -26,11 +26,13 @@ public class EventService {
 
 
     //Todo Name bei Trip muss besser gelöst werden jetzt vereinfacht über id
-    public void SaveEventToDB(EventRequestDTO dto)
+    public EventResponseDTO SaveEventToDB(EventRequestDTO dto)
     {
         Trip matchingTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException("Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
         Event newEvent = new Event(dto.getName(), LocalDateTime.now(), dto.getKosten(), matchingTrip);
+        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(),dto.getKosten(), LocalDateTime.now());
         eventRepository.save(newEvent);
+        return ausgabe;
     }
 
 
