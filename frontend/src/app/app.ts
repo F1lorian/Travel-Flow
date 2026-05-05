@@ -1,4 +1,4 @@
-import {Component, NgModule, signal} from '@angular/core';
+import {Component, signal} from '@angular/core';
 import {RouterOutlet} from '@angular/router';
 import {CalendarComponent} from './components/calendar/calendar';
 
