@@ -4,6 +4,7 @@ import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-event-dialog',
+  standalone: true,
   imports: [
     FormsModule
   ],
