@@ -6,7 +6,6 @@ import interactionPlugin from '@fullcalendar/interaction';
 import {EventDialog} from '../event-dialog/event-dialog';
 import { MatDialog } from '@angular/material/dialog';
 
-
 @Component({
   selector: 'app-calendar',
   standalone: true,
@@ -31,20 +30,38 @@ export class CalendarComponent implements OnInit {
 
 
   handleEventClick(clickInfo: any) {
-    const title = clickInfo.event.title;
-    alert(`Ihr Event ist: ${title}`);
+    const dialogRef =this.dialog.open(EventDialog, {
+      data: {
+        mode: 'edit',
+        title: clickInfo.title,
+        start: clickInfo.start,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+
+      if (!result) return;
+
+      if(result.action === 'save') {
+        clickInfo.event.setProp('title', result.title);
+      }
+      if(result.action === 'delete') {
+        clickInfo.event.remove();
+      }
+
+    })
   }
 
   handleDateClick(clickInfo: any) {
-    const dialogRef = this.dialog.open(EventDialog);
+    const dialogRef = this.dialog.open(EventDialog, { data: {mode: 'create'}});
 
-    dialogRef.afterClosed().subscribe(title => {
+    dialogRef.afterClosed().subscribe(result => {
 
-      console.log("Returned:", title);
+      if(!result) return;
 
-      if(title) {
+      if(result) {
         clickInfo.view.calendar.addEvent({
-          title: title,
+          title: result.title,
           start: clickInfo.dateStr
         });
 
