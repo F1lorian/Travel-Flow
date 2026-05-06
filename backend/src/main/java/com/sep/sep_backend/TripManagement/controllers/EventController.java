@@ -1,5 +1,9 @@
 package com.sep.sep_backend.TripManagement.controllers;
 
+/* back-front relation: REST endpoints for events within a trip.
+   GET  /api/trips/{tripId}/events  → frontend trip-detail page (loads events list)
+   POST /api/trips/{tripId}/events  → frontend add-event form */
+
 import com.sep.sep_backend.TripManagement.dto.EventDTO;
 import com.sep.sep_backend.TripManagement.services.EventService;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +25,14 @@ public class EventController {
         this.eventService = eventService;
     }
 
+    @GetMapping
+    public List<EventDTO> getEvents(@PathVariable Long tripId) {
+        return eventService.getEventsForTrip(tripId)
+                .stream()
+                .map(EventDTO::from)
+                .collect(Collectors.toList());
+    }
+
     @PostMapping
     public ResponseEntity<EventDTO> addEvent(
             @PathVariable Long tripId,
@@ -32,13 +44,5 @@ public class EventController {
 
         EventDTO dto = EventDTO.from(eventService.addEventToTrip(tripId, name, dateTime, kosten));
         return ResponseEntity.ok(dto);
-    }
-
-    @GetMapping
-    public List<EventDTO> getEvents(@PathVariable Long tripId) {
-        return eventService.getEventsForTrip(tripId)
-                .stream()
-                .map(EventDTO::from)
-                .collect(Collectors.toList());
     }
 }
