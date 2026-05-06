@@ -20,3 +20,6 @@ Thumbs.db
 
 # Gradle
 .gradle/
+
+# Local dev overrides
+application-local.properties

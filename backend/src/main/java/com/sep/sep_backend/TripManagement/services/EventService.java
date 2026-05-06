@@ -1,4 +1,4 @@
-package com.sep.sep_backend.services;
+package com.sep.sep_backend.TripManagement.services;
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;

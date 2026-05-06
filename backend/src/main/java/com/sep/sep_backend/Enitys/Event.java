@@ -20,9 +20,6 @@ public class Event {
 
     @ManyToOne
     @JoinColumn(name = "trip_id")
-    // TO avoid infinite loop
-    @JsonIgnore
-
     private Trip trip;
 
     public Event() {
