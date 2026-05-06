@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import {EventDialog} from '../event-dialog/event-dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { EventAddingManual } from '../../../event-adding-manual/event-adding-manual';
+import { AddEventResponse } from '../../../event-adding-manual/models/AddEventResponse';
 
 @Component({
   selector: 'app-calendar',
@@ -16,6 +17,7 @@ import { EventAddingManual } from '../../../event-adding-manual/event-adding-man
 })
 export class CalendarComponent implements OnInit {
   showManualEventDialog = false;
+  selectedDateStr = '';
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -44,8 +46,27 @@ export class CalendarComponent implements OnInit {
     this.showManualEventDialog = false;
   }
 
+  addCreatedEvent(event: AddEventResponse) {
+    const currentEvents = Array.isArray(this.calendarOptions.events)
+      ? this.calendarOptions.events
+      : [];
+    const startDate = this.selectedDateStr || event.uhrzeit.substring(0, 10);
+
+    this.calendarOptions = {
+      ...this.calendarOptions,
+      events: [
+        ...currentEvents,
+        {
+          title: event.name,
+          start: startDate,
+        },
+      ],
+    };
+  }
+
   handleDateClick(clickInfo: any) {
     this.ngZone.run(() => {
+      this.selectedDateStr = clickInfo.dateStr;
       this.showManualEventDialog = true;
     });
     return;

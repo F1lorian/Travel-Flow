@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EventService} from './service/event.service';
 import {AddEventRequest} from './models/AddEventRequest';
+import { AddEventResponse } from './models/AddEventResponse';
 
 @Component({
   selector: 'app-event-adding-manual',
@@ -16,6 +17,7 @@ export class EventAddingManual {
   isSending = false;
   message = '';
   @Output() closed = new EventEmitter<void>();
+  @Output() eventCreated = new EventEmitter<AddEventResponse>();
 
   closeDialog() {
     this.closed.emit();
@@ -34,8 +36,9 @@ export class EventAddingManual {
     };
     this.eventService.createManualEvent(newEvent)
       .subscribe({
-        next: () => {
-          this.message = 'Event wurde gespeichert.';
+        next: (response) => {
+          this.message = `${response.name} wurde gespeichert.`;
+          this.eventCreated.emit(response);
           this.isSending = false;
           this.closeDialog();
         },
