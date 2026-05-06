@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+/* Material 3 Theme Definition */
+$theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+));
+
+/* Theme auf alle Material-Komponenten anwenden */
+@include mat.all-component-themes($theme);

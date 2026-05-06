@@ -1,0 +1,13 @@
+<h2>{{ mode == 'create' ? 'Neues Event erstellen' : 'Event bearbeiten'}}</h2>
+
+<input [(ngModel)]="title" placeholder="Titel eingeben">
+
+<button (click)="save()">
+  {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
+</button>
+
+@if (mode === 'edit') {
+  <button (click)="delete()">Löschen</button>
+}
+
+<button (click)="close()">Abbrechen</button>
