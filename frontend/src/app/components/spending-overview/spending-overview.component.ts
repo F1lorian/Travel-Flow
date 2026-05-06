@@ -1,55 +1,46 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { Component, AfterViewInit } from '@angular/core';
+import { Chart } from 'chart.js/auto';
 import { ExpenseService } from '../../services/expense.service';
 
 @Component({
   selector: 'app-spending-overview',
   standalone: true,
-  imports: [FormsModule, CommonModule],
-  templateUrl: './spending-overview.component.html',
-  styleUrls: ['./spending-overview.component.css']
+  templateUrl: './spending-overview.component.html'
 })
-export class SpendingOverviewComponent {
-  startDate: string = '';
-  endDate: string = '';
-  expenses: any[] = [];
-  categorySummary: any = {};
-
+export class SpendingOverviewComponent implements AfterViewInit {
+  selectedYear = new Date().getFullYear();
   constructor(private expenseService: ExpenseService) {}
 
-  // was beim start stehen sollte
-  ngOnInit() {
-    // Setze Standard-Datumsbereich
-    const today = new Date();
-    this.endDate = today.toISOString().split('T')[0];
-    const lastWeek = new Date();
-    lastWeek.setDate(today.getDate() - 7);
-    this.startDate = lastWeek.toISOString().split('T')[0];
+  ngAfterViewInit(): void {
+    const expenses = this.expenseService.getExpenses()();
 
-    // Lade direkt beim Start
-    this.loadExpenses();
-  }
+    const categoryMap: { [key: string]: number } = {};
 
-  loadExpenses() {
-    // Lade Ausgaben
-    this.expenseService.getExpensesByPeriod(this.startDate, this.endDate).subscribe(
-      (data: any[]) => {
-        this.expenses = data;
-      },
-      (error) => {
-        console.error('Fehler beim Laden der Ausgaben:', error);
+    expenses.forEach(e => {
+      if (!categoryMap[e.category]) {
+        categoryMap[e.category] = 0;
       }
-    );
+      categoryMap[e.category] += e.amount;
+    });
 
-    // Lade Kategorie-Auswertung
-    this.expenseService.getCategorySummary(this.startDate, this.endDate).subscribe(
-      (data: any) => {
-        this.categorySummary = data;
-      },
-      (error) => {
-        console.error('Fehler beim Laden der Kategorie-Auswertung:', error);
+    const labels = Object.keys(categoryMap);
+    const amounts = Object.values(categoryMap);
+
+    new Chart('myChart', {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Ausgaben',
+          data: amounts,
+          backgroundColor: [
+            '#42a5f5',
+            '#66bb6a',
+            '#ffa726',
+            '#ef5350'
+          ]
+        }]
       }
-    );
+    });
   }
 }

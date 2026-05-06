@@ -1,35 +1,39 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-export interface Expense {
-  kosten: number;
-  trip: string;
-  date: string;
-  kategorie: string;
-}
-
-export interface CategorySummary {
-  [key: string]: number;
-}
+import { Expense } from '../models/expense.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExpenseService {
-  private apiUrl = 'http://localhost:8080';
 
-  constructor(private http: HttpClient) { }
+  private apiUrl = 'http://localhost:8080/ausgaben';
 
-  addExpense(expense: any): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/ausgabe`, expense);
+  expenses = signal<Expense[]>([]);
+
+  constructor(private http: HttpClient) {
+    this.loadExpenses();
   }
 
-  getExpensesByPeriod(startDate: string, endDate: string): Observable<Expense[]> {
-    return this.http.get<Expense[]>(`${this.apiUrl}/ausgabenliste?start=${startDate}&end=${endDate}`);
+  loadExpenses() {
+    this.http.get<Expense[]>(this.apiUrl).subscribe(data => {
+      this.expenses.set(data);
+    });
   }
 
-  getCategorySummary(startDate: string, endDate: string): Observable<CategorySummary> {
-    return this.http.get<CategorySummary>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`);
+  getExpenses() {
+    return this.expenses;
+  }
+
+  addExpense(expense: Partial<Expense>) {
+    this.http.post<Expense>(this.apiUrl, expense).subscribe(() => {
+      this.loadExpenses();
+    });
+  }
+
+  deleteExpense(id: number) {
+    this.http.delete(`${this.apiUrl}/${id}`).subscribe(() => {
+      this.loadExpenses();
+    });
   }
 }

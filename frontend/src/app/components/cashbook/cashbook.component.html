@@ -1,54 +1,52 @@
 <h2>Cashbook</h2>
 
-<div>
-  <label for="betrag">Betrag:</label>
+<div class="form">
   <input
-    id="betrag"
-    type="number"
     [ngModel]="amount()"
     (ngModelChange)="amount.set($event)"
-    placeholder="Betrag eingeben"
+    type="number"
+    placeholder="Betrag"
   />
-</div>
 
-<div>
-  <label for="trip">Trip:</label>
   <input
-    id="trip"
-    type="text"
-    [ngModel]="tripName()"
-    (ngModelChange)="tripName.set($event)"
-    placeholder="Name des Trips"
-  />
-</div>
-
-<div>
-  <label for="datum">Datum:</label>
-  <input
-    id="datum"
-    type="date"
     [ngModel]="date()"
     (ngModelChange)="date.set($event)"
+    type="date"
   />
-</div>
 
-<div>
-  <label for="kategorie">Kategorie:</label>
   <select
-    id="kategorie"
     [ngModel]="category()"
     (ngModelChange)="category.set($event)"
   >
     <option value="">Kategorie wählen</option>
-    <option *ngFor="let cat of categories" [value]="cat">
-      {{ cat }}
-    </option>
+    @for (cat of categories; track cat) {
+      <option [value]="cat">{{ cat }}</option>
+    }
   </select>
+
+  <button (click)="addExpense()">Hinzufügen</button>
 </div>
 
-<div>
-  <button (click)="addExpense()">Hinzufuegen</button>
-</div>
+<table>
+  <thead>
+  <tr>
+    <th>Betrag (€)</th>
+    <th>Datum</th>
+    <th>Kategorie</th>
+    <th>Aktionen</th>
+  </tr>
+  </thead>
 
-<p *ngIf="successMessage()">{{ successMessage() }}</p>
-<p *ngIf="errorMessage()">{{ errorMessage() }}</p>
+  <tbody>
+    @for (expense of expenses(); track expense.id) {
+      <tr>
+        <td>{{ expense.kosten }}</td>
+        <td>{{ expense.date }}</td>
+        <td>{{ expense.kategorie }}</td>
+        <td>
+          <button (click)="deleteExpense(expense.id)">❌</button>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
