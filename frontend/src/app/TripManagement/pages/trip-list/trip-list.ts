@@ -1,3 +1,5 @@
+/* back-front relation: trip-list page — calls GET /api/trips and POST /api/trips via TripService. */
+
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,10 +21,6 @@ export class TripList implements OnInit {
   errorMessage = '';
 
   ngOnInit() {
-    this.loadTrips();
-  }
-
-  loadTrips() {
     this.tripService.getAllTrips().subscribe({
       next: (data) => this.trips.set(data),
       error: (err) => this.errorMessage = 'Could not load trips: ' + err.message
@@ -34,7 +32,6 @@ export class TripList implements OnInit {
       this.errorMessage = 'Please enter a trip name';
       return;
     }
-
     this.tripService.createTrip(this.newTripName).subscribe({
       next: (trip) => {
         this.trips.update(list => [...list, trip]);

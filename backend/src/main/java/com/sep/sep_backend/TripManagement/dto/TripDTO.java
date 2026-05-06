@@ -1,5 +1,8 @@
 package com.sep.sep_backend.TripManagement.dto;
 
+/* back-front relation: TripDTO is the JSON object the frontend receives for a trip.
+   Fields match the Trip interface in trip.service.ts */
+
 import com.sep.sep_backend.Enitys.Trip;
 import java.util.Collections;
 import java.util.List;
