@@ -1,2 +1,5 @@
 <full-calendar [options]="calendarOptions"></full-calendar>
 
+@if (showManualEventDialog) {
+  <app-event-adding-manual (closed)="closeManualEventDialog()" />
+}
