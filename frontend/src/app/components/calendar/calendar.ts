@@ -18,7 +18,8 @@ export class CalendarComponent implements OnInit {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
     events: [
-      { title: 'test', start: '2026-05-05' },
+      { title: '1', start: '2026-04-27'},
+      { title: 'test', start: '2026-05-05'},
       { title: 'sprint 1', start: '2026-04-28', end: '2026-05-08'}
     ],
 
@@ -31,11 +32,13 @@ export class CalendarComponent implements OnInit {
 
   handleEventClick(clickInfo: any) {
     const dialogRef =this.dialog.open(EventDialog, {
+      panelClass: 'dialog-style',
       data: {
         mode: 'edit',
         title: clickInfo.title,
         start: clickInfo.start,
       }
+
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -50,10 +53,18 @@ export class CalendarComponent implements OnInit {
       }
 
     })
+
+    //hier später nur noch auf den service verweisen, dass ein event geändert werden soll.
+    //Dialog weiterhin hierüber
+
+
   }
 
   handleDateClick(clickInfo: any) {
-    const dialogRef = this.dialog.open(EventDialog, { data: {mode: 'create'}});
+    const dialogRef = this.dialog.open(EventDialog, {
+      data: {mode: 'create'},
+      panelClass: 'dialog-style'
+    });
 
     dialogRef.afterClosed().subscribe(result => {
 
@@ -65,7 +76,9 @@ export class CalendarComponent implements OnInit {
           start: clickInfo.dateStr
         });
 
-        //hier noch in db speichern!
+        //hier noch in db speichern über den service!
+        //methode nur noch für die kommunikation über den dalog da
+
 
       }
     })
