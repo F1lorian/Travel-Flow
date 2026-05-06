@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {AddEventRequest} from '../models/AddEventRequest';
+import { AddEventResponse } from '../models/AddEventResponse';
 
 
 @Injectable({
@@ -9,9 +10,9 @@ import {AddEventRequest} from '../models/AddEventRequest';
 })
 export class EventService {
   private readonly http = inject(HttpClient);
-  private readonly manualEventEndpoint = 'http://localhost:8082/api/event/create/manual';
+  private readonly manualEventEndpoint = '/api/event/create/manual';
 
-  createManualEvent(newEvent: AddEventRequest): Observable<unknown> {
-    return this.http.post(this.manualEventEndpoint, newEvent);
+  createManualEvent(newEvent: AddEventRequest): Observable<AddEventResponse> {
+    return this.http.post<AddEventResponse>(this.manualEventEndpoint, newEvent);
   }
 }
