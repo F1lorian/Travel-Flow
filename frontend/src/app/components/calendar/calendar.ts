@@ -1,19 +1,22 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, NgZone, OnInit} from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import {EventDialog} from '../event-dialog/event-dialog';
 import { MatDialog } from '@angular/material/dialog';
+import { EventAddingManual } from '../../../event-adding-manual/event-adding-manual';
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [FullCalendarModule],
+  imports: [FullCalendarModule, EventAddingManual],
   templateUrl: './calendar.html',
   styleUrl: './calendar.css',
 })
 export class CalendarComponent implements OnInit {
+  showManualEventDialog = false;
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
     initialView: 'dayGridMonth',
@@ -27,40 +30,26 @@ export class CalendarComponent implements OnInit {
     dateClick: this.handleDateClick.bind(this)
   }
 
-  constructor(private dialog: MatDialog) {}
+  constructor(private dialog: MatDialog, private ngZone: NgZone) {}
 
 
   handleEventClick(clickInfo: any) {
-    const dialogRef =this.dialog.open(EventDialog, {
-      panelClass: 'dialog-style',
-      data: {
-        mode: 'edit',
-        title: clickInfo.title,
-        start: clickInfo.start,
-      }
-
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-
-      if (!result) return;
-
-      if(result.action === 'save') {
-        clickInfo.event.setProp('title', result.title);
-      }
-      if(result.action === 'delete') {
-        clickInfo.event.remove();
-      }
-
-    })
-
     //hier später nur noch auf den service verweisen, dass ein event geändert werden soll.
     //Dialog weiterhin hierüber
 
 
   }
 
+  closeManualEventDialog() {
+    this.showManualEventDialog = false;
+  }
+
   handleDateClick(clickInfo: any) {
+    this.ngZone.run(() => {
+      this.showManualEventDialog = true;
+    });
+    return;
+
     const dialogRef = this.dialog.open(EventDialog, {
       data: {mode: 'create'},
       panelClass: 'dialog-style'
