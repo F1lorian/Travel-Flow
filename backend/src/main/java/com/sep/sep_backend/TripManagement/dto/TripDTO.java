@@ -3,8 +3,9 @@ package com.sep.sep_backend.TripManagement.dto;
 /* back-front relation: TripDTO is the JSON object the frontend receives for a trip.
    Fields match the Trip interface in trip.service.ts */
 
+import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
-import java.util.Collections;
+
 import java.util.List;
 
 public class TripDTO {
@@ -16,8 +17,13 @@ public class TripDTO {
         TripDTO dto = new TripDTO();
         dto.id = trip.getId();
         dto.name = trip.getName();
-        dto.events = trip.getEvents() == null ? Collections.emptyList()
-                : trip.getEvents().stream().map(EventDTO::from).toList();
+
+        List<Event> tripEvents = trip.getEvents();
+        if (tripEvents == null) {
+            dto.events = List.of();
+        } else {
+            dto.events = tripEvents.stream().map(EventDTO::from).toList();
+        }
         return dto;
     }
 
