@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trips/{tripId}/events")
@@ -30,7 +29,7 @@ public class EventController {
         return eventService.getEventsForTrip(tripId)
                 .stream()
                 .map(EventDTO::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @PostMapping
