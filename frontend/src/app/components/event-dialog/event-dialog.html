@@ -1,13 +1,51 @@
-<h2>{{ mode == 'create' ? 'Neues Event erstellen' : 'Event bearbeiten'}}</h2>
+<div class="p-6 w-[400px]">
 
-<input [(ngModel)]="title" placeholder="Titel eingeben">
+  <h2 class="text-2xl font-bold mb-4">
+    {{ mode === 'create' ? 'Neues Event' : 'Event bearbeiten' }}
+  </h2>
 
-<button (click)="save()">
-  {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
-</button>
+  <input
+    [(ngModel)]="title"
+    placeholder="Titel eingeben"
+    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
 
-@if (mode === 'edit') {
-  <button (click)="delete()">Löschen</button>
-}
+  <input
+    [(ngModel)]="kosten"
+    placeholder="Kosten eingeben"
+    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
 
-<button (click)="close()">Abbrechen</button>
+  <input
+    [(ngModel)]="tripId"
+    placeholder="TripId eingeben"
+    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+
+  <div class="flex justify-end gap-2">
+
+    <button
+      (click)="save()"
+      class="bg-blue-500 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
+    >
+      {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
+    </button>
+
+    @if (mode === 'edit') {
+      <button
+        (click)="delete()"
+        class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
+      >
+        Löschen
+      </button>
+    }
+
+    <button
+      (click)="close()"
+      class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
+    >
+      Abbrechen
+    </button>
+
+  </div>
+</div>

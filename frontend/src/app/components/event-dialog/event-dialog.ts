@@ -13,6 +13,9 @@ import {FormsModule} from '@angular/forms';
 })
 export class EventDialog {
   title: string = "";
+  kosten: number | undefined;
+  tripId: bigint | undefined;
+
   mode: 'create' | 'edit' = 'create';
 
   constructor(private dialogRef: MatDialogRef<EventDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
