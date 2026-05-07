@@ -1,5 +1,6 @@
-/* back-front relation: trip-detail page — calls GET /api/trips/{id}, GET /api/trips/{id}/events
-   and POST /api/trips/{id}/events via TripService. */
+/* back-front relation: trip-detail page — calls GET /api/trips/{id}
+   and POST /api/trips/{id}/events via TripService. Events are included
+   in the trip response, so no separate events fetch is needed. */
 
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -29,12 +30,11 @@ export class TripDetail implements OnInit {
   ngOnInit() {
     const tripId = Number(this.route.snapshot.paramMap.get('id'));
     this.tripService.getTrip(tripId).subscribe({
-      next: (data) => this.trip.set(data),
+      next: (trip) => {
+        this.trip.set(trip);
+        this.events.set(trip.events);
+      },
       error: (err) => this.errorMessage = 'Could not load trip: ' + err.message
-    });
-    this.tripService.getEventsForTrip(tripId).subscribe({
-      next: (data) => this.events.set(data),
-      error: (err) => this.errorMessage = 'Could not load events: ' + err.message
     });
   }
 
@@ -42,11 +42,19 @@ export class TripDetail implements OnInit {
     const tripId = this.trip()?.id;
     if (!tripId) return;
 
-    if (!this.newEventName.trim()) { this.errorMessage = 'Please enter an event name'; return; }
-    if (!this.newEventDateTime) { this.errorMessage = 'Please pick a date and time'; return; }
+    if (!this.newEventName.trim()) {
+      this.errorMessage = 'Please enter an event name';
+      return;
+    }
+    if (!this.newEventDateTime) {
+      this.errorMessage = 'Please pick a date and time';
+      return;
+    }
 
     // datetime-local gives YYYY-MM-DDTHH:MM, backend needs seconds appended
-    this.tripService.addEvent(tripId, this.newEventName, this.newEventDateTime + ':00', this.newEventKosten).subscribe({
+    const dateTime = this.newEventDateTime + ':00';
+
+    this.tripService.addEvent(tripId, this.newEventName, dateTime, this.newEventKosten).subscribe({
       next: (event) => {
         this.events.update(list => [...list, event]);
         this.newEventName = '';

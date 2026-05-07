@@ -5,18 +5,22 @@ package com.sep.sep_backend.TripManagement.controllers;
    GET /api/trips/{id}    → frontend trip-detail page (loads one trip)
    POST /api/trips        → frontend create-trip form */
 
+import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/trips")
 @CrossOrigin(origins = "*")
 public class TripController {
+
+    // Shape of the JSON body sent by the frontend when creating a trip
+    public record CreateTripRequest(String name) {}
 
     private final TripService tripService;
 
@@ -34,15 +38,16 @@ public class TripController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TripDTO> getTrip(@PathVariable Long id) {
-        return tripService.getTrip(id)
-                .map(TripDTO::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Trip> trip = tripService.getTrip(id);
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(TripDTO.from(trip.get()));
     }
 
     @PostMapping
-    public ResponseEntity<TripDTO> createTrip(@RequestBody Map<String, String> body) {
-        TripDTO dto = TripDTO.from(tripService.createTrip(body.get("name")));
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request) {
+        Trip created = tripService.createTrip(request.name());
+        return ResponseEntity.ok(TripDTO.from(created));
     }
 }

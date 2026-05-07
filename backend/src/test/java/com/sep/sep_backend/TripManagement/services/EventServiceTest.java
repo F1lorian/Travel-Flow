@@ -55,18 +55,13 @@ class EventServiceTest {
 
     @Test
     void addEventToTrip_throwsWhenNameIsBlank() {
-        Trip trip = new Trip("Paris");
-        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
-
+        // Validation runs before the trip lookup, so no repository stubbing is needed
         assertThrows(IllegalArgumentException.class,
                 () -> eventService.addEventToTrip(1L, "", sampleDateTime, 50));
     }
 
     @Test
     void addEventToTrip_throwsWhenDateTimeIsNull() {
-        Trip trip = new Trip("Paris");
-        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
-
         assertThrows(IllegalArgumentException.class,
                 () -> eventService.addEventToTrip(1L, "Dinner", null, 50));
     }

@@ -24,11 +24,16 @@ public class EventService {
     }
 
     public Event addEventToTrip(Long tripId, String name, LocalDateTime dateTime, int kosten) {
+        // Validate input first — fail fast before touching the database
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Event name cannot be empty");
+        }
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Event date/time is required");
+        }
+
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
-
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("Event name cannot be empty");
-        if (dateTime == null) throw new IllegalArgumentException("Event date/time is required");
 
         Event savedEvent = eventRepository.save(new Event(name, dateTime, kosten, trip));
         notifyRelatedUsers(savedEvent);

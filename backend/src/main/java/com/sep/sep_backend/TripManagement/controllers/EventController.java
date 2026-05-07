@@ -4,6 +4,7 @@ package com.sep.sep_backend.TripManagement.controllers;
    GET  /api/trips/{tripId}/events  → frontend trip-detail page (loads events list)
    POST /api/trips/{tripId}/events  → frontend add-event form */
 
+import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.TripManagement.dto.EventDTO;
 import com.sep.sep_backend.TripManagement.services.EventService;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +12,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/trips/{tripId}/events")
 @CrossOrigin(origins = "*")
 public class EventController {
+
+    // Shape of the JSON body sent by the frontend when adding an event
+    public record CreateEventRequest(String name, LocalDateTime dateTime, int kosten) {}
 
     private final EventService eventService;
 
@@ -35,13 +38,8 @@ public class EventController {
     @PostMapping
     public ResponseEntity<EventDTO> addEvent(
             @PathVariable Long tripId,
-            @RequestBody Map<String, Object> body) {
-
-        String name = (String) body.get("name");
-        LocalDateTime dateTime = LocalDateTime.parse((String) body.get("dateTime"));
-        int kosten = (int) body.getOrDefault("kosten", 0);
-
-        EventDTO dto = EventDTO.from(eventService.addEventToTrip(tripId, name, dateTime, kosten));
-        return ResponseEntity.ok(dto);
+            @RequestBody CreateEventRequest request) {
+        Event created = eventService.addEventToTrip(tripId, request.name(), request.dateTime(), request.kosten());
+        return ResponseEntity.ok(EventDTO.from(created));
     }
 }
