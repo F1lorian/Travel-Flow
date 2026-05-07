@@ -8,7 +8,7 @@ public class EventCalendarDTO {
     private String id;
     private String title;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime start;
 
     public EventCalendarDTO() {

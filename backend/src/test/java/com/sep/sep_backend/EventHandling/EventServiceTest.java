@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +67,24 @@ class EventServiceTest {
                 .hasRootCauseMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
 
         verify(eventRepository, never()).save(any(Event.class));
+    }
+
+    @Test
+    void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
+        Trip trip = new Trip("London");
+        LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
+        Event event = new Event("Museum", start, 25, trip);
+        event.setId(42L);
+
+        when(eventRepository.findAll()).thenReturn(List.of(event));
+
+        List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo("42");
+        assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
+        assertThat(result.getFirst().getStart()).isEqualTo(start);
+        verify(eventRepository).findAll();
     }
 
     private void saveEventToDB(EventRequestDTO request)

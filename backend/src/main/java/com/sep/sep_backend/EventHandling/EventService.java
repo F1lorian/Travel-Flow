@@ -28,8 +28,9 @@ public class EventService {
     public EventResponseDTO SaveEventToDB(EventRequestDTO dto)
     {
         Trip matchingTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException("Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
-        Event newEvent = new Event(dto.getName(), LocalDateTime.now(), dto.getKosten(), matchingTrip);
-        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(),dto.getKosten(), LocalDateTime.now());
+        LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
+        Event newEvent = new Event(dto.getName(), eventStart, dto.getKosten(), matchingTrip);
+        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart);
         eventRepository.save(newEvent);
         return ausgabe;
     }
