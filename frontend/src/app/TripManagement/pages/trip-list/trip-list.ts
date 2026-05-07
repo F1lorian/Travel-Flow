@@ -1,7 +1,6 @@
 /* back-front relation: trip-list page — calls GET /api/trips and POST /api/trips via TripService. */
 
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TripService, Trip } from '../../services/trip.service';
@@ -9,7 +8,7 @@ import { TripService, Trip } from '../../services/trip.service';
 @Component({
   selector: 'app-trip-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './trip-list.html',
   styleUrl: './trip-list.css'
 })

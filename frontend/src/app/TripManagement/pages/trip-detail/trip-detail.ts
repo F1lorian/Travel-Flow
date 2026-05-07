@@ -3,7 +3,6 @@
    in the trip response, so no separate events fetch is needed. */
 
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TripService, Trip, Event } from '../../services/trip.service';
@@ -11,7 +10,7 @@ import { TripService, Trip, Event } from '../../services/trip.service';
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './trip-detail.html',
   styleUrl: './trip-detail.css'
 })
