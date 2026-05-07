@@ -22,7 +22,7 @@ export interface Event {
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/trips';
+  private apiUrl = '/api/trips';
 
   getAllTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(this.apiUrl);
