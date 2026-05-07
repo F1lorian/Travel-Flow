@@ -18,20 +18,33 @@ export class CashbookComponent {
   tripName = signal('');
   date = signal('');
   category = signal('');
+  errorMessage = signal('');
+  successMessage = signal('');
 
   constructor(private expenseService: ExpenseService) {}
 
   addExpense() {
     this.expenseService.addExpense({
       kosten: this.amount(),
-      trip: this.tripName(),
+      trip: {
+        name: this.tripName()
+      },
       date: this.date(),
       kategorie: this.category()
+    }).subscribe({
+      next: () => {
+        this.amount.set(0);
+        this.tripName.set('');
+        this.date.set('');
+        this.category.set('');
+        this.errorMessage.set('');
+        this.successMessage.set('Ausgabe wurde hinzugefuegt.');
+      },
+      error: (error) => {
+        console.error('Fehler beim Speichern der Ausgabe:', error);
+        this.successMessage.set('');
+        this.errorMessage.set('Ausgabe konnte nicht gespeichert werden.');
+      }
     });
-
-    this.amount.set(0);
-    this.tripName.set('');
-    this.date.set('');
-    this.category.set('');
   }
 }

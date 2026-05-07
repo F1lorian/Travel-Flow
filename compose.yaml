@@ -4,7 +4,11 @@ services:
       context: ./backend
     restart: unless-stopped
     ports:
-      - 8080:8080
+      - 8080:8081
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sep
+      SPRING_DATASOURCE_USERNAME: sep
+      SPRING_DATASOURCE_PASSWORD: sepsep123
     depends_on:
       - db
 
@@ -27,7 +31,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql
     ports:
-      - 5432:5432
+      - 5433:5432
 
 volumes:
   db_data:

@@ -49,3 +49,6 @@
 <div>
   <button (click)="addExpense()">Hinzufuegen</button>
 </div>
+
+<p *ngIf="successMessage()">{{ successMessage() }}</p>
+<p *ngIf="errorMessage()">{{ errorMessage() }}</p>

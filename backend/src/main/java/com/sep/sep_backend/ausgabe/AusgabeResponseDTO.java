@@ -7,7 +7,7 @@ import java.time.LocalDate;
 public class AusgabeResponseDTO {
     private long id;
     private double kosten;
-    private Trip trip;
+    private String trip;
     private LocalDate date;
     private Kategorie kategorie;
 
@@ -15,7 +15,7 @@ public class AusgabeResponseDTO {
 
     public AusgabeResponseDTO(double kosten, Trip trip, LocalDate date, Kategorie kategorie){
         this.kosten = kosten;
-        this.trip = trip;
+        this.trip = trip != null ? trip.getName() : "";
         this.date = date;
         this.kategorie = kategorie;
     }
@@ -25,7 +25,7 @@ public class AusgabeResponseDTO {
         return this.kosten;
     }
 
-    public Trip getTrip(){
+    public String getTrip(){
         return this.trip;
     }
 
@@ -40,7 +40,7 @@ public class AusgabeResponseDTO {
         this.kosten = kosten;
     }
 
-    public void setTrip(Trip trip){
+    public void setTrip(String trip){
         this.trip = trip;
     }
 
