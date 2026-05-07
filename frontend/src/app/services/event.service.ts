@@ -7,6 +7,6 @@ import { Observable } from 'rxjs';
 })
 export class EventService {
   private readonly http = inject(HttpClient);
-  private readonly manualEventEndpoint = 'http://localhost:8082/api/event/create/manual';
+  private readonly manualEventEndpoint = '/api/event/create/manual';
 
 }
