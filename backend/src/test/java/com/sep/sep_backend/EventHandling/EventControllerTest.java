@@ -1,13 +1,20 @@
 package com.sep.sep_backend.EventHandling;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EventControllerTest {
 
@@ -25,5 +32,30 @@ class EventControllerTest {
 
         PostMapping postMapping = method.getAnnotation(PostMapping.class);
         assertThat(postMapping.value()).containsExactly("event/create/manual");
+    }
+
+    @Test
+    void eventControllerHatDenAllEventsEndpoint() throws NoSuchMethodException {
+        Method method = EventController.class.getDeclaredMethod("getAllEvents");
+
+        GetMapping getMapping = method.getAnnotation(GetMapping.class);
+        assertThat(getMapping.value()).containsExactly("event/pull/all_events");
+    }
+
+    @Test
+    void getAllEventsGibtCalendarDtosAusServiceZurueck() {
+        EventService eventService = mock(EventService.class);
+        EventController eventController = new EventController(eventService);
+        List<EventCalendarDTO> events = List.of(
+                new EventCalendarDTO("42", "Museum", LocalDateTime.of(2026, 5, 7, 14, 30))
+        );
+
+        when(eventService.GetAllEventsFromDb()).thenReturn(events);
+
+        ResponseEntity<List<EventCalendarDTO>> response = eventController.getAllEvents();
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).isEqualTo(events);
+        verify(eventService).GetAllEventsFromDb();
     }
 }
