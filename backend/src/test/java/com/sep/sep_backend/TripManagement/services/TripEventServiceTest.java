@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EventServiceTest {
+class TripEventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
@@ -27,7 +27,7 @@ class EventServiceTest {
     private TripRepository tripRepository;
 
     @InjectMocks
-    private EventService eventService;
+    private TripEventService eventService;
 
     private final LocalDateTime sampleDateTime = LocalDateTime.of(2026, 7, 15, 19, 30);
 

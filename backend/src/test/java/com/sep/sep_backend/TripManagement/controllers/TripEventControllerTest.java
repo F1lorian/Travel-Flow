@@ -2,7 +2,7 @@ package com.sep.sep_backend.TripManagement.controllers;
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.TripManagement.services.EventService;
+import com.sep.sep_backend.TripManagement.services.TripEventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,14 +17,14 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(EventController.class)
-class EventControllerTest {
+@WebMvcTest(TripEventController.class)
+class TripEventControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private EventService eventService;
+    private TripEventService eventService;
 
     private final LocalDateTime sampleDateTime = LocalDateTime.of(2026, 7, 15, 19, 30, 0);
 

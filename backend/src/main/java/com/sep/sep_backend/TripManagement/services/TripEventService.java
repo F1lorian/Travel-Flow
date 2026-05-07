@@ -1,7 +1,7 @@
 package com.sep.sep_backend.TripManagement.services;
 
-/* back-front relation: EventService handles all event business logic.
-   Called by EventController, which exposes the results to the Angular frontend. */
+/* back-front relation: TripEventService handles all trip-event business logic.
+   Called by TripEventController, which exposes the results to the Angular frontend. */
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class EventService {
+public class TripEventService {
 
     private final EventRepository eventRepository;
     private final TripRepository tripRepository;
 
-    public EventService(EventRepository eventRepository, TripRepository tripRepository) {
+    public TripEventService(EventRepository eventRepository, TripRepository tripRepository) {
         this.eventRepository = eventRepository;
         this.tripRepository = tripRepository;
     }
