@@ -1,46 +1,54 @@
-import { Component, AfterViewInit } from '@angular/core';
-import { Chart } from 'chart.js/auto';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../services/expense.service';
 
 @Component({
   selector: 'app-spending-overview',
   standalone: true,
-  templateUrl: './spending-overview.component.html'
+  imports: [FormsModule, CommonModule],
+  templateUrl: './spending-overview.component.html',
+  styleUrls: ['./spending-overview.component.css']
 })
-export class SpendingOverviewComponent implements AfterViewInit {
-  selectedYear = new Date().getFullYear();
+export class SpendingOverviewComponent {
+  startDate: string = '';
+  endDate: string = '';
+  expenses: any[] = [];
+  categorySummary: any = {};
+
   constructor(private expenseService: ExpenseService) {}
 
-  ngAfterViewInit(): void {
-    const expenses = this.expenseService.getExpenses()();
+  ngOnInit() {
+    // Setze Standard-Datumsbereich
+    const today = new Date();
+    this.endDate = today.toISOString().split('T')[0];
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+    this.startDate = lastWeek.toISOString().split('T')[0];
 
-    const categoryMap: { [key: string]: number } = {};
+    // Lade direkt beim Start
+    this.loadExpenses();
+  }
 
-    expenses.forEach(e => {
-      if (!categoryMap[e.category]) {
-        categoryMap[e.category] = 0;
+  loadExpenses() {
+    // Lade Ausgaben
+    this.expenseService.getExpensesByPeriod(this.startDate, this.endDate).subscribe(
+      (data: any[]) => {
+        this.expenses = data;
+      },
+      (error) => {
+        console.error('Fehler beim Laden der Ausgaben:', error);
       }
-      categoryMap[e.category] += e.amount;
-    });
+    );
 
-    const labels = Object.keys(categoryMap);
-    const amounts = Object.values(categoryMap);
-
-    new Chart('myChart', {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Ausgaben',
-          data: amounts,
-          backgroundColor: [
-            '#42a5f5',
-            '#66bb6a',
-            '#ffa726',
-            '#ef5350'
-          ]
-        }]
+    // Lade Kategorie-Auswertung
+    this.expenseService.getCategorySummary(this.startDate, this.endDate).subscribe(
+      (data: any) => {
+        this.categorySummary = data;
+      },
+      (error) => {
+        console.error('Fehler beim Laden der Kategorie-Auswertung:', error);
       }
-    });
+    );
   }
 }

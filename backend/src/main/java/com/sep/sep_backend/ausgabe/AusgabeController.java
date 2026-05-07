@@ -26,15 +26,16 @@ public class AusgabeController {
         ausgabeService.ausgabeHinzufuegen(ausgabeDTO);
     }
 
-    @GetMapping("/proZeitraum")
-    public List<AusgabeResponseDTO> kostenAausgabenProZeitraum( @RequestParam LocalDate start,
-                                                                @RequestParam LocalDate end){
-        return ausgabeService.ausgabenProZeitraum(start, end);
+    @GetMapping("/ausgabenliste")
+    public List<AusgabeResponseDTO> ausgabenliste( @RequestParam LocalDate start,
+                                                   @RequestParam LocalDate end){
+        return ausgabeService.ausgabenliste(start, end);
     }
 
     @GetMapping("/proKategorie")
-    public Map<Kategorie, Double> ausgabenProKategorie(@RequestBody Trip trip){
-        return ausgabeService.ausgabenProKategorie(trip);
+    public Map<Kategorie, Double> ausgabenProKategorie( @RequestParam LocalDate start,
+                                                        @RequestParam LocalDate end){
+        return ausgabeService.ausgabenProKategorie(start, end);
     }
 
 }

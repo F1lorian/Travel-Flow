@@ -1,45 +1,37 @@
 import { Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../services/expense.service';
 
 @Component({
   selector: 'app-cashbook',
   standalone: true,
+  imports: [FormsModule, CommonModule],
   templateUrl: './cashbook.component.html',
-  styleUrl: './cashbook.component.css'
+  styleUrls: ['./cashbook.component.css']
 })
 export class CashbookComponent {
 
-  // Dropdown Kategorien (an Backend anpassen falls nötig)
-  categories = ['FOOD', 'TRAVEL', 'SHOPPING', 'OTHER'];
+  categories = ['ESSEN', 'TRANSPORT', 'HOTEL', 'FREIZEIT', 'SONSTIGES'];
 
-  // Daten vom Service
-  expenses!: ReturnType<ExpenseService['getExpenses']>;
-
-  // Form Felder
   amount = signal(0);
+  tripName = signal('');
   date = signal('');
   category = signal('');
 
-  constructor(private expenseService: ExpenseService) {
-    this.expenses = this.expenseService.getExpenses();
-  }
+  constructor(private expenseService: ExpenseService) {}
 
-  // ➕ NEU: Backend-konformes Add
   addExpense() {
     this.expenseService.addExpense({
       kosten: this.amount(),
+      trip: this.tripName(),
       date: this.date(),
       kategorie: this.category()
     });
 
-    // Reset Formular
     this.amount.set(0);
+    this.tripName.set('');
     this.date.set('');
     this.category.set('');
-  }
-
-  // 🗑️ Delete bleibt gleich
-  deleteExpense(id: number) {
-    this.expenseService.deleteExpense(id);
   }
 }
