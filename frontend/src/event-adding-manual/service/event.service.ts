@@ -20,7 +20,6 @@ export class EventService {
 
   getEvents(): Observable<CalendarEventImport[]> {
     let test = this.http.get<CalendarEventImport[]>(this.pullEvents);
-    console.log(JSON.stringify(test, null, 2));
     return test;
   }
 }

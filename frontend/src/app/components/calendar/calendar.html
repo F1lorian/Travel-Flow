@@ -14,6 +14,7 @@
 
 @if (showManualEventDialog) {
   <app-event-adding-manual
+    [selectedDate]="selectedDateStr"
     (closed)="closeManualEventDialog()"
     (eventCreated)="addCreatedEvent($event)"
   />

@@ -83,7 +83,6 @@ export class CalendarComponent implements OnInit {
 
   loadEvents(){
     this.eventService.getEvents().subscribe(events => {
-
       this.calendarOptions.events = events;
 
     })

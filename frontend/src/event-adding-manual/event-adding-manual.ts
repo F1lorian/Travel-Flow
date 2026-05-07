@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EventService} from './service/event.service';
 import {AddEventRequest} from './models/AddEventRequest';
@@ -16,6 +16,7 @@ export class EventAddingManual {
 
   isSending = false;
   message = '';
+  @Input() selectedDate = '';
   @Output() closed = new EventEmitter<void>();
   @Output() eventCreated = new EventEmitter<AddEventResponse>();
 
@@ -24,15 +25,19 @@ export class EventAddingManual {
   }
   public newItemText: string = '';
   public newItemCost: number = 0;
-  public newItemTrip: string = '';
+  public newItemTrip: number = 0;
 
   sendEvent() {
     this.isSending = true;
+    const start = this.selectedDate
+      ? `${this.selectedDate}T00:00:00`
+      : new Date().toISOString().slice(0, 19);
 
     let newEvent: AddEventRequest = {
       name: this.newItemText,
-      cost : this.newItemCost,
-      tripId : this.newItemTrip
+      kosten: this.newItemCost,
+      tripId: this.newItemTrip,
+      start,
     };
     this.eventService.createManualEvent(newEvent)
       .subscribe({
