@@ -17,11 +17,11 @@ export interface CategorySummary {
   providedIn: 'root'
 })
 export class ExpenseService {
-  private apiUrl = 'http://localhost:8080/api'; // passe diese URL an
+  private apiUrl = 'http://localhost:8080';
 
   constructor(private http: HttpClient) { }
 
-  addExpense(expense: any) {
+  addExpense(expense: any): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/ausgabe`, expense);
   }
 
