@@ -36,10 +36,6 @@ export class TripService {
     return this.http.post<Trip>(this.apiUrl, { name });
   }
 
-  getEventsForTrip(tripId: number): Observable<Event[]> {
-    return this.http.get<Event[]>(`${this.apiUrl}/${tripId}/events`);
-  }
-
   addEvent(tripId: number, name: string, dateTime: string, kosten: number): Observable<Event> {
     return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten });
   }
