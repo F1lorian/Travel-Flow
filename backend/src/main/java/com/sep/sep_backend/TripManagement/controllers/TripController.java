@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -30,7 +29,7 @@ public class TripController {
         return tripService.getAllTrips()
                 .stream()
                 .map(TripDTO::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @GetMapping("/{id}")
