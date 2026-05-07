@@ -6,7 +6,7 @@ package com.sep.sep_backend.TripManagement.controllers;
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.TripManagement.dto.EventDTO;
-import com.sep.sep_backend.TripManagement.services.EventService;
+import com.sep.sep_backend.TripManagement.services.TripEventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +16,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/trips/{tripId}/events")
 @CrossOrigin(origins = "*")
-public class EventController {
+public class TripEventController {
 
     // Shape of the JSON body sent by the frontend when adding an event
     public record CreateEventRequest(String name, LocalDateTime dateTime, int kosten) {}
 
-    private final EventService eventService;
+    private final TripEventService eventService;
 
-    public EventController(EventService eventService) {
+    public TripEventController(TripEventService eventService) {
         this.eventService = eventService;
     }
 
