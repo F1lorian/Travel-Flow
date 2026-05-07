@@ -1,52 +1,51 @@
 <h2>Cashbook</h2>
 
-<div class="form">
+<div>
+  <label for="betrag">Betrag:</label>
   <input
+    id="betrag"
+    type="number"
     [ngModel]="amount()"
     (ngModelChange)="amount.set($event)"
-    type="number"
-    placeholder="Betrag"
+    placeholder="Betrag eingeben"
   />
+</div>
 
+<div>
+  <label for="trip">Trip:</label>
   <input
+    id="trip"
+    type="text"
+    [ngModel]="tripName()"
+    (ngModelChange)="tripName.set($event)"
+    placeholder="Name des Trips"
+  />
+</div>
+
+<div>
+  <label for="datum">Datum:</label>
+  <input
+    id="datum"
+    type="date"
     [ngModel]="date()"
     (ngModelChange)="date.set($event)"
-    type="date"
   />
+</div>
 
+<div>
+  <label for="kategorie">Kategorie:</label>
   <select
+    id="kategorie"
     [ngModel]="category()"
     (ngModelChange)="category.set($event)"
   >
     <option value="">Kategorie wählen</option>
-    @for (cat of categories; track cat) {
-      <option [value]="cat">{{ cat }}</option>
-    }
+    <option *ngFor="let cat of categories" [value]="cat">
+      {{ cat }}
+    </option>
   </select>
-
-  <button (click)="addExpense()">Hinzufügen</button>
 </div>
 
-<table>
-  <thead>
-  <tr>
-    <th>Betrag (€)</th>
-    <th>Datum</th>
-    <th>Kategorie</th>
-    <th>Aktionen</th>
-  </tr>
-  </thead>
-
-  <tbody>
-    @for (expense of expenses(); track expense.id) {
-      <tr>
-        <td>{{ expense.kosten }}</td>
-        <td>{{ expense.date }}</td>
-        <td>{{ expense.kategorie }}</td>
-        <td>
-          <button (click)="deleteExpense(expense.id)">❌</button>
-        </td>
-      </tr>
-    }
-  </tbody>
-</table>
+<div>
+  <button (click)="addExpense()">Hinzufuegen</button>
+</div>
