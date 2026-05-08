@@ -11,6 +11,4 @@ public interface AusgabeRepository extends JpaRepository<Ausgabe, Long> {
 
     List<Ausgabe> findByDateBetween(LocalDate start, LocalDate end);
 
-    List<Ausgabe> findAllByTrip(Trip trip);
-
 }

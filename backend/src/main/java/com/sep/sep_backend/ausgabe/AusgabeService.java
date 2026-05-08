@@ -27,12 +27,15 @@ public class AusgabeService {
 
     // Ausgabe hinzufuegen
     public void ausgabeHinzufuegen(AusgabeRequestDTO ausgabeDTO){
+        // Tip von der Ausgabe herausfinden
         Trip trip = ausgabeDTO.getTrip();
-        if (trip != null && trip.getName() != null && !trip.getName().isBlank()) {
+        if (trip != null && trip.getName() != null) {
             Trip existingTrip = tripRepository.findByName(trip.getName());
+            // wenn der trip in der db existier, dann soll er den nehmen, ansonsten neu speichern
             trip = existingTrip != null ? existingTrip : tripRepository.save(trip);
         }
 
+        // Ausgabe aus dem DTO machen
         Ausgabe ausgabe = new Ausgabe(ausgabeDTO.getKosten(), trip, ausgabeDTO.getDate(), ausgabeDTO.getKategorie());
         repo.save(ausgabe);
     }
@@ -41,6 +44,7 @@ public class AusgabeService {
     public List<AusgabeResponseDTO> ausgabenliste(LocalDate start, LocalDate end){
         List<Ausgabe> ausgaben = repo.findByDateBetween(start, end);
         List<AusgabeResponseDTO> ausgabenDTOs = new ArrayList<>();
+
         for (int i=0; i < ausgaben.size(); i++){
             Ausgabe x = ausgaben.get(i);
             AusgabeResponseDTO y = new AusgabeResponseDTO(x.getKosten(), x.getTrip(), x.getDate(), x.getKategorie());
@@ -59,10 +63,13 @@ public class AusgabeService {
             Kategorie kategorie = ausgabe.getKategorie();
             double kosten = ausgabe.getKosten();
 
+            // pro kategorie Gesmatkosten addieren
             if (summen.containsKey(kategorie)) {
+                // wenn zu einer Kategorie schon kosten gespeichert wurden
                 double alteSumme = summen.get(kategorie);
                 summen.put(kategorie, alteSumme + kosten);
             } else {
+                // wenn zu einer Kategorie noch keine kosten gespeichert wurden
                 summen.put(kategorie, kosten);
             }
         }

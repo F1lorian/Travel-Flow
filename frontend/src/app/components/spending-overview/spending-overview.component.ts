@@ -18,6 +18,7 @@ export class SpendingOverviewComponent {
 
   constructor(private expenseService: ExpenseService) {}
 
+  // was beim start stehen sollte
   ngOnInit() {
     // Setze Standard-Datumsbereich
     const today = new Date();

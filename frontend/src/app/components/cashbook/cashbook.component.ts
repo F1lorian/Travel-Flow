@@ -25,6 +25,8 @@ export class CashbookComponent {
 
   addExpense() {
     this.expenseService.addExpense({
+      // ruft die methode addExpence() von expenceService() auf
+      // er erwatet hier ein expence, deswegen geben wir ihm die  Parameter, die er benoetigt
       kosten: this.amount(),
       trip: {
         name: this.tripName()
@@ -32,6 +34,7 @@ export class CashbookComponent {
       date: this.date(),
       kategorie: this.category()
     }).subscribe({
+      // nach der methode, wird alles zurueckgesetzt
       next: () => {
         this.amount.set(0);
         this.tripName.set('');
@@ -41,6 +44,7 @@ export class CashbookComponent {
         this.successMessage.set('Ausgabe wurde hinzugefuegt.');
       },
       error: (error) => {
+        // falls ein Fehler kommt, dann soll er das ausgeben
         console.error('Fehler beim Speichern der Ausgabe:', error);
         this.successMessage.set('');
         this.errorMessage.set('Ausgabe konnte nicht gespeichert werden.');
