@@ -1,7 +1,7 @@
 package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
