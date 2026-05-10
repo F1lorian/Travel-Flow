@@ -17,7 +17,7 @@ export interface CategorySummary {
   providedIn: 'root'
 })
 export class ExpenseService {
-  private apiUrl = 'http://localhost:8080';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) { }
 

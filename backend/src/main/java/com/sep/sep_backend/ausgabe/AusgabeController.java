@@ -22,18 +22,18 @@ public class AusgabeController {
         this.ausgabeService = ausgabeService;
     }
 
-    @PostMapping("/ausgabe")
+    @PostMapping({"/ausgabe", "/api/ausgabe"})
     public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO ausgabeDTO){
         ausgabeService.ausgabeHinzufuegen(ausgabeDTO);
     }
 
-    @GetMapping("/ausgabenliste")
+    @GetMapping({"/ausgabenliste", "/api/ausgabenliste"})
     public List<AusgabeResponseDTO> ausgabenliste( @RequestParam LocalDate start,
                                                    @RequestParam LocalDate end){
         return ausgabeService.ausgabenliste(start, end);
     }
 
-    @GetMapping("/proKategorie")
+    @GetMapping({"/proKategorie", "/api/proKategorie"})
     public Map<Kategorie, Double> ausgabenProKategorie( @RequestParam LocalDate start,
                                                         @RequestParam LocalDate end){
         return ausgabeService.ausgabenProKategorie(start, end);
