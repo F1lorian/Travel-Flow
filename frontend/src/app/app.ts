@@ -17,4 +17,12 @@ export class App {
     const url = this.router.url;
     return url === '/' || url === '';
   }
+
+  get navTarget(): string {
+    return this.isCalendar ? '/trips' : '/';
+  }
+
+  get navLabel(): string {
+    return this.isCalendar ? 'Manage Trips' : 'Calendar';
+  }
 }
