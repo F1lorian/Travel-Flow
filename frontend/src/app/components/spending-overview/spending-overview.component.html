@@ -1,0 +1,54 @@
+<h2>Spending Overview</h2>
+
+<div>
+  <label for="start">From:</label>
+  <input
+    id="start"
+    type="date"
+    [(ngModel)]="startDate"
+    (change)="loadExpenses()"
+  />
+</div>
+
+<div>
+  <label Von="end">Bis:</label>
+  <input
+    id="end"
+    type="date"
+    [(ngModel)]="endDate"
+    (change)="loadExpenses()"
+  />
+</div>
+
+<hr />
+
+<h3>Ausgaben</h3>
+
+<div *ngIf="expenses.length === 0">
+  Keine Ausgaben gefunden.
+</div>
+
+<table *ngIf="expenses.length > 0" border="1">
+  <thead>
+  <tr>
+    <th>Kosten</th>
+    <th>Trip</th>
+    <th>Datum</th>
+    <th>Kategorie</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let expense of expenses">
+    <td>{{ expense.kosten }}</td>
+    <td>{{ expense.trip }}</td>
+    <td>{{ expense.date }}</td>
+    <td>{{ expense.kategorie }}</td>
+  </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h3>Kategorie-Übersicht</h3>
+
+<pre>{{ categorySummary | json }}</pre>

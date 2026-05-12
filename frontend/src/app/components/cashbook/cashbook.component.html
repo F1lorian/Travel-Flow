@@ -1,0 +1,54 @@
+<h2>Cashbook</h2>
+
+<div>
+  <label for="betrag">Betrag:</label>
+  <input
+    id="betrag"
+    type="number"
+    [ngModel]="amount()"
+    (ngModelChange)="amount.set($event)"
+    placeholder="Betrag eingeben"
+  />
+</div>
+
+<div>
+  <label for="trip">Trip:</label>
+  <input
+    id="trip"
+    type="text"
+    [ngModel]="tripName()"
+    (ngModelChange)="tripName.set($event)"
+    placeholder="Name des Trips"
+  />
+</div>
+
+<div>
+  <label for="datum">Datum:</label>
+  <input
+    id="datum"
+    type="date"
+    [ngModel]="date()"
+    (ngModelChange)="date.set($event)"
+  />
+</div>
+
+<div>
+  <label for="kategorie">Kategorie:</label>
+  <select
+    id="kategorie"
+    [ngModel]="category()"
+    (ngModelChange)="category.set($event)"
+  >
+    <option value="">Kategorie wählen</option>
+    <option *ngFor="let cat of categories" [value]="cat">
+      {{ cat }}
+    </option>
+  </select>
+</div>
+
+<div>
+  <button (click)="addExpense()">Hinzufuegen</button>
+</div>
+
+<p *ngIf="successMessage()">{{ successMessage() }}</p>
+<p *ngIf="errorMessage()">{{ errorMessage() }}</p>

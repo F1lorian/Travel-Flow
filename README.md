@@ -1,5 +1,23 @@
 # team-repo-template
 
+## Local start
+
+Run the full application with Docker Compose:
+
+```powershell
+docker compose up --build
+```
+
+The frontend is available at `http://localhost:4200` and proxies `/api` requests to the backend. The backend is available on the host at `http://localhost:8082`.
+
+For frontend-only development, start the Angular dev server from `frontend`:
+
+```powershell
+npm.cmd start
+```
+
+The Angular dev server uses `frontend/proxy.conf.json` to forward `/api` to a backend running on `http://localhost:8082`.
+
 
 
 ## Getting started
