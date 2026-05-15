@@ -6,8 +6,15 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.ausgabe.*;
 import com.sep.sep_backend.repos.AusgabeRepository;
+import com.sep.sep_backend.repos.TripRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.lang.reflect.Method;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +30,13 @@ public class AusgabenControllerTest {
     assertThat(AusgabeController.class.getAnnotation(RestController.class)).isNotNull();
   }
 
-  @Test
-  void ausgabeHinzufuegenRuftServiceAuf() {
-    // du erstellst dir einen Controller
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    AusgabeService ausgabeService = mock(AusgabeService.class);
-    AusgabeController ausgabeController = new AusgabeController(ausgabeRepository, ausgabeService);
+    @Test
+    void ausgabeHinzufuegenRuftServiceAuf(){
+        // du erstellst dir einen Controller
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        AusgabeService ausgabeService = mock(AusgabeService.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        AusgabeController ausgabeController = new  AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
 
     // eine Ausgabe erstellen
     AusgabeRequestDTO request = new AusgabeRequestDTO();
@@ -40,12 +48,13 @@ public class AusgabenControllerTest {
     verify(ausgabeService).ausgabeHinzufuegen(request);
   }
 
-  @Test
-  void ausgabelisteGibtServiceErgebnisZurueck() {
-    // du erstellst dir einen Controller
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    AusgabeService ausgabeService = mock(AusgabeService.class);
-    AusgabeController ausgabeController = new AusgabeController(ausgabeRepository, ausgabeService);
+    @Test
+    void ausgabelisteGibtServiceErgebnisZurueck(){
+        // du erstellst dir einen Controller
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        AusgabeService ausgabeService = mock(AusgabeService.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        AusgabeController ausgabeController = new  AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
 
     LocalDate start = LocalDate.of(2026, 5, 1);
     LocalDate end = LocalDate.of(2026, 5, 11);
@@ -67,12 +76,13 @@ public class AusgabenControllerTest {
     verify(ausgabeService).ausgabenliste(start, end);
   }
 
-  @Test
-  void ausgabenProKategorieGibtServiceErgebnisZurueck() {
-    // du erstellst dir einen Controller
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    AusgabeService ausgabeService = mock(AusgabeService.class);
-    AusgabeController ausgabeController = new AusgabeController(ausgabeRepository, ausgabeService);
+    @Test
+    void ausgabenProKategorieGibtServiceErgebnisZurueck(){
+        // du erstellst dir einen Controller
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        AusgabeService ausgabeService = mock(AusgabeService.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        AusgabeController ausgabeController = new  AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
 
     LocalDate start = LocalDate.of(2026, 5, 1);
     LocalDate end = LocalDate.of(2026, 5, 11);

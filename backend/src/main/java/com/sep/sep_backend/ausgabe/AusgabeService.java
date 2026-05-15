@@ -24,18 +24,11 @@ public class AusgabeService {
     this.tripRepository = tripRepository;
   }
 
-  // Ausgabe hinzufuegen
-  public void ausgabeHinzufuegen(AusgabeRequestDTO ausgabeDTO) {
-    Trip trip = ausgabeDTO.getTrip();
-    if (trip != null && trip.getName() != null && !trip.getName().isBlank()) {
-      Trip existingTrip = tripRepository.findByName(trip.getName());
-      trip = existingTrip != null ? existingTrip : tripRepository.save(trip);
+    // Ausgabe hinzufuegen
+    public void ausgabeHinzufuegen(AusgabeRequestDTO dto){
+        Ausgabe ausgabe = new Ausgabe(dto.getKosten(), dto.getTrip(), dto.getDate(), dto.getKategorie());
+        repo.save(ausgabe);
     }
-
-    Ausgabe ausgabe =
-        new Ausgabe(ausgabeDTO.getKosten(), trip, ausgabeDTO.getDate(), ausgabeDTO.getKategorie());
-    repo.save(ausgabe);
-  }
 
   // die Methode gibt eine Liste von Ausgaben in dem gewählten Interval
   public List<AusgabeResponseDTO> ausgabenliste(LocalDate start, LocalDate end) {
@@ -68,6 +61,75 @@ public class AusgabeService {
       }
     }
 
-    return summen;
-  }
-}
+        return summen;
+    }
+
+    // Methode liefert Liste von Ausgaben von diesem Trip
+    public List<AusgabeResponseDTO> ausgabenlisteTrip(String tripname){
+        Trip trip = tripRepository.findByName(tripname);
+        if(trip == null){
+            return null;
+        }
+        List<Ausgabe> ausgaben = repo.findByTrip(trip);
+        List<AusgabeResponseDTO> ausgabenDTOs = new ArrayList<>();
+        for(Ausgabe ausgabe : ausgaben){
+            AusgabeResponseDTO dto = new AusgabeResponseDTO(ausgabe.getKosten(), trip, ausgabe.getDate(), ausgabe.getKategorie());
+            ausgabenDTOs.add(dto);
+        }
+        return ausgabenDTOs;
+    }
+
+
+    // die Methode gibt eine Darstellung, in Form eines Maps, von Kategorie und ihre Gesamtkosten fuer ein bestimmten Trip
+    public Map<Kategorie, Double> ausgabenProKategorieTrip(String tripname){
+        Trip trip = tripRepository.findByName(tripname);
+        if(trip == null){
+            return null;
+        }
+        List<Ausgabe> ausgaben = repo.findByTrip(trip);
+        Map<Kategorie, Double> summen = new HashMap<>();
+
+        for (Ausgabe ausgabe : ausgaben) {
+            Kategorie kategorie = ausgabe.getKategorie();
+            double kosten = ausgabe.getKosten();
+
+            if (summen.containsKey(kategorie)) {
+                double alteSumme = summen.get(kategorie);
+                summen.put(kategorie, alteSumme + kosten);
+            } else {
+                summen.put(kategorie, kosten);
+            }
+        }
+
+        return summen;
+    }
+
+    public double gesamtausgabenTrip(String tripname){
+        Trip trip = tripRepository.findByName(tripname);
+        if(trip == null){
+            return -1;
+        }
+        double summe = 0;
+        List<Ausgabe> ausgaben = trip.getAusgaben();
+        for(Ausgabe ausgabe : ausgaben){
+            summe = summe + ausgabe.getKosten();
+        }
+        return summe;
+    }
+
+    public double verfuegbarTrip(String tripname){
+        Trip trip = tripRepository.findByName(tripname);
+        if(trip == null){
+            return -1;
+        }
+        double ausgaben = gesamtausgabenTrip(trip.getName());
+        double budget = trip.getBudget();
+
+        if(budget == 0){
+            return -2;
+        }
+
+        return budget - ausgaben;
+    }
+
+    }

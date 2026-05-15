@@ -13,6 +13,11 @@ public class Trip {
   @Column(nullable = false)
   private String name;
 
+    @Column(nullable = false, columnDefinition = "double precision default 0")
+    private double budget = 0;
+
+    @OneToMany(mappedBy = "trip")
+    private List<Event> events;
   private LocalDate startDate;
 
   private LocalDate endDate;
@@ -70,6 +75,13 @@ public class Trip {
     return ausgaben;
   }
 
+    public void setAusgaben(List<Ausgabe> ausgaben) {
+        this.ausgaben = ausgaben;
+    }
+
+    public double getBudget() {return this.budget;}
+
+    public void setBudget(double budget) {this.budget = budget;}
   public void setAusgaben(List<Ausgabe> ausgaben) {
     this.ausgaben = ausgaben;
   }

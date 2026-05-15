@@ -43,7 +43,12 @@ export class CashbookComponent {
       error: (error) => {
         console.error('Fehler beim Speichern der Ausgabe:', error);
         this.successMessage.set('');
-        this.errorMessage.set('Ausgabe konnte nicht gespeichert werden.');
+        if (error.status === 404) {
+          this.errorMessage.set('Trip wurde nicht gefunden. Bitte pruefe den Tripnamen.');
+        } else {
+          this.errorMessage.set('Ausgabe konnte nicht gespeichert werden.');
+        }
+
       }
     });
   }

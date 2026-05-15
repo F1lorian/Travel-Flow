@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AusgabeRepository extends JpaRepository<Ausgabe, Long> {
 
-  List<Ausgabe> findByDateBetween(LocalDate start, LocalDate end);
+    List<Ausgabe> findByDateBetween(LocalDate start, LocalDate end);
+    List<Ausgabe> findByTrip(Trip trip);
 
-  List<Ausgabe> findAllByTrip(Trip trip);
 }

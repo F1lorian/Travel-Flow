@@ -21,7 +21,12 @@ export class ExpenseService {
 
   constructor(private http: HttpClient) { }
 
-  addExpense(expense: any): Observable<unknown> {
+  addExpense(expense: {
+    kosten: number;
+    trip: { name: string };
+    date: string;
+    kategorie: string;
+  }): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/ausgabe`, expense);
   }
 
