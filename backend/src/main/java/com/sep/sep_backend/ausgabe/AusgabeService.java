@@ -104,6 +104,7 @@ public class AusgabeService {
         return summen;
     }
 
+    // die methode gibt die gesamtausgaben pro trip zurueck
     public double gesamtausgabenTrip(String tripname){
         Trip trip = tripRepository.findByName(tripname);
         if(trip == null){
@@ -117,6 +118,9 @@ public class AusgabeService {
         return summe;
     }
 
+    // die methode rechnet fuer einen trip: budget - gesamtausgaben
+    // falls kein trip mit dem namen gefunden wurde, dann wird -1 zurueckgegeben
+    // falls kein budget gesetzt wurde, dann wird -2 zurueckgegeben
     public double verfuegbarTrip(String tripname){
         Trip trip = tripRepository.findByName(tripname);
         if(trip == null){

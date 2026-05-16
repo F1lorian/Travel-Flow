@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../services/expense.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-spending-overview',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './spending-overview.component.html',
   styleUrls: ['./spending-overview.component.css']
 })
@@ -14,6 +15,7 @@ export class SpendingOverviewComponent {
   startDate: string = '';
   endDate: string = '';
   expenses: any[] = [];
+  showAllExpenses: boolean = false;
   categorySummary: any = {};
 
   constructor(private expenseService: ExpenseService) {}
@@ -51,4 +53,9 @@ export class SpendingOverviewComponent {
       }
     );
   }
+
+  get displayedExpenses() {
+    return this.showAllExpenses ? this.expenses : this.expenses.slice(0,5);
+  }
+
 }
