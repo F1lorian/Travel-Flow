@@ -22,6 +22,10 @@ public class Event {
     @JoinColumn(name = "trip_id")
     private Trip trip;
 
+    @ManyToOne
+    @JoinColumn(name = "categorie_id")
+    private Categories categorie;
+
     public Event() {
     }
 
@@ -71,5 +75,13 @@ public class Event {
 
     public void setTrip(Trip trip) {
         this.trip = trip;
+    }
+
+    public Categories getCategorie() {
+        return categorie;
+    }
+
+    public void setCategorie(Categories categorie) {
+        this.categorie = categorie;
     }
 }
