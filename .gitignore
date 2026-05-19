@@ -22,4 +22,7 @@ Thumbs.db
 .gradle/
 
 # Local dev overrides
+.env
+.env.*
+!.env.example
 application-local.properties
