@@ -1,7 +1,9 @@
 package com.sep.sep_backend.EventHandling;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,5 +28,13 @@ public class EventController {
     @GetMapping("event/pull/all_events")
     public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
         return ResponseEntity.ok(eventService.GetAllEventsFromDb());
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/automatic")
+    public EventResponseDTO uploadEmail(@RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId) throws Exception
+    {
+        var eventDTO = eventService.ParseMailFile(file.getInputStream());
+        eventService.SaveEventResponseToDB(eventDTO, tripId);
+        return eventDTO;
     }
 }

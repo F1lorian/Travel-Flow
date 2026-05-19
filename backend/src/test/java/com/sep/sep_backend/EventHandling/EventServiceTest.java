@@ -2,6 +2,7 @@ package com.sep.sep_backend.EventHandling;
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class EventServiceTest {
 
     @Mock
     private TripRepository tripRepository;
+
+    @Mock
+    private AusgabeService ausgabeService;
 
     @InjectMocks
     private EventService eventService;
@@ -67,6 +71,30 @@ class EventServiceTest {
                 .hasRootCauseMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
 
         verify(eventRepository, never()).save(any(Event.class));
+    }
+
+    @Test
+    void saveEventResponseToDBSpeichertEventFuerVorhandeneTripId() {
+        Trip trip = new Trip("London");
+        LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
+        EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start);
+
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+
+        EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventRepository).save(eventCaptor.capture());
+        verify(ausgabeService).ausgabeHinzufuegen(any());
+
+        Event savedEvent = eventCaptor.getValue();
+        assertThat(savedEvent.getName()).isEqualTo("Konzert");
+        assertThat(savedEvent.getKosten()).isEqualTo(49);
+        assertThat(savedEvent.getDateTime()).isEqualTo(start);
+        assertThat(savedEvent.getTrip()).isSameAs(trip);
+        assertThat(result.getName()).isEqualTo("Konzert");
+        assertThat(result.getKosten()).isEqualTo(49);
+        assertThat(result.getUhrzeit()).isEqualTo(start);
     }
 
     @Test
