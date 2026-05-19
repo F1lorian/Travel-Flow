@@ -28,6 +28,19 @@
 
 <h3>Übersicht</h3>
 
+<label for="trip-auswaehlen">Filtern:</label>
+
+<select
+  id="trip-auswaehlen"
+  (change)="openTripOverview($event)"
+>
+  <option value="">Nach Trip filtern</option>
+  <option *ngFor="let trip of trips" [value]="trip.id">
+    {{ trip.name }}
+  </option>
+</select>
+
+
 <apx-chart
   [series] = "chartseries"
   [labels] = "chartlabels"

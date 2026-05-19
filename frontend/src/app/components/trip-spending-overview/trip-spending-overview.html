@@ -1,0 +1,80 @@
+<h2>{{ tripname }} - spending overview</h2>
+
+<div *ngIf="errorMessage">
+  {{ errorMessage }}
+</div>
+
+<div>
+  <p>Budget: {{ budget }}</p>
+  <p>Ausgegeben: {{ summedExpenses }}</p>
+  <p>Verfügbar: {{ available }}</p>
+
+  <a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+
+  <hr />
+
+  <h3>Ausgaben nach Kategorie</h3>
+
+  <apx-chart
+    [labels] = "chartlabels"
+    [series] = "chartseries"
+    [chart] = "chartDetails">
+  </apx-chart>
+
+  <table class="category-table">
+    <thead>
+    <tr>
+      <th>Kategorie</th>
+      <th>Ausgaben</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let item of categorySummary | keyvalue">
+      <td>{{ item.key }}</td>
+      <td>{{ item.value }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <hr />
+
+  <h3>Letzte Ausgaben</h3>
+
+  <div *ngIf="expenses.length === 0">
+    Keine Ausgaben gefunden.
+  </div>
+
+  <table *ngIf="expenses.length > 0" class="expenses-table">
+    <thead>
+    <tr>
+      <th>Kosten</th>
+      <th>Trip</th>
+      <th>Datum</th>
+      <th>Kategorie</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let expense of displayedExpenses">
+      <td>{{ expense.kosten }}</td>
+      <td>{{ expense.trip }}</td>
+      <td>{{ expense.date }}</td>
+      <td>{{ expense.kategorie }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <button
+    *ngIf="expenses.length > 5 && !showAllExpenses"
+    type = "button"
+    (click)="showAllExpenses = true"
+  >Alle Ausgaben anzeigen
+  </button>
+
+  <button
+    *ngIf="expenses.length > 5 && showAllExpenses"
+    type="button"
+    (click)="showAllExpenses = false"
+  >Weniger anzeigen
+  </button>
+
+</div>

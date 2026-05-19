@@ -37,4 +37,25 @@ export class ExpenseService {
   getCategorySummary(startDate: string, endDate: string): Observable<CategorySummary> {
     return this.http.get<CategorySummary>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`);
   }
+
+  getExpensesByTrip(tripname: string): Observable<Expense[]> {
+    return this.http.get<Expense[]>(`${this.apiUrl}/ausgabenlisteTrip?tripname=${tripname}`)
+  }
+
+  getCategorySummaryTrip(tripname: string): Observable<CategorySummary> {
+    return this.http.get<CategorySummary>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`);
+  }
+
+  getBudget(tripname: string): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/budget?tripname=${tripname}`);
+  }
+
+  getSummedExpensesTrip(tripname: string): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/gesamtausgabenTrip?tripname=${tripname}`);
+  }
+
+  getAvailable(tripname: string): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/verfuegbar?tripname=${tripname}`);
+  }
+
 }

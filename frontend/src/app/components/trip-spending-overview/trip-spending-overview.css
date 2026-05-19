@@ -1,0 +1,12 @@
+.add-expense-button{
+  display: inline-block;
+  margin-top: 20px;
+  padding: 8px 14px;
+  background-color: #1976d2;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.add-expense-button:hover{
+  background-color: #125aa0;
+}
