@@ -5,15 +5,39 @@
 </div>
 
 <div>
-  <p>Budget: {{ budget }}</p>
-  <p>Ausgegeben: {{ summedExpenses }}</p>
-  <p>Verfügbar: {{ available }}</p>
+
+  <div class="budget-summary">
+
+    <button class="budget budget-box-budget" type="button">
+      <span>Budget</span>
+      <strong>{{budget}}</strong>
+    </button>
+
+    <div class="ausgegeben">
+      <span>Ausgegeben</span>
+      <strong>{{summedExpenses}}</strong>
+    </div>
+
+    <div class="verfuegbar">
+      <span>Verfügbar</span>
+      <strong>{{available}}</strong>
+    </div>
+
+  </div>
 
   <a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
 
   <hr />
 
   <h3>Ausgaben nach Kategorie</h3>
+
+  <select id="overview-auswaehlen" (change)="openOverview($event)">
+    <option value="">Anderer Trip</option>
+    <option *ngFor="let trip of trips" [value]="trip.id">
+      {{ trip.name }}
+    </option>
+    <option value="interval">Selbstgewählter Intervall</option>
+  </select>
 
   <apx-chart
     [labels] = "chartlabels"
@@ -65,6 +89,7 @@
 
   <button
     *ngIf="expenses.length > 5 && !showAllExpenses"
+    class="button"
     type = "button"
     (click)="showAllExpenses = true"
   >Alle Ausgaben anzeigen
@@ -72,6 +97,7 @@
 
   <button
     *ngIf="expenses.length > 5 && showAllExpenses"
+    class="button"
     type="button"
     (click)="showAllExpenses = false"
   >Weniger anzeigen

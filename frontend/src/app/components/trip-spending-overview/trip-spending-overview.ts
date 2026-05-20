@@ -1,14 +1,15 @@
 import {Component} from '@angular/core';
 import {ExpenseService} from '../../services/expense.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
-import {ActivatedRoute, RouterLink} from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {CommonModule} from '@angular/common';
 import { NgApexchartsModule } from "ng-apexcharts";
+import {ReactiveFormsModule} from '@angular/forms';
 
 @Component({
   selector: 'trip-spending-overview',
   standalone: true,
-  imports: [RouterLink, CommonModule, NgApexchartsModule],
+  imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule],
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
@@ -31,27 +32,44 @@ export class TripSpendingOverviewComponent {
 
   errorMessage: string = '';
 
+  trips: Trip[] = [];
+
   constructor(private expenseService: ExpenseService,
               private route: ActivatedRoute,
-              private tripService: TripService) {}
+              private tripService: TripService,
+              private router: Router) {}
 
   ngOnInit() {
-    const tripId = Number(this.route.snapshot.paramMap.get('id'));
-    if(!tripId){
-      this.errorMessage = "TripId fehlt";
-      return;
-    }
-    this.tripService.getTrip(tripId).subscribe({
-      next: (trip) => {
-        this.trip = trip;
-        this.tripname = trip.name;
-        this.loadTripExpenses();
+    this.route.params.subscribe(params => {
+      const tripId = Number(params['id']);
+      if (!tripId) {
+        this.errorMessage = "TripId fehlt";
+        return;
+      }
+      this.loadTrip(tripId);
+    })
+    this.tripService.getAllTrips().subscribe({
+      next: (trips) => {
+        this.trips = trips;
       },
       error: (error) => {
-        console.error("Fehler beim Laden des Trips", error);
-        this.errorMessage = "Trip konnte nicht geladen werden.";
+        console.error("Fehler beim Laden der Trips", error);
       }
-    });
+    })
+  }
+
+    loadTrip(tripId: number) {
+      this.tripService.getTrip(tripId).subscribe({
+        next: (trip) => {
+          this.trip = trip;
+          this.tripname = trip.name;
+          this.loadTripExpenses();
+        },
+        error: (error) => {
+          console.error("Fehler beim Laden des Trips", error);
+          this.errorMessage = "Trip konnte nicht geladen werden.";
+        }
+      });
     }
 
     loadTripExpenses() {
@@ -109,5 +127,17 @@ export class TripSpendingOverviewComponent {
     type: 'pie' as const,
     height: 350
   };
+
+  openOverview(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    if (!value) {
+      return;
+    }
+    if(value === "interval"){
+      this.router.navigate(['/overview']);
+      return;
+    }
+    this.router.navigate(['/trip-spending-overview', value]);
+  }
 
 }

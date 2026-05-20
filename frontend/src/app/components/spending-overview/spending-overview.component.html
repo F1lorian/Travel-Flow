@@ -34,7 +34,7 @@
   id="trip-auswaehlen"
   (change)="openTripOverview($event)"
 >
-  <option value="">Nach Trip filtern</option>
+  <option value="">Nach Trip</option>
   <option *ngFor="let trip of trips" [value]="trip.id">
     {{ trip.name }}
   </option>
@@ -92,11 +92,13 @@
 <button
   *ngIf="expenses.length > 5 && !showAllExpenses"
   type = "button"
+  class="button"
   (click)="showAllExpenses = true"
 >Alle Ausgaben anzeigen</button>
 
 <button
   *ngIf="expenses.length > 5 && showAllExpenses"
   type = "button"
+  class="button"
   (click)="showAllExpenses = false"
 >Weniger anzeigen</button>
