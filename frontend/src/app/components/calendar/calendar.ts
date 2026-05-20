@@ -8,6 +8,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { EventAddingManual } from '../../../event-adding-manual/event-adding-manual';
 import { AddEventResponse } from '../../../event-adding-manual/models/AddEventResponse';
 import { EventService} from '../../../event-adding-manual/service/event.service';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import FullCalendar from "@fullcalendar/react";
+import listPlugin from "@fullcalendar/list";
 
 @Component({
   selector: 'app-calendar',
@@ -22,8 +25,13 @@ export class CalendarComponent implements OnInit {
   eventService = inject(EventService);
 
   calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
     initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'dayGridMonth timeGridWeek timeGridDay listYear',
+      center: 'title',
+      right: 'today prev next'
+    },
     events: [],
 
     eventClick: this.handleEventClick.bind(this),
