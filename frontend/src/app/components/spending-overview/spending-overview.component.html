@@ -7,7 +7,7 @@
     type="date"
     [(ngModel)]="startDate"
     (change)="loadExpenses()"
-  />
+    />
 </div>
 
 <div>
@@ -17,35 +17,41 @@
     type="date"
     [(ngModel)]="endDate"
     (change)="loadExpenses()"
-  />
+    />
 </div>
 
 <hr />
 
 <h3>Ausgaben</h3>
 
-<div *ngIf="expenses.length === 0">
-  Keine Ausgaben gefunden.
-</div>
+@if (expenses.length === 0) {
+  <div>
+    Keine Ausgaben gefunden.
+  </div>
+}
 
-<table *ngIf="expenses.length > 0" border="1">
-  <thead>
-  <tr>
-    <th>Kosten</th>
-    <th>Trip</th>
-    <th>Datum</th>
-    <th>Kategorie</th>
-  </tr>
-  </thead>
-  <tbody>
-  <tr *ngFor="let expense of expenses">
-    <td>{{ expense.kosten }}</td>
-    <td>{{ expense.trip }}</td>
-    <td>{{ expense.date }}</td>
-    <td>{{ expense.kategorie }}</td>
-  </tr>
-  </tbody>
-</table>
+@if (expenses.length > 0) {
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Kosten</th>
+        <th>Trip</th>
+        <th>Datum</th>
+        <th>Kategorie</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (expense of expenses; track expense) {
+        <tr>
+          <td>{{ expense.kosten }}</td>
+          <td>{{ expense.trip }}</td>
+          <td>{{ expense.date }}</td>
+          <td>{{ expense.kategorie }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
 
 <hr />
 

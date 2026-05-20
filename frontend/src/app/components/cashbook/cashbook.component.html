@@ -8,7 +8,7 @@
     [ngModel]="amount()"
     (ngModelChange)="amount.set($event)"
     placeholder="Betrag eingeben"
-  />
+    />
 </div>
 
 <div>
@@ -19,7 +19,7 @@
     [ngModel]="tripName()"
     (ngModelChange)="tripName.set($event)"
     placeholder="Name des Trips"
-  />
+    />
 </div>
 
 <div>
@@ -29,7 +29,7 @@
     type="date"
     [ngModel]="date()"
     (ngModelChange)="date.set($event)"
-  />
+    />
 </div>
 
 <div>
@@ -38,11 +38,13 @@
     id="kategorie"
     [ngModel]="category()"
     (ngModelChange)="category.set($event)"
-  >
+    >
     <option value="">Kategorie wählen</option>
-    <option *ngFor="let cat of categories" [value]="cat">
-      {{ cat }}
-    </option>
+    @for (cat of categories; track cat) {
+      <option [value]="cat">
+        {{ cat }}
+      </option>
+    }
   </select>
 </div>
 
@@ -50,5 +52,9 @@
   <button (click)="addExpense()">Hinzufuegen</button>
 </div>
 
-<p *ngIf="successMessage()">{{ successMessage() }}</p>
-<p *ngIf="errorMessage()">{{ errorMessage() }}</p>
+@if (successMessage()) {
+  <p>{{ successMessage() }}</p>
+}
+@if (errorMessage()) {
+  <p>{{ errorMessage() }}</p>
+}
