@@ -26,7 +26,7 @@ export class EventDialog {
   }
 
   save() {
-    this.dialogRef.close({action: 'save',title: this.title});
+    this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripid: this.tripId});
   }
 
   close() {

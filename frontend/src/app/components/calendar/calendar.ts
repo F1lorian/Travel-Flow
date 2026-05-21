@@ -1,4 +1,4 @@
-import {Component, inject, Injectable, NgZone, OnInit} from '@angular/core';
+import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
 import { CalendarOptions } from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,8 +9,8 @@ import { EventAddingManual } from '../../../event-adding-manual/event-adding-man
 import { AddEventResponse } from '../../../event-adding-manual/models/AddEventResponse';
 import { EventService} from '../../../event-adding-manual/service/event.service';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import FullCalendar from "@fullcalendar/react";
 import listPlugin from "@fullcalendar/list";
+import {AddEventRequest} from '../../../event-adding-manual/models/AddEventRequest';
 
 @Component({
   selector: 'app-calendar',
@@ -20,6 +20,7 @@ import listPlugin from "@fullcalendar/list";
   styleUrl: './calendar.css',
 })
 export class CalendarComponent implements OnInit {
+  @Input() selectedDate = '';
   showManualEventDialog = false;
   selectedDateStr = '';
   eventService = inject(EventService);
@@ -27,10 +28,21 @@ export class CalendarComponent implements OnInit {
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
     initialView: 'dayGridMonth',
+    customButtons:{
+      eventAddenButton:{
+        text:'Event hinzufügen'
+      },
+      eventImportButton:{
+        text:'Event importieren'
+      }
+    },
     headerToolbar: {
       left: 'dayGridMonth timeGridWeek timeGridDay listYear',
       center: 'title',
       right: 'today prev next'
+    },
+    footerToolbar:{
+      left: 'eventAddenButton eventImportButton'
     },
     events: [],
 
@@ -42,7 +54,6 @@ export class CalendarComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    //throw new Error("Method not implemented.");
     this.loadEvents();
   }
 
@@ -50,12 +61,10 @@ export class CalendarComponent implements OnInit {
   handleEventClick(clickInfo: any) {
 
     const dialogRef = this.dialog.open(EventDialog, {
-      data: {mode: 'create'},
-      //panelClass: 'dialog-style'
+      data: {mode: 'edit'},
     });
-    //hier später nur noch auf den service verweisen, dass ein event geändert werden soll.
-    //Dialog weiterhin hierüber
 
+    //hier noch mit dem service die änderungen an dem event durchführen
 
   }
 
@@ -82,10 +91,33 @@ export class CalendarComponent implements OnInit {
   }
 
   handleDateClick(clickInfo: any) {
-    this.ngZone.run(() => {
-      this.selectedDateStr = clickInfo.dateStr;
-      this.showManualEventDialog = true;
-    });
+    const dialogRef = this.dialog.open(EventDialog, {
+      data:{mode: 'create'},
+    })
+
+    this.selectedDateStr = clickInfo.dateStr;
+    dialogRef.afterClosed().subscribe(result => {
+
+      if(result) {
+        let newEvent: AddEventRequest = {
+          name: result.title,
+          kosten: result.kosten,
+          tripId: result.tripid,
+          start: this.selectedDateStr +"T00:00:00",
+        }
+        console.log(newEvent);
+        this.eventService.createManualEvent(newEvent)
+          .subscribe({
+            next: (response) => {
+              console.log("Event Response:", response);
+              this.addCreatedEvent(response);
+            },
+            error: () => {
+              console.error("Event konnte nicht erstellt werden!");
+            }
+          });
+      }
+    })
     return;
   }
 

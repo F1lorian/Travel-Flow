@@ -19,7 +19,6 @@ export class EventService {
   }
 
   getEvents(): Observable<CalendarEventImport[]> {
-    let test = this.http.get<CalendarEventImport[]>(this.pullEvents);
-    return test;
+    return this.http.get<CalendarEventImport[]>(this.pullEvents);
   }
 }
