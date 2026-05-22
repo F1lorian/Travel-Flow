@@ -69,11 +69,6 @@ public class EventService {
         new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
     eventRepository.save(newEvent);
 
-    // add the expence automatically to the db
-    AusgabeRequestDTO ausgabeRequestDTO =
-        new AusgabeRequestDTO(
-            (double) dto.getKosten(), matchingTrip, eventStart.toLocalDate(), Kategorie.SONSTIGES);
-    ausgabeService.ausgabeHinzufuegen(ausgabeRequestDTO);
 
     return ausgabe;
   }

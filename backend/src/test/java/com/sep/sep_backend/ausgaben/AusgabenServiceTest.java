@@ -19,12 +19,13 @@ import org.mockito.ArgumentCaptor;
 
 public class AusgabenServiceTest {
 
-  @Test
-  void ausgabeHinzufuegenSpeichertAusgabeMitExistierendemTrip() {
-    // du erstellst einen Service
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    TripRepository tripRepository = mock(TripRepository.class);
-    AusgabeService ausgabeService = new AusgabeService(ausgabeRepository, tripRepository);
+    @Test
+    void ausgabeHinzufuegenSpeichertAusgabeMitExistierendemTrip(){
+        // du erstellst einen Service
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        EventRepository eventRepository = mock(EventRepository.class);
+        AusgabeService ausgabeService = new AusgabeService(ausgabeRepository, tripRepository,  eventRepository);
 
     // du erstellst 2 Trips, die den gleichen Trip repraesentieren muessen, und "speicherst" den
     // einen
@@ -55,12 +56,13 @@ public class AusgabenServiceTest {
     verify(tripRepository, never()).save(requestedTrip);
   }
 
-  @Test
-  void ausgabenlisteGibtDTOsZurueck() {
-    // du erstellst einen Service
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    TripRepository tripRepository = mock(TripRepository.class);
-    AusgabeService ausgabeService = new AusgabeService(ausgabeRepository, tripRepository);
+    @Test
+    void ausgabenlisteGibtDTOsZurueck(){
+        // du erstellst einen Service
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        EventRepository eventRepository =  mock(EventRepository.class);
+        AusgabeService ausgabeService = new AusgabeService(ausgabeRepository, tripRepository, eventRepository);
 
     // du "speicherst" eine Ausgabe und holst sie dir
     Trip trip = new Trip();
@@ -81,12 +83,13 @@ public class AusgabenServiceTest {
     assertThat(result.get(0).getKategorie()).isEqualTo(Kategorie.HOTEL);
   }
 
-  @Test
-  void ausgabeProKategorieSummiertKosten() {
-    // du erstellst einen Service
-    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
-    TripRepository tripRepository = mock(TripRepository.class);
-    AusgabeService ausgabeService = new AusgabeService(ausgabeRepository, tripRepository);
+    @Test
+    void ausgabeProKategorieSummiertKosten(){
+        // du erstellst einen Service
+        AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+        TripRepository tripRepository = mock(TripRepository.class);
+        EventRepository eventRepository =  mock(EventRepository.class);
+        AusgabeService ausgabeService = new  AusgabeService(ausgabeRepository, tripRepository, eventRepository);
 
     // "speicherst" 2 Ausgaben in derselben Kategorie
     Trip trip1 = new Trip();
