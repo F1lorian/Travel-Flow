@@ -1,6 +1,7 @@
 package com.sep.sep_backend.ausgabe;
 
 import com.sep.sep_backend.Enitys.Ausgabe;
+import com.sep.sep_backend.Enitys.Categories;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -51,7 +52,7 @@ public class AusgabeController {
   }
 
     @GetMapping({"/proKategorie", "/api/proKategorie"})
-    public Map<Kategorie, Double> ausgabenProKategorie( @RequestParam LocalDate start,
+    public List<KategorieSummeDTO> ausgabenProKategorie(@RequestParam LocalDate start,
                                                         @RequestParam LocalDate end) {
         return ausgabeService.ausgabenProKategorie(start, end);
     }
@@ -66,8 +67,8 @@ public class AusgabeController {
     }
 
     @GetMapping({"/proKategorieTrip", "/api/proKategorieTrip"})
-    public Map<Kategorie, Double> ausgabenProKategorieTrip(@RequestParam String tripname) {
-        Map<Kategorie, Double> result = ausgabeService.ausgabenProKategorieTrip(tripname);
+    public List<KategorieSummeDTO> ausgabenProKategorieTrip(@RequestParam String tripname) {
+        List<KategorieSummeDTO> result = ausgabeService.ausgabenProKategorieTrip(tripname);
         if (result == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
         }

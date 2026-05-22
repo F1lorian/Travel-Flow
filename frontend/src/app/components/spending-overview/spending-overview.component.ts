@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ExpenseService } from '../../services/expense.service';
+import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
 import {Router, RouterLink} from '@angular/router';
 import { NgApexchartsModule } from "ng-apexcharts";
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
@@ -18,7 +18,7 @@ export class SpendingOverviewComponent {
   endDate: string = '';
   expenses: any[] = [];
   showAllExpenses: boolean = false;
-  categorySummary: any = {};
+  categorySummary: CategorySummaryItem[] = [];
   chartseries: number[] = [];
   chartlabels: string[] = [];
 
@@ -63,10 +63,10 @@ export class SpendingOverviewComponent {
 
     // Lade Kategorie-Auswertung
     this.expenseService.getCategorySummary(this.startDate, this.endDate).subscribe(
-      (data: any) => {
+      (data: CategorySummaryItem[]) => {
         this.categorySummary = data;
-        this.chartlabels = Object.keys(data);
-        this.chartseries = Object.values(data).map(Number);
+        this.chartlabels = data.map(item => item.category);
+        this.chartseries = data.map(item => item.cost);
       },
       (error) => {
         console.error('Fehler beim Laden der Kategorie-Auswertung:', error);

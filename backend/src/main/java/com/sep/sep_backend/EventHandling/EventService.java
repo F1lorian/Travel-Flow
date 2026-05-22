@@ -7,7 +7,6 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.ausgabe.AusgabeRequestDTO;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.ausgabe.Kategorie;
 import com.sep.sep_backend.repos.EventRepository;
@@ -26,6 +25,10 @@ import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class EventService {

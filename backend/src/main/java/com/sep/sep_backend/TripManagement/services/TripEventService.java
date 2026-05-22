@@ -5,6 +5,7 @@ Called by TripEventController, which exposes the results to the Angular frontend
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import java.time.LocalDateTime;

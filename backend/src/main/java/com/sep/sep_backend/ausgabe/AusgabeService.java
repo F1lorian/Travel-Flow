@@ -1,13 +1,17 @@
 package com.sep.sep_backend.ausgabe;
 
 import com.sep.sep_backend.Enitys.Ausgabe;
+import com.sep.sep_backend.Enitys.Categories;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.AusgabeRepository;
+import com.sep.sep_backend.repos.CategoriesRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -21,18 +25,24 @@ public class AusgabeService {
     AusgabeRepository repo;
     TripRepository tripRepository;
     EventRepository eventRepository;
+    CategoriesRepository categoriesRepository;
 
     @Autowired
-    public AusgabeService(AusgabeRepository repo, TripRepository tripRepository, EventRepository eventRepository) {
+    public AusgabeService(AusgabeRepository repo, TripRepository tripRepository, EventRepository eventRepository, CategoriesRepository categoriesRepository) {
         this.repo = repo;
         this.tripRepository = tripRepository;
         this.eventRepository = eventRepository;
+        this.categoriesRepository = categoriesRepository;
     }
 
     // Ausgabe hinzufuegen
     public void ausgabeHinzufuegen(AusgabeRequestDTO dto){
-        Ausgabe ausgabe = new Ausgabe(dto.getKosten(), dto.getTrip(), dto.getDate(), dto.getKategorie());
+        Categories category = categoriesRepository.findByName(dto.getKategorie())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
+
+        Ausgabe ausgabe = new Ausgabe(dto.getKosten(), dto.getTrip(), dto.getDate(), category);
         repo.save(ausgabe);
+
     }
 
     // die Methode gibt eine Liste von Ausgaben in dem gewählten Interval
@@ -47,43 +57,44 @@ public class AusgabeService {
         }
         for (int i=0; i < events.size(); i++){
             Event x = events.get(i);
-            AusgabeResponseDTO y = new AusgabeResponseDTO(x.getKosten(), x.getTrip(), x.getDateTime().toLocalDate(), Kategorie.SONSTIGES);
+            AusgabeResponseDTO y = new AusgabeResponseDTO(x.getKosten(), x.getTrip(), x.getDateTime().toLocalDate(), x.getCategorie());
             ausgabenDTOs.add(y);
         }
         return ausgabenDTOs;
     }
 
 
-    // die Methode gibt eine Darstellung, in Form eines Maps, von Kategorie und ihre Gesamtkosten in dem gewählten Interval
-    public Map<Kategorie, Double> ausgabenProKategorie(LocalDate start, LocalDate end){
+    // eine Darstellung von Kategorie und ihre Gesamtkosten in dem gewählten Interval
+    public List<KategorieSummeDTO> ausgabenProKategorie(LocalDate start, LocalDate end) {
         List<Ausgabe> ausgaben = repo.findByDateBetween(start, end);
         List<Event> events = eventRepository.findByDateTimeBetween(start.atStartOfDay(), end.atStartOfDay());
-        Map<Kategorie, Double> summen = new HashMap<>();
+
+        Map<String, Double> summen = new HashMap<>();
 
         for (Ausgabe ausgabe : ausgaben) {
-            Kategorie kategorie = ausgabe.getKategorie();
+            String kategorie = ausgabe.getKategorie() != null
+                    ? ausgabe.getKategorie().getName()
+                    : "SONSTIGES";
+
             double kosten = ausgabe.getKosten();
-
-            if (summen.containsKey(kategorie)) {
-                double alteSumme = summen.get(kategorie);
-                summen.put(kategorie, alteSumme + kosten);
-            } else {
-                summen.put(kategorie, kosten);
-            }
+            summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
         }
+
         for (Event event : events) {
-            Kategorie kategorie = Kategorie.SONSTIGES;
-            double kosten = event.getKosten();
+            String kategorie = event.getCategorie() != null
+                    ? event.getCategorie().getName()
+                    : "SONSTIGES";
 
-            if (summen.containsKey(kategorie)) {
-                double alteSumme = summen.get(kategorie);
-                summen.put(kategorie, alteSumme + kosten);
-            } else {
-                summen.put(kategorie, kosten);
-            }
+            double kosten = event.getKosten();
+            summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
         }
 
-        return summen;
+        List<KategorieSummeDTO> result = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : summen.entrySet()) {
+            result.add(new KategorieSummeDTO(entry.getKey(), entry.getValue()));
+        }
+
+        return result;
     }
 
     // Methode liefert Liste von Ausgaben von diesem Trip
@@ -100,47 +111,51 @@ public class AusgabeService {
             ausgabenDTOs.add(dto);
         }
         for(Event event : events){
-            AusgabeResponseDTO dto = new AusgabeResponseDTO(event.getKosten(), trip, event.getDateTime().toLocalDate(), Kategorie.SONSTIGES);
+            AusgabeResponseDTO dto = new AusgabeResponseDTO(event.getKosten(), trip, event.getDateTime().toLocalDate(), event.getCategorie());
             ausgabenDTOs.add(dto);
         }
         return ausgabenDTOs;
     }
 
 
-    // die Methode gibt eine Darstellung, in Form eines Maps, von Kategorie und ihre Gesamtkosten fuer ein bestimmten Trip
-    public Map<Kategorie, Double> ausgabenProKategorieTrip(String tripname){
+    // eine Darstellung von Kategorie und ihre Gesamtkosten fuer ein bestimmten Trip
+    public List<KategorieSummeDTO> ausgabenProKategorieTrip(String tripname) {
         Trip trip = tripRepository.findByName(tripname);
-        if(trip == null){
+        if (trip == null) {
             return null;
         }
+
         List<Ausgabe> ausgaben = repo.findByTrip(trip);
         List<Event> events = eventRepository.findByTripId(trip.getId());
-        Map<Kategorie, Double> summen = new HashMap<>();
+
+        Map<String, Double> summen = new HashMap<>();
 
         for (Ausgabe ausgabe : ausgaben) {
-            Kategorie kategorie = ausgabe.getKategorie();
+            String kategorie = ausgabe.getKategorie() != null
+                    ? ausgabe.getKategorie().getName()
+                    : "SONSTIGES";
+
             double kosten = ausgabe.getKosten();
-
-            if (summen.containsKey(kategorie)) {
-                double alteSumme = summen.get(kategorie);
-                summen.put(kategorie, alteSumme + kosten);
-            } else {
-                summen.put(kategorie, kosten);
-            }
+            summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
         }
+
         for (Event event : events) {
-            Kategorie kategorie = Kategorie.SONSTIGES;
-            double kosten = event.getKosten();
+            String kategorie = event.getCategorie() != null
+                    ? event.getCategorie().getName()
+                    : "SONSTIGES";
 
-            if (summen.containsKey(kategorie)) {
-                double alteSumme = summen.get(kategorie);
-                summen.put(kategorie, alteSumme + kosten);
-            } else {
-                summen.put(kategorie, kosten);
-            }
+            double kosten = event.getKosten();
+            summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
         }
-        return summen;
+
+        List<KategorieSummeDTO> result = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : summen.entrySet()) {
+            result.add(new KategorieSummeDTO(entry.getKey(), entry.getValue()));
+        }
+
+        return result;
     }
+
 
     // die methode gibt die gesamtausgaben pro trip zurueck
     public double gesamtausgabenTrip(String tripname){
@@ -149,7 +164,7 @@ public class AusgabeService {
             return -1;
         }
         double summe = 0;
-        List<Ausgabe> ausgaben = trip.getAusgaben();
+        List<Ausgabe> ausgaben = repo.findByTrip(trip);
         List<Event> events = eventRepository.findByTripId(trip.getId());
         for(Ausgabe ausgabe : ausgaben){
             summe = summe + ausgabe.getKosten();

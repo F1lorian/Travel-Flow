@@ -9,8 +9,9 @@ export interface Expense {
   kategorie: string;
 }
 
-export interface CategorySummary {
-  [key: string]: number;
+export interface CategorySummaryItem {
+  category: string;
+  cost: number;
 }
 
 @Injectable({
@@ -34,16 +35,16 @@ export class ExpenseService {
     return this.http.get<Expense[]>(`${this.apiUrl}/ausgabenliste?start=${startDate}&end=${endDate}`);
   }
 
-  getCategorySummary(startDate: string, endDate: string): Observable<CategorySummary> {
-    return this.http.get<CategorySummary>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`);
+  getCategorySummary(startDate: string, endDate: string): Observable<CategorySummaryItem[]> {
+    return this.http.get<CategorySummaryItem[]>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`);
   }
 
   getExpensesByTrip(tripname: string): Observable<Expense[]> {
     return this.http.get<Expense[]>(`${this.apiUrl}/ausgabenlisteTrip?tripname=${tripname}`)
   }
 
-  getCategorySummaryTrip(tripname: string): Observable<CategorySummary> {
-    return this.http.get<CategorySummary>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`);
+  getCategorySummaryTrip(tripname: string): Observable<CategorySummaryItem[]> {
+    return this.http.get<CategorySummaryItem[]>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`);
   }
 
   getBudget(tripname: string): Observable<number> {

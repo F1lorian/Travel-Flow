@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {ExpenseService} from '../../services/expense.service';
+import {CategorySummaryItem, ExpenseService} from '../../services/expense.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {CommonModule} from '@angular/common';
@@ -26,7 +26,7 @@ export class TripSpendingOverviewComponent {
   expenses: any[] = [];
   showAllExpenses: boolean = false;
 
-  categorySummary: any = {};
+  categorySummary: CategorySummaryItem[] = [];
   chartseries: number[] = [];
   chartlabels: string[] = [];
 
@@ -108,8 +108,8 @@ export class TripSpendingOverviewComponent {
       this.expenseService.getCategorySummaryTrip(this.tripname).subscribe({
         next: (data) => {
           this.categorySummary = data;
-          this.chartlabels = Object.keys(this.categorySummary);
-          this.chartseries = Object.values(this.categorySummary).map(Number);
+          this.chartlabels = data.map(item => item.category);
+          this.chartseries = data.map(item => item.cost);
         },
         error: (error) => {
           console.error("Fehler beim Laden der kategorisierten Ausgaben", error);

@@ -1,40 +1,43 @@
 package com.sep.sep_backend.Enitys;
-
 import jakarta.persistence.*;
+
 import java.util.List;
 
 @Entity
-public class Categories {
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private long id;
+public class Categories
+{
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+    private String name;
 
-  private String name;
+    @OneToMany(mappedBy = "categorie")
+    private List<Event> events;
 
-  @OneToMany(mappedBy = "categorie")
-  private List<Event> events;
+    @OneToMany(mappedBy = "kategorie")
+    private List<Ausgabe> ausgaben;
 
-  public long getId() {
-    return id;
-  }
+    public long getId() {
+        return id;
+    }
 
-  public void setId(long id) {
-    this.id = id;
-  }
+    public void setId(long id) {
+        this.id = id;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public List<Event> getEvents() {
-    return events;
-  }
+    public List<Event> getEvents() {
+        return events;
+    }
 
-  public void setEvents(List<Event> events) {
-    this.events = events;
-  }
+    public void setEvents(List<Event> events) {
+        this.events = events;
+    }
 }
