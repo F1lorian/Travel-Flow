@@ -11,6 +11,8 @@ import { EventService} from '../../../event-adding-manual/service/event.service'
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from "@fullcalendar/list";
 import {AddEventRequest} from '../../../event-adding-manual/models/AddEventRequest';
+import {EditEventRequest} from '../../../event-adding-manual/models/EditEventRequest';
+
 
 @Component({
   selector: 'app-calendar',
@@ -28,6 +30,10 @@ export class CalendarComponent implements OnInit {
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
     initialView: 'dayGridMonth',
+    dayMaxEvents: 4,
+    contentHeight: 800,
+    expandRows: false,
+    fixedWeekCount: true,
     customButtons:{
       eventAddenButton:{
         text:'Event hinzufügen'
@@ -44,7 +50,9 @@ export class CalendarComponent implements OnInit {
     footerToolbar:{
       left: 'eventAddenButton eventImportButton'
     },
-    events: [],
+    events: [
+      {title: "test", start:"2026-05-21", id:"1"}
+    ],
 
     eventClick: this.handleEventClick.bind(this),
     dateClick: this.handleDateClick.bind(this)
@@ -60,10 +68,35 @@ export class CalendarComponent implements OnInit {
 
   handleEventClick(clickInfo: any) {
 
+    let selectedEvent = clickInfo.event;
+    let id = selectedEvent.id;
+    console.log("EventID =" + id);
+    console.log(selectedEvent);
+    console.log(selectedEvent.name + selectedEvent.kosten + selectedEvent.tripId + selectedEvent.start);
     const dialogRef = this.dialog.open(EventDialog, {
-      data: {mode: 'edit'},
+      data: {mode: 'edit', title: selectedEvent.name, kosten: selectedEvent.kosten, tripId: selectedEvent.tripId, start: selectedEvent.start},
     });
 
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        if(result.action === 'save'){
+          let updatedEvent: EditEventRequest = {
+            id: id,
+            kosten: result.kosten,
+            name: result.name,
+            start: '',
+            tripId: result.tripId,
+          }
+          this.eventService.editEvent(updatedEvent);
+          //.subscribe etc für rückmeldung
+        }
+        if(result.action === 'delete'){
+          this.eventService.deleteEvent(id);
+          //.subscribe für evtl rückmeldung
+        }
+      }
+    })
+    return;
     //hier noch mit dem service die änderungen an dem event durchführen
 
   }
