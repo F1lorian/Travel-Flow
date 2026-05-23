@@ -23,6 +23,8 @@ export class SpendingOverviewComponent {
   chartlabels: string[] = [];
 
   trips: Trip[] = [];
+  categories: string[] = [];
+  selectedCategory: string = 'ALL';
 
   constructor(private expenseService: ExpenseService,
               private tripService: TripService,
@@ -55,6 +57,7 @@ export class SpendingOverviewComponent {
     this.expenseService.getExpensesByPeriod(this.startDate, this.endDate).subscribe(
       (data: any[]) => {
         this.expenses = data;
+        this.categories = [...new Set(data.map(expense => expense.kategorie))];
       },
       (error) => {
         console.error('Fehler beim Laden der Ausgaben:', error);
@@ -75,7 +78,17 @@ export class SpendingOverviewComponent {
   }
 
   get displayedExpenses() {
-    return this.showAllExpenses ? this.expenses : this.expenses.slice(0,5);
+    return this.showAllExpenses
+      ? this.filteredAusgaben
+      : this.filteredAusgaben.slice(0, 5);
+  }
+
+  get filteredAusgaben() {
+    if (this.selectedCategory === 'ALL') {
+      return this.expenses;
+    }
+
+    return this.expenses.filter(expense => expense.kategorie === this.selectedCategory);
   }
 
   chartDetails = {

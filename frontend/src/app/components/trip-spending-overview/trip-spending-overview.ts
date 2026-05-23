@@ -4,12 +4,12 @@ import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {CommonModule} from '@angular/common';
 import { NgApexchartsModule } from "ng-apexcharts";
-import {ReactiveFormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 @Component({
   selector: 'trip-spending-overview',
   standalone: true,
-  imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule],
+  imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule, FormsModule],
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
@@ -33,6 +33,8 @@ export class TripSpendingOverviewComponent {
   errorMessage: string = '';
 
   trips: Trip[] = [];
+  categories: string[] = [];
+  selectedCategory: string = 'ALL';
 
   constructor(private expenseService: ExpenseService,
               private route: ActivatedRoute,
@@ -100,6 +102,7 @@ export class TripSpendingOverviewComponent {
       this.expenseService.getExpensesByTrip(this.tripname).subscribe({
         next: (data) => {
           this.expenses = data;
+          this.categories = [...new Set(data.map(expense => expense.kategorie))];
         },
         error: (error) => {
           console.error("Fehler beim Laden der Ausgaben", error);
@@ -119,9 +122,19 @@ export class TripSpendingOverviewComponent {
 
     }
 
-    get displayedExpenses() {
-      return this.showAllExpenses ? this.expenses : this.expenses.slice(0,5);
+  get displayedExpenses() {
+    return this.showAllExpenses
+      ? this.filteredAusgaben
+      : this.filteredAusgaben.slice(0, 5);
+  }
+
+  get filteredAusgaben() {
+    if (this.selectedCategory === 'ALL') {
+      return this.expenses;
     }
+
+    return this.expenses.filter(expense => expense.kategorie === this.selectedCategory);
+  }
 
   chartDetails = {
     type: 'pie' as const,

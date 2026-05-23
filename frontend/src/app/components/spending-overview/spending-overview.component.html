@@ -67,6 +67,18 @@
 
 <h3>Letzte ausgaben</h3>
 
+<label for="category-filter">Kategorie:</label>
+
+<select
+  id="category-filter"
+  [(ngModel)]="selectedCategory"
+>
+  <option value="ALL">Alle Kategorien</option>
+  <option *ngFor="let category of categories" [value]="category">
+    {{ category }}
+  </option>
+</select>
+
 <div *ngIf="expenses.length === 0">
   Keine Ausgaben gefunden.
 </div>
@@ -91,15 +103,19 @@
 </table>
 
 <button
-  *ngIf="expenses.length > 5 && !showAllExpenses"
-  type = "button"
+  *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
   class="button"
+  type="button"
   (click)="showAllExpenses = true"
->Alle Ausgaben anzeigen</button>
+>
+  Mehr anzeigen
+</button>
 
 <button
-  *ngIf="expenses.length > 5 && showAllExpenses"
-  type = "button"
+  *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
   class="button"
+  type="button"
   (click)="showAllExpenses = false"
->Weniger anzeigen</button>
+>
+  Weniger anzeigen
+</button>
