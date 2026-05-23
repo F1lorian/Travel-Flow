@@ -17,6 +17,12 @@ public class Categories
     @OneToMany(mappedBy = "kategorie")
     private List<Ausgabe> ausgaben;
 
+    public Categories() {}
+
+    public Categories(String name) {
+        this.name = name;
+    }
+
     public long getId() {
         return id;
     }
