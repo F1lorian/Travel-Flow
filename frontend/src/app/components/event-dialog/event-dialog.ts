@@ -31,10 +31,10 @@ export class EventDialog {
 
   save() {
     if(this.mode === 'create') {
-      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripid: this.tripId});
+      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId});
     }
     if(this.mode === 'edit') {
-      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripid: this.tripId, start:this.start +"T00:00:00"});
+      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start +"T00:00:00"});
     }
   }
 

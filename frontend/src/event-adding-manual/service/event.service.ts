@@ -5,6 +5,8 @@ import {AddEventRequest} from '../models/AddEventRequest';
 import { AddEventResponse } from '../models/AddEventResponse';
 import {CalendarEventImport} from '../models/CalendarEventImport';
 import {EditEventRequest} from '../models/EditEventRequest';
+import {EditEventResponse} from '../models/EditEventResponse';
+
 
 
 @Injectable({
@@ -26,12 +28,12 @@ export class EventService {
     return this.http.get<CalendarEventImport[]>(this.pullEvents);
   }
 
-  editEvent(updatedEvent: EditEventRequest){
+  editEvent(updatedEvent: EditEventRequest):Observable<EditEventResponse>{
     return this.http.post<EditEventRequest>(this.editEvents, updatedEvent);
   }
 
-  deleteEvent(id: number){
-    return this.http.post<number>(this.deleteEvents, id);
+  deleteEvent(id: string):Observable<string> {
+    return this.http.post<string>(this.deleteEvents, id);
   }
 
 }

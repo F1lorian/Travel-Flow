@@ -1,5 +1,5 @@
 export type EditEventRequest = {
-  id: number;
+  id: string;
   name: string;
   kosten: number;
   tripId: number;
