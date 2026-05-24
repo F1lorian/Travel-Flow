@@ -1,23 +1,5 @@
 package com.sep.sep_backend.EventHandling;
 
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.ausgabe.AusgabeService;
-import com.sep.sep_backend.repos.EventRepository;
-import com.sep.sep_backend.repos.TripRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,99 +7,112 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sep.sep_backend.Enitys.Event;
+import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.TripRepository;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
 
-    @Mock
-    private EventRepository eventRepository;
+  @Mock private EventRepository eventRepository;
 
-    @Mock
-    private TripRepository tripRepository;
+  @Mock private TripRepository tripRepository;
 
-    @Mock
-    private AusgabeService ausgabeService;
+  @Mock private AusgabeService ausgabeService;
 
-    @InjectMocks
-    private EventService eventService;
+  @InjectMocks private EventService eventService;
 
-    @Test
-    void saveEventToDBSpeichertEventFuerVorhandeneTripId() throws Exception {
-        Trip trip = new Trip("London");
-        EventRequestDTO request = new EventRequestDTO("Museum", 25, 1L);
-        LocalDateTime beforeSave = LocalDateTime.now();
+  @Test
+  void saveEventToDBSpeichertEventFuerVorhandeneTripId() throws Exception {
+    Trip trip = new Trip("London");
+    EventRequestDTO request = new EventRequestDTO("Museum", 25, 1L);
+    LocalDateTime beforeSave = LocalDateTime.now();
 
-        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
-        saveEventToDB(request);
+    saveEventToDB(request);
 
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventRepository).save(eventCaptor.capture());
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(eventRepository).save(eventCaptor.capture());
 
-        Event savedEvent = eventCaptor.getValue();
-        assertThat(savedEvent.getName()).isEqualTo("Museum");
-        assertThat(savedEvent.getKosten()).isEqualTo(25);
-        assertThat(savedEvent.getTrip()).isSameAs(trip);
-        assertThat(savedEvent.getDateTime()).isAfterOrEqualTo(beforeSave);
-    }
+    Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getName()).isEqualTo("Museum");
+    assertThat(savedEvent.getKosten()).isEqualTo(25);
+    assertThat(savedEvent.getTrip()).isSameAs(trip);
+    assertThat(savedEvent.getDateTime()).isAfterOrEqualTo(beforeSave);
+  }
 
-    @Test
-    void saveEventToDBWirftExceptionWennTripNichtExistiert() {
-        EventRequestDTO request = new EventRequestDTO("Museum", 25, 99L);
-        when(tripRepository.findById(99L)).thenReturn(Optional.empty());
+  @Test
+  void saveEventToDBWirftExceptionWennTripNichtExistiert() {
+    EventRequestDTO request = new EventRequestDTO("Museum", 25, 99L);
+    when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> saveEventToDB(request))
-                .isInstanceOf(InvocationTargetException.class)
-                .hasCauseInstanceOf(RuntimeException.class)
-                .hasRootCauseMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
+    assertThatThrownBy(() -> saveEventToDB(request))
+        .isInstanceOf(InvocationTargetException.class)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasRootCauseMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
 
-        verify(eventRepository, never()).save(any(Event.class));
-    }
+    verify(eventRepository, never()).save(any(Event.class));
+  }
 
-    @Test
-    void saveEventResponseToDBSpeichertEventFuerVorhandeneTripId() {
-        Trip trip = new Trip("London");
-        LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
-        EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start);
+  @Test
+  void saveEventResponseToDBSpeichertEventFuerVorhandeneTripId() {
+    Trip trip = new Trip("London");
+    LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
+    EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start);
 
-        when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
-        EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
 
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventRepository).save(eventCaptor.capture());
-        verify(ausgabeService).ausgabeHinzufuegen(any());
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(eventRepository).save(eventCaptor.capture());
+    verify(ausgabeService).ausgabeHinzufuegen(any());
 
-        Event savedEvent = eventCaptor.getValue();
-        assertThat(savedEvent.getName()).isEqualTo("Konzert");
-        assertThat(savedEvent.getKosten()).isEqualTo(49);
-        assertThat(savedEvent.getDateTime()).isEqualTo(start);
-        assertThat(savedEvent.getTrip()).isSameAs(trip);
-        assertThat(result.getName()).isEqualTo("Konzert");
-        assertThat(result.getKosten()).isEqualTo(49);
-        assertThat(result.getUhrzeit()).isEqualTo(start);
-    }
+    Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getName()).isEqualTo("Konzert");
+    assertThat(savedEvent.getKosten()).isEqualTo(49);
+    assertThat(savedEvent.getDateTime()).isEqualTo(start);
+    assertThat(savedEvent.getTrip()).isSameAs(trip);
+    assertThat(result.getName()).isEqualTo("Konzert");
+    assertThat(result.getKosten()).isEqualTo(49);
+    assertThat(result.getUhrzeit()).isEqualTo(start);
+  }
 
-    @Test
-    void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
-        Trip trip = new Trip("London");
-        LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
-        Event event = new Event("Museum", start, 25, trip);
-        event.setId(42L);
+  @Test
+  void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
+    Trip trip = new Trip("London");
+    LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
+    Event event = new Event("Museum", start, 25, trip);
+    event.setId(42L);
 
-        when(eventRepository.findAll()).thenReturn(List.of(event));
+    when(eventRepository.findAll()).thenReturn(List.of(event));
 
-        List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
+    List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
 
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getId()).isEqualTo("42");
-        assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
-        assertThat(result.getFirst().getStart()).isEqualTo(start);
-        verify(eventRepository).findAll();
-    }
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst().getId()).isEqualTo("42");
+    assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
+    assertThat(result.getFirst().getStart()).isEqualTo(start);
+    verify(eventRepository).findAll();
+  }
 
-    private void saveEventToDB(EventRequestDTO request)
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method method = EventService.class.getDeclaredMethod("SaveEventToDB", EventRequestDTO.class);
-        method.invoke(eventService, request);
-    }
+  private void saveEventToDB(EventRequestDTO request)
+      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Method method = EventService.class.getDeclaredMethod("SaveEventToDB", EventRequestDTO.class);
+    method.invoke(eventService, request);
+  }
 }
