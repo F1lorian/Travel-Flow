@@ -52,13 +52,28 @@
         <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
       </p>
 
+      <p>
+        Aktueller Warnbereich:
+        <strong>{{ warningRange | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
       <div>
-        <label for="budget-input">Neues Budget:</label>
+        <label for="budget-input">Neues Budget (€):</label>
         <input
           id="budget-input"
           type="number"
           min="0"
           [(ngModel)]="budgetInput"
+        />
+      </div>
+
+      <div>
+        <label for="warning-range-input">Warnbereich (€):</label>
+        <input
+          id="warning-range-input"
+          type="number"
+          min="0"
+          [(ngModel)]="warningRangeInput"
         />
       </div>
 

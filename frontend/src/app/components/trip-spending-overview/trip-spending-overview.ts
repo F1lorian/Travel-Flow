@@ -22,8 +22,10 @@ export class TripSpendingOverviewComponent {
   budget: number = 0;
   summedExpenses: number = 0;
   available: number = 0;
+  warningRange: number = 0;
   showBudgetDialog: boolean = false;
   budgetInput: number = 0;
+  warningRangeInput: number = 0;
   budgetErrorMessage: string = '';
   budgetSuccessMessage: string = '';
   expenses: any[] = [];
@@ -84,6 +86,14 @@ export class TripSpendingOverviewComponent {
         },
         error: (error) => {
           console.error("Fehler beim Laden des Budgets", error);
+        }
+      });
+      this.expenseService.getWarningRange(this.tripname).subscribe({
+        next: (data) => {
+          this.warningRange = data;
+        },
+        error: (error) => {
+          console.error("Fehler beim Laden des Warnbereichs", error);
         }
       });
       this.expenseService.getSummedExpensesTrip(this.tripname).subscribe({
@@ -157,6 +167,7 @@ export class TripSpendingOverviewComponent {
   }
   openBudgetDialog(): void {
     this.budgetInput = this.budget;
+    this.warningRangeInput = this.warningRange;
     this.budgetErrorMessage = '';
     this.budgetSuccessMessage = '';
     this.showBudgetDialog = true;
@@ -181,13 +192,37 @@ export class TripSpendingOverviewComponent {
       return;
     }
 
+    if (
+      this.warningRangeInput === null ||
+      this.warningRangeInput === undefined ||
+      this.warningRangeInput < 0
+    ) {
+      this.budgetErrorMessage = 'Bitte gib einen gültigen Warnbereich ein.';
+      return;
+    }
+
+    if (this.warningRangeInput > this.budgetInput) {
+      this.budgetErrorMessage = 'Der Warnbereich darf nicht größer als das Budget sein.';
+      return;
+    }
+
     this.expenseService.updateBudget(this.tripname, this.budgetInput).subscribe({
       next: (updatedBudget) => {
         this.budget = updatedBudget;
-        this.showBudgetDialog = false;
-        this.budgetSuccessMessage = 'Budget wurde aktualisiert.';
 
-        this.loadTripExpenses();
+        this.expenseService.updateWarningRange(this.tripname, this.warningRangeInput).subscribe({
+          next: (updatedWarningRange) => {
+            this.warningRange = updatedWarningRange;
+            this.showBudgetDialog = false;
+            this.budgetSuccessMessage = 'Budget und Warnbereich wurden aktualisiert.';
+
+            this.loadTripExpenses();
+          },
+          error: (error) => {
+            console.error('Fehler beim Aktualisieren des Warnbereichs:', error);
+            this.budgetErrorMessage = 'Warnbereich konnte nicht gespeichert werden.';
+          }
+        });
       },
       error: (error) => {
         console.error('Fehler beim Aktualisieren des Budgets:', error);

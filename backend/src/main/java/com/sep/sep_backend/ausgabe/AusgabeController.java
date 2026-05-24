@@ -103,6 +103,36 @@ public class AusgabeController {
         return trip.getBudget();
     }
 
+    @GetMapping({"/warningRange", "/api/warningRange"})
+    public double warningRange(@RequestParam String tripname) {
+        Trip trip = tripRepository.findByName(tripname);
+
+        if (trip == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+        }
+
+        return trip.getWarningRange();
+    }
+
+    @PutMapping({"/warningRange", "/api/warningRange"})
+    public double warningRangeAktualisieren(@RequestParam String tripname,
+                                            @RequestParam double warningRange) {
+        if (warningRange < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Warning range must not be negative");
+        }
+
+        Trip trip = tripRepository.findByName(tripname);
+
+        if (trip == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+        }
+
+        trip.setWarningRange(warningRange);
+        tripRepository.save(trip);
+
+        return trip.getWarningRange();
+    }
+
     @GetMapping({"/gesamtausgabenTrip", "/api/gesamtausgabenTrip"})
     public double gesamtausgabenTrip(@RequestParam String tripname) {
         double result = ausgabeService.gesamtausgabenTrip(tripname);

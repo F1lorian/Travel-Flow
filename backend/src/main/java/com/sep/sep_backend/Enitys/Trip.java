@@ -16,6 +16,9 @@ public class Trip {
     @Column(nullable = false, columnDefinition = "double precision default 0")
     private double budget = 0;
 
+    @Column(nullable = false, columnDefinition = "double precision default 0")
+    private double warningRange = 0;
+
     @OneToMany(mappedBy = "trip")
     private List<Event> events;
   private LocalDate startDate;
@@ -82,6 +85,14 @@ public class Trip {
     public double getBudget() {return this.budget;}
 
     public void setBudget(double budget) {this.budget = budget;}
+
+    public double getWarningRange() {
+        return this.warningRange;
+    }
+
+    public void setWarningRange(double warningRange) {
+        this.warningRange = warningRange;
+    }
   public void setAusgaben(List<Ausgabe> ausgaben) {
     this.ausgaben = ausgaben;
   }

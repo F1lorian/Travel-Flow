@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
+import { forkJoin } from 'rxjs';
 import { ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
 
@@ -81,9 +81,14 @@ export class CashbookComponent implements OnInit {
       return;
     }
 
-    this.expenseService.getAvailable(selectedTrip).subscribe({
-      next: (available) => {
+    forkJoin({
+      available: this.expenseService.getAvailable(selectedTrip),
+      warningRange: this.expenseService.getWarningRange(selectedTrip)
+    }).subscribe({
+      next: ({ available, warningRange }) => {
         const availableValue = Number(available);
+        const warningRangeValue = Number(warningRange);
+        const remainingAfterExpense = availableValue - amountValue;
 
         if (amountValue > availableValue) {
           const exceededBy = amountValue - availableValue;
@@ -101,13 +106,31 @@ export class CashbookComponent implements OnInit {
             );
             return;
           }
+
+          this.saveExpense();
+          return;
+        }
+
+        if (warningRangeValue > 0 && remainingAfterExpense <= warningRangeValue) {
+          const shouldStillAdd = window.confirm(
+            `Achtung: Nach dieser Ausgabe bleiben nur noch ${remainingAfterExpense.toFixed(2)} € verfügbar.\n` +
+            `Das liegt innerhalb deines Warnbereichs von ${warningRangeValue.toFixed(2)} €.\n\n` +
+            `Ausgabe trotzdem hinzufügen?`
+          );
+
+          if (!shouldStillAdd) {
+            this.warningMessage.set(
+              'Ausgabe wurde nicht hinzugefügt, weil sie innerhalb des Warnbereichs liegt.'
+            );
+            return;
+          }
         }
 
         this.saveExpense();
       },
       error: (error) => {
-        console.error('Fehler beim Prüfen des verfügbaren Budgets:', error);
-        this.errorMessage.set('Verfügbares Budget konnte nicht geprüft werden.');
+        console.error('Fehler beim Prüfen des verfügbaren Budgets/Warnbereichs:', error);
+        this.errorMessage.set('Budget und Warnbereich konnten nicht geprüft werden.');
       }
     });
   }

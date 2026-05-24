@@ -88,6 +88,19 @@ export class ExpenseService {
     );
   }
 
+  getWarningRange(tripname: string): Observable<number> {
+    return this.http.get<number>(
+      `${this.apiUrl}/warningRange?tripname=${encodeURIComponent(tripname)}`
+    );
+  }
+
+  updateWarningRange(tripname: string, warningRange: number): Observable<number> {
+    return this.http.put<number>(
+      `${this.apiUrl}/warningRange?tripname=${encodeURIComponent(tripname)}&warningRange=${warningRange}`,
+      {}
+    );
+  }
+
   private normalizeCategorySummary(
     response: CategorySummaryItem[] | Record<string, number>
   ): CategorySummaryItem[] {
