@@ -78,10 +78,30 @@ public class EventService {
     eventRepository.deleteById(EventID);
   }
 
-  //    public void EditEvent(Long EventID)
-  //    {
-  //        eventRepository.
-  //    }
+  public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
+    Event event =
+            eventRepository
+                    .findById(eventId)
+                    .orElseThrow(
+                            () -> new EntityNotFoundException("Event mit ID " + eventId + " wurde nicht gefunden"));
+
+    if(dto.getName() != null)
+    {
+      event.setName(dto.getName());
+    }
+    if(dto.getKosten() != -1)
+    {
+      event.setKosten(dto.getKosten());
+    }
+    if (dto.getTripId() != null)
+    {
+      var newTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException());
+      event.setTrip(newTrip);
+    }
+    eventRepository.save(event);
+
+    return new EventResponseDTO(event.getName(), event.getKosten(), event.getDateTime());
+  }
 
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
     Trip matchingTrip =

@@ -42,4 +42,10 @@ public class EventController {
     eventService.DeleteEventFromDB(EventID);
     return ResponseEntity.noContent().build();
   }
+
+  @PostMapping("event/edit")
+  public ResponseEntity<EventResponseDTO> EditEvent(@RequestBody Long EventID, EventRequestDTO dto) {
+    var response = eventService.EditEvent(EventID, dto);
+    return ResponseEntity.ok(response);
+  }
 }
