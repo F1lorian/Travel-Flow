@@ -37,4 +37,12 @@ public class EventController {
         eventService.SaveEventResponseToDB(eventDTO, tripId);
         return eventDTO;
     }
+
+    @PostMapping("event/delete")
+    public ResponseEntity<Void> DeleteEventFromDB(@RequestBody Long EventID)
+    {
+        eventService.DeleteEventFromDB(EventID);
+        return ResponseEntity.noContent().build();
+    }
+
 }
