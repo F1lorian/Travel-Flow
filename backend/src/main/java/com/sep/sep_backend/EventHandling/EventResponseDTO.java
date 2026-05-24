@@ -9,8 +9,7 @@ public class EventResponseDTO {
     private LocalDateTime startZeit;
     private LocalDateTime endZeit;
 
-    public EventResponseDTO() {
-    }
+  public EventResponseDTO() {}
 
     public EventResponseDTO(String name, int kosten, LocalDateTime startZeit, LocalDateTime endZeit) {
         this.name = name;
@@ -19,21 +18,21 @@ public class EventResponseDTO {
         this.endZeit = endZeit;
     }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public int getKosten() {
-        return kosten;
-    }
+  public int getKosten() {
+    return kosten;
+  }
 
-    public void setKosten(int kosten) {
-        this.kosten = kosten;
-    }
+  public void setKosten(int kosten) {
+    this.kosten = kosten;
+  }
 
     public LocalDateTime getStartZeit() {
         return startZeit;

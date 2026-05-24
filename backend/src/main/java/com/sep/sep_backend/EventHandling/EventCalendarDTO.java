@@ -13,8 +13,7 @@ public class EventCalendarDTO {
     private LocalDateTime end;
     //hier müssen noch die uhrzeiten hinzugefügt werden!
 
-    public EventCalendarDTO() {
-    }
+  public EventCalendarDTO() {}
 
     public EventCalendarDTO(String id, String title, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
         this.id = id;
@@ -25,25 +24,25 @@ public class EventCalendarDTO {
         this.tripId = tripId;
     }
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public String getTitle() {
-        return title;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public LocalDateTime getStart() {
-        return start;
-    }
+  public LocalDateTime getStart() {
+    return start;
+  }
 
     public void setStart(LocalDateTime start) {
         this.start = start;
