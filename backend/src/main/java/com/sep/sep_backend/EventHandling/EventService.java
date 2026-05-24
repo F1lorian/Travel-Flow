@@ -14,6 +14,7 @@ import com.sep.sep_backend.repos.TripRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -61,6 +62,21 @@ public class EventService {
         AusgabeRequestDTO ausgabeRequestDTO = new AusgabeRequestDTO( (double) dto.getKosten(), matchingTrip, eventStart.toLocalDate(), Kategorie.SONSTIGES);
 
         return ausgabe;
+    }
+
+    public void DeleteEventFromDB(Long EventID)
+    {
+        if (!eventRepository.existsById(EventID))
+        {
+            throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
+        }
+
+        eventRepository.deleteById(EventID);
+    }
+
+    public void EditEvent(Long EventID)
+    {
+        eventRepository.
     }
 
     public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId)
