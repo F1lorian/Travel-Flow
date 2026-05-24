@@ -8,19 +8,35 @@
     [ngModel]="amount()"
     (ngModelChange)="amount.set($event)"
     placeholder="Betrag eingeben"
-    />
+  />
 </div>
 
 <div>
   <label for="trip">Trip:</label>
-  <input
+
+  <select
     id="trip"
-    type="text"
     [ngModel]="tripName()"
     (ngModelChange)="tripName.set($event)"
-    placeholder="Name des Trips"
-    />
+    [disabled]="loadingTrips() || trips().length === 0"
+  >
+    <option value="">Trip wählen</option>
+
+    @for (trip of trips(); track trip.id) {
+      <option [value]="trip.name">
+        {{ trip.name }}
+      </option>
+    }
+  </select>
 </div>
+
+@if (loadingTrips()) {
+  <p>Trips werden geladen...</p>
+}
+
+@if (!loadingTrips() && trips().length === 0) {
+  <p>Es sind noch keine Trips vorhanden.</p>
+}
 
 <div>
   <label for="datum">Datum:</label>
@@ -29,7 +45,7 @@
     type="date"
     [ngModel]="date()"
     (ngModelChange)="date.set($event)"
-    />
+  />
 </div>
 
 <div>
@@ -38,8 +54,9 @@
     id="kategorie"
     [ngModel]="category()"
     (ngModelChange)="category.set($event)"
-    >
+  >
     <option value="">Kategorie wählen</option>
+
     @for (cat of categories; track cat) {
       <option [value]="cat">
         {{ cat }}
@@ -49,12 +66,18 @@
 </div>
 
 <div>
-  <button (click)="addExpense()">Hinzufuegen</button>
+  <button
+    (click)="addExpense()"
+    [disabled]="loadingTrips() || trips().length === 0"
+  >
+    Hinzufuegen
+  </button>
 </div>
 
 @if (successMessage()) {
   <p>{{ successMessage() }}</p>
 }
+
 @if (errorMessage()) {
   <p>{{ errorMessage() }}</p>
 }
