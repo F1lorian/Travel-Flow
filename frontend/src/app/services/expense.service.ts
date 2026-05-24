@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export interface Expense {
   kosten: number;
@@ -13,6 +13,7 @@ export interface CategorySummaryItem {
   category: string;
   cost: number;
 }
+type CategorySummaryResponse = Record<string, number>;
 
 @Injectable({
   providedIn: 'root'
@@ -36,7 +37,16 @@ export class ExpenseService {
   }
 
   getCategorySummary(startDate: string, endDate: string): Observable<CategorySummaryItem[]> {
-    return this.http.get<CategorySummaryItem[]>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`);
+    return this.http
+      .get<CategorySummaryResponse>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`)
+      .pipe(
+        map((summary) =>
+          Object.entries(summary).map(([category, cost]) => ({
+            category,
+            cost: Number(cost)
+          }))
+        )
+      );
   }
 
   getExpensesByTrip(tripname: string): Observable<Expense[]> {
@@ -44,7 +54,16 @@ export class ExpenseService {
   }
 
   getCategorySummaryTrip(tripname: string): Observable<CategorySummaryItem[]> {
-    return this.http.get<CategorySummaryItem[]>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`);
+    return this.http
+      .get<CategorySummaryResponse>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`)
+      .pipe(
+        map((summary) =>
+          Object.entries(summary).map(([category, cost]) => ({
+            category,
+            cost: Number(cost)
+          }))
+        )
+      );
   }
 
   getBudget(tripname: string): Observable<number> {
