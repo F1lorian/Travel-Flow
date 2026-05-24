@@ -25,6 +25,7 @@ export class CashbookComponent implements OnInit {
 
   errorMessage = signal('');
   successMessage = signal('');
+  warningMessage = signal('');
 
   constructor(
     private expenseService: ExpenseService,
@@ -55,13 +56,17 @@ export class CashbookComponent implements OnInit {
   addExpense(): void {
     this.errorMessage.set('');
     this.successMessage.set('');
+    this.warningMessage.set('');
 
-    if (!this.amount() || this.amount() <= 0) {
+    const amountValue = Number(this.amount());
+    const selectedTrip = this.tripName();
+
+    if (!amountValue || amountValue <= 0) {
       this.errorMessage.set('Bitte gib einen gültigen Betrag ein.');
       return;
     }
 
-    if (!this.tripName()) {
+    if (!selectedTrip) {
       this.errorMessage.set('Bitte wähle einen Trip aus.');
       return;
     }
@@ -76,8 +81,40 @@ export class CashbookComponent implements OnInit {
       return;
     }
 
+    this.expenseService.getAvailable(selectedTrip).subscribe({
+      next: (available) => {
+        const availableValue = Number(available);
+
+        if (amountValue > availableValue) {
+          const exceededBy = amountValue - availableValue;
+
+          const shouldStillAdd = window.confirm(
+            `Achtung: Für diesen Trip sind nur noch ${availableValue.toFixed(2)} € verfügbar.\n` +
+            `Diese Ausgabe beträgt ${amountValue.toFixed(2)} €.\n\n` +
+            `Das Budget wird um ${exceededBy.toFixed(2)} € überschritten.\n\n` +
+            `Ausgabe trotzdem hinzufügen?`
+          );
+
+          if (!shouldStillAdd) {
+            this.warningMessage.set(
+              'Ausgabe wurde nicht hinzugefügt, weil das verfügbare Budget nicht ausreicht.'
+            );
+            return;
+          }
+        }
+
+        this.saveExpense();
+      },
+      error: (error) => {
+        console.error('Fehler beim Prüfen des verfügbaren Budgets:', error);
+        this.errorMessage.set('Verfügbares Budget konnte nicht geprüft werden.');
+      }
+    });
+  }
+
+  private saveExpense(): void {
     this.expenseService.addExpense({
-      kosten: this.amount(),
+      kosten: Number(this.amount()),
       trip: {
         name: this.tripName()
       },
@@ -89,12 +126,15 @@ export class CashbookComponent implements OnInit {
         this.tripName.set('');
         this.date.set('');
         this.category.set('');
+
         this.errorMessage.set('');
+        this.warningMessage.set('');
         this.successMessage.set('Ausgabe wurde hinzugefuegt.');
       },
       error: (error) => {
         console.error('Fehler beim Speichern der Ausgabe:', error);
         this.successMessage.set('');
+        this.warningMessage.set('');
 
         if (error.status === 404) {
           this.errorMessage.set('Trip wurde nicht gefunden. Bitte pruefe den Tripnamen.');

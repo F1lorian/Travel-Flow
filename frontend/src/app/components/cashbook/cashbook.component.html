@@ -1,7 +1,7 @@
 <h2>Cashbook</h2>
 
 <div>
-  <label for="betrag">Betrag:</label>
+  <label for="betrag">Betrag (€):</label>
   <input
     id="betrag"
     type="number"
@@ -75,9 +75,13 @@
 </div>
 
 @if (successMessage()) {
-  <p>{{ successMessage() }}</p>
+  <p style="color: green;">{{ successMessage() }}</p>
+}
+
+@if (warningMessage()) {
+  <p style="color: orange;">{{ warningMessage() }}</p>
 }
 
 @if (errorMessage()) {
-  <p>{{ errorMessage() }}</p>
+  <p style="color: red;">{{ errorMessage() }}</p>
 }

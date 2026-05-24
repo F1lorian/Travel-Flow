@@ -84,6 +84,25 @@ public class AusgabeController {
         return trip.getBudget();
     }
 
+    @PutMapping({"/budget", "/api/budget"})
+    public double budgetAktualisieren(@RequestParam String tripname,
+                                      @RequestParam double budget) {
+        if (budget < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget must not be negative");
+        }
+
+        Trip trip = tripRepository.findByName(tripname);
+
+        if (trip == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+        }
+
+        trip.setBudget(budget);
+        tripRepository.save(trip);
+
+        return trip.getBudget();
+    }
+
     @GetMapping({"/gesamtausgabenTrip", "/api/gesamtausgabenTrip"})
     public double gesamtausgabenTrip(@RequestParam String tripname) {
         double result = ausgabeService.gesamtausgabenTrip(tripname);

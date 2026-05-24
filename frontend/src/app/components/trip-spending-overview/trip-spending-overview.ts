@@ -22,7 +22,10 @@ export class TripSpendingOverviewComponent {
   budget: number = 0;
   summedExpenses: number = 0;
   available: number = 0;
-
+  showBudgetDialog: boolean = false;
+  budgetInput: number = 0;
+  budgetErrorMessage: string = '';
+  budgetSuccessMessage: string = '';
   expenses: any[] = [];
   showAllExpenses: boolean = false;
 
@@ -152,5 +155,44 @@ export class TripSpendingOverviewComponent {
     }
     this.router.navigate(['/trip-spending-overview', value]);
   }
+  openBudgetDialog(): void {
+    this.budgetInput = this.budget;
+    this.budgetErrorMessage = '';
+    this.budgetSuccessMessage = '';
+    this.showBudgetDialog = true;
+  }
 
+  closeBudgetDialog(): void {
+    this.showBudgetDialog = false;
+    this.budgetErrorMessage = '';
+  }
+
+  saveBudget(): void {
+    this.budgetErrorMessage = '';
+    this.budgetSuccessMessage = '';
+
+    if (!this.tripname) {
+      this.budgetErrorMessage = 'Tripname fehlt.';
+      return;
+    }
+
+    if (this.budgetInput === null || this.budgetInput === undefined || this.budgetInput < 0) {
+      this.budgetErrorMessage = 'Bitte gib ein gültiges Budget ein.';
+      return;
+    }
+
+    this.expenseService.updateBudget(this.tripname, this.budgetInput).subscribe({
+      next: (updatedBudget) => {
+        this.budget = updatedBudget;
+        this.showBudgetDialog = false;
+        this.budgetSuccessMessage = 'Budget wurde aktualisiert.';
+
+        this.loadTripExpenses();
+      },
+      error: (error) => {
+        console.error('Fehler beim Aktualisieren des Budgets:', error);
+        this.budgetErrorMessage = 'Budget konnte nicht gespeichert werden.';
+      }
+    });
+  }
 }

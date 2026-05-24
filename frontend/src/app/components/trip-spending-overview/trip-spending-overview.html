@@ -8,22 +8,79 @@
 
   <div class="budget-summary">
 
-    <button class="budget budget-box-budget" type="button">
+    <button
+      class="budget budget-box-budget"
+      type="button"
+      (click)="openBudgetDialog()"
+    >
       <span>Budget</span>
-      <strong>{{budget}}</strong>
+      <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </button>
-
     <div class="ausgegeben">
       <span>Ausgegeben</span>
-      <strong>{{summedExpenses}}</strong>
+      <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </div>
 
     <div class="verfuegbar">
       <span>Verfügbar</span>
-      <strong>{{available}}</strong>
+      <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </div>
 
   </div>
+
+  <div class="budget-dialog-backdrop" *ngIf="showBudgetDialog">
+    <div class="budget-dialog">
+      <h3>Budget bearbeiten</h3>
+
+      <p>
+        Trip:
+        <strong>{{ tripname }}</strong>
+      </p>
+
+      <p>
+        Aktuelles Budget:
+        <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <p>
+        Bereits ausgegeben:
+        <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <p>
+        Aktuell verfügbar:
+        <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <div>
+        <label for="budget-input">Neues Budget:</label>
+        <input
+          id="budget-input"
+          type="number"
+          min="0"
+          [(ngModel)]="budgetInput"
+        />
+      </div>
+
+      <p *ngIf="budgetErrorMessage" class="budget-error">
+        {{ budgetErrorMessage }}
+      </p>
+
+      <div class="budget-dialog-actions">
+        <button type="button" (click)="saveBudget()">
+          Speichern
+        </button>
+
+        <button type="button" (click)="closeBudgetDialog()">
+          Abbrechen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="budgetSuccessMessage" class="budget-success">
+    {{ budgetSuccessMessage }}
+  </p>
 
   <a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
 
@@ -55,7 +112,7 @@
     <tbody>
     <tr *ngFor="let item of categorySummary">
       <td>{{ item.category }}</td>
-      <td>{{ item.cost }}</td>
+      <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
     </tr>
 
     </tbody>
@@ -92,7 +149,7 @@
     </thead>
     <tbody>
     <tr *ngFor="let expense of displayedExpenses">
-      <td>{{ expense.kosten }}</td>
+      <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
       <td>{{ expense.trip }}</td>
       <td>{{ expense.date }}</td>
       <td>{{ expense.kategorie }}</td>

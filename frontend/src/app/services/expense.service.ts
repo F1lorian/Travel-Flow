@@ -13,7 +13,6 @@ export interface CategorySummaryItem {
   category: string;
   cost: number;
 }
-type CategorySummaryResponse = Record<string, number>;
 
 @Injectable({
   providedIn: 'root'
@@ -38,12 +37,12 @@ export class ExpenseService {
 
   getCategorySummary(startDate: string, endDate: string): Observable<CategorySummaryItem[]> {
     return this.http
-      .get<CategorySummaryResponse>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`)
+      .get<CategorySummaryItem[]>(`${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`)
       .pipe(
-        map((summary) =>
-          Object.entries(summary).map(([category, cost]) => ({
-            category,
-            cost: Number(cost)
+        map((items) =>
+          items.map((item) => ({
+            category: item.category,
+            cost: Number(item.cost)
           }))
         )
       );
@@ -55,12 +54,14 @@ export class ExpenseService {
 
   getCategorySummaryTrip(tripname: string): Observable<CategorySummaryItem[]> {
     return this.http
-      .get<CategorySummaryResponse>(`${this.apiUrl}/proKategorieTrip?tripname=${tripname}`)
+      .get<CategorySummaryItem[]>(
+        `${this.apiUrl}/proKategorieTrip?tripname=${encodeURIComponent(tripname)}`
+      )
       .pipe(
-        map((summary) =>
-          Object.entries(summary).map(([category, cost]) => ({
-            category,
-            cost: Number(cost)
+        map((items) =>
+          items.map((item) => ({
+            category: item.category,
+            cost: Number(item.cost)
           }))
         )
       );
@@ -75,7 +76,32 @@ export class ExpenseService {
   }
 
   getAvailable(tripname: string): Observable<number> {
-    return this.http.get<number>(`${this.apiUrl}/verfuegbar?tripname=${tripname}`);
+    return this.http.get<number>(
+      `${this.apiUrl}/verfuegbar?tripname=${encodeURIComponent(tripname)}`
+    );
+  }
+
+  updateBudget(tripname: string, budget: number): Observable<number> {
+    return this.http.put<number>(
+      `${this.apiUrl}/budget?tripname=${encodeURIComponent(tripname)}&budget=${budget}`,
+      {}
+    );
+  }
+
+  private normalizeCategorySummary(
+    response: CategorySummaryItem[] | Record<string, number>
+  ): CategorySummaryItem[] {
+    if (Array.isArray(response)) {
+      return response.map(item => ({
+        category: item.category,
+        cost: Number(item.cost)
+      }));
+    }
+
+    return Object.entries(response).map(([category, cost]) => ({
+      category,
+      cost: Number(cost)
+    }));
   }
 
 }
