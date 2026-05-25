@@ -15,6 +15,7 @@ import { EventClickArg } from '@fullcalendar/core';
 import {EditEventResponse} from '../../../event-adding-manual/models/EditEventResponse';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
+import {EventImpl} from '@fullcalendar/core/internal';
 
 
 @Component({
@@ -39,10 +40,16 @@ export class CalendarComponent implements OnInit {
     fixedWeekCount: true,
     customButtons:{
       eventAddenButton:{
-        text:'Event hinzufügen'
+        text:'Event hinzufügen',
+        click: () => {
+          this.createEvent();
+        }
       },
       eventImportButton:{
         text:'Event importieren'
+      },
+      eventExportButton:{
+        text:'Events exportieren'
       }
     },
     headerToolbar: {
@@ -51,7 +58,7 @@ export class CalendarComponent implements OnInit {
       right: 'today prev next'
     },
     footerToolbar:{
-      left: 'eventAddenButton eventImportButton'
+      left: 'eventAddenButton eventImportButton eventExportButton'
     },
     events: [],
 
@@ -68,53 +75,27 @@ export class CalendarComponent implements OnInit {
 
 
   handleEventClick(clickInfo: EventClickArg) {
-
     let selectedEvent = clickInfo.event;
-    let id = selectedEvent.id;
-
     const dialogRef = this.dialog.open(EventDialog, {
-      data: {mode: 'edit',
+      data: {
+        mode: 'show',
+        id: selectedEvent.id,
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr + "T00:00"}, //noch ändern, wenn uhrzeiten hinzugefügt werden
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if(result){
-        if(result.action === 'save'){
-          let updatedEvent: EditEventRequest = {
-            id: id,
-            kosten: result.kosten,
-            name: result.title,
-            start: result.start,
-            tripId: result.tripId,
-          }
-          console.log(updatedEvent);
-          this.eventService.editEvent(updatedEvent).subscribe({
-            next:(response: EditEventResponse) => {
-              console.log(response);
-              this.updateEditedEvent(response);
-            },
-            error: () => {
-              console.error("Event konnte nicht geändert werden!");
-            }
-          })
-        }
-        if(result.action === 'delete'){
-          this.eventService.deleteEvent(id).subscribe({
-            next:(response: string) => {
-              console.log(response);
-              this.removeDeletedEvent(id)
-            },
-            error: () => {
-              console.error("Event konnte nicht gelöscht werden!");
-            }
-          })
-        }
+        start: selectedEvent.startStr
       }
-    })
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'edit') {
+        this.editEvent(selectedEvent);
+      }
+    });
     return;
+  }
+
+  handleDateClick(clickInfo: any) {
+    this.createEvent(clickInfo.dateStr);
   }
 
   addCreatedEvent(event: AddEventResponse) {
@@ -159,20 +140,19 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  handleDateClick(clickInfo: any) {
+  createEvent(selectedDateStr?: string) {
     const dialogRef = this.dialog.open(EventDialog, {
-      data:{mode: 'create'},
+      data:{mode: 'create',
+        ...(selectedDateStr && { start: selectedDateStr + 'T00:00' }),},
     })
 
-    this.selectedDateStr = clickInfo.dateStr;
     dialogRef.afterClosed().subscribe(result => {
-
       if(result) {
         let newEvent: AddEventRequest = {
           name: result.title,
           kosten: result.kosten,
-          tripId: result.tripid,
-          start: this.selectedDateStr +"T00:00:00",
+          tripId: result.tripId,
+          start: result.start,
         }
         console.log(newEvent);
         this.eventService.createManualEvent(newEvent)
@@ -185,6 +165,52 @@ export class CalendarComponent implements OnInit {
               console.error("Event konnte nicht erstellt werden!");
             }
           });
+      }
+    })
+    return;
+  }
+
+  editEvent(selectedEvent: EventImpl){
+    let id = selectedEvent.id;
+    const dialogRef = this.dialog.open(EventDialog, {
+      data: {mode: 'edit',
+        title: selectedEvent.title,
+        kosten: selectedEvent.extendedProps['kosten'],
+        tripId: selectedEvent.extendedProps['trip'],
+        start: selectedEvent.startStr + "T00:00"}, //noch ändern, wenn uhrzeiten hinzugefügt werden
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        if(result.action === 'save'){
+          let updatedEvent: EditEventRequest = {
+            id: id,
+            kosten: result.kosten,
+            name: result.title,
+            start: result.start,
+            tripId: result.tripId,
+          }
+          console.log(updatedEvent);
+          this.eventService.editEvent(updatedEvent).subscribe({
+            next:(response: EditEventResponse) => {
+              console.log(response);
+              this.updateEditedEvent(response);
+            },
+            error: () => {
+              console.error("Event konnte nicht geändert werden!");
+            }
+          })
+        }
+        if(result.action === 'delete'){
+          this.eventService.deleteEvent(id).subscribe({
+            next:(response: string) => {
+              console.log(response);
+              this.removeDeletedEvent(id)
+            },
+            error: () => {
+              console.error("Event konnte nicht gelöscht werden!");
+            }
+          })
+        }
       }
     })
     return;

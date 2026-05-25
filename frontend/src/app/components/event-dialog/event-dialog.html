@@ -1,41 +1,59 @@
 <div class="p-6 w-[400px]">
 
   <h2 class="text-2xl font-bold mb-4">
-    {{ mode === 'create' ? 'Neues Event' : 'Event bearbeiten' }}
+    {{ mode === 'create' ? 'Neues Event' : mode === 'edit' ? 'Event bearbeiten' : 'Aktuelles Event:'}}
   </h2>
 
-  <input
-    [(ngModel)]="title"
-    placeholder="Titel eingeben"
-    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
+  @if (mode === 'show'){
+    <p>Titel: {{ data.title }}</p>
+  } @else {
+    <input
+      [(ngModel)]="title"
+      placeholder="Titel eingeben"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+  }
 
-  <input
-    [(ngModel)]="kosten"
-    placeholder="Kosten eingeben"
-    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
+  @if(mode === 'show'){
+    <p>Kosten: {{data.kosten}} </p>
+  } @else {
+    <input
+      [(ngModel)]="kosten"
+      placeholder="Kosten eingeben"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+  }
 
-  <input
-    [(ngModel)]="tripId"
-    placeholder="TripId eingeben"
-    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
+  @if (mode === 'show') {
+    <p>Trip: {{ data.tripId }}</p>
+  } @else {
+    <input
+      [(ngModel)]="tripId"
+      placeholder="TripId eingeben"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+  }
 
-  <input
-    [(ngModel)]="start"
-    type="datetime-local"
-    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
+  @if (mode === 'show') {
+    <p>Beginn: {{data.start}}</p>
+  } @else {
+    <input
+      [(ngModel)]="start"
+      type="datetime-local"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+  }
 
   <div class="flex justify-end gap-2">
 
-    <button
-      (click)="save()"
-      class="bg-blue-500 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
-    >
-      {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
-    </button>
+    @if(mode ==='create' || mode ==='edit'){
+      <button
+        (click)="save()"
+        class="bg-blue-500 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
+      >
+        {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
+      </button>
+    }
 
     @if (mode === 'edit') {
       <button
@@ -43,6 +61,15 @@
         class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
       >
         Löschen
+      </button>
+    }
+
+    @if (mode ==='show'){
+      <button
+        (click)="edit()"
+        class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
+      >
+        Event bearbeiten
       </button>
     }
 

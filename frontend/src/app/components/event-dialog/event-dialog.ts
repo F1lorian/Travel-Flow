@@ -27,15 +27,12 @@ export class EventDialog {
       this.tripId = data.tripId || undefined;
       this.start = data.start || "";
     }
+    console.log(data);
   }
 
   save() {
-    if(this.mode === 'create') {
-      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId});
-    }
-    if(this.mode === 'edit') {
-      this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start +"T00:00:00"});
-    }
+    console.log(this.start);
+    this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start});
   }
 
   close() {
@@ -44,6 +41,10 @@ export class EventDialog {
 
   delete() {
     this.dialogRef.close({ action: 'delete' });
+  }
+
+  edit(){
+    this.dialogRef.close({ action: 'edit' });
   }
 
 }
