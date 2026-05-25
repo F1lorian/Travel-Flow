@@ -3,6 +3,7 @@ package com.sep.sep_backend.TripManagement.services;
 /* back-front relation: TripEventService handles all trip-event business logic.
 Called by TripEventController, which exposes the results to the Angular frontend. */
 
+import com.sep.sep_backend.Enitys.Categories;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.EventRepository;
@@ -16,14 +17,24 @@ public class TripEventService {
 
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
+  private final CategoryService categoryService;
 
-  public TripEventService(EventRepository eventRepository, TripRepository tripRepository) {
+  public TripEventService(
+      EventRepository eventRepository,
+      TripRepository tripRepository,
+      CategoryService categoryService) {
     this.eventRepository = eventRepository;
     this.tripRepository = tripRepository;
+    this.categoryService = categoryService;
   }
 
   public Event addEventToTrip(
-      Long tripId, String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {
+      Long tripId,
+      String name,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      int kosten,
+      String categoryName) {
     // Validate input first — fail fast before touching the database
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Event name cannot be empty");
@@ -37,7 +48,14 @@ public class TripEventService {
             .findById(tripId)
             .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
 
-    Event savedEvent = eventRepository.save(new Event(name, startTime, endTime, kosten, trip));
+    Event newEvent = new Event(name, startTime, endTime, kosten, trip);
+
+    if (categoryName != null && !categoryName.isBlank()) {
+      Categories category = categoryService.getOrCreate(categoryName);
+      newEvent.setCategorie(category);
+    }
+
+    Event savedEvent = eventRepository.save(newEvent);
     notifyRelatedUsers(savedEvent);
     return savedEvent;
   }

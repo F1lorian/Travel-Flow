@@ -19,7 +19,11 @@ public class TripEventController {
 
   // Shape of the JSON body sent by the frontend when adding an event
   public record CreateEventRequest(
-      String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {}
+      String name,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      int kosten,
+      String categoryName) {}
 
   private final TripEventService eventService;
 
@@ -37,7 +41,12 @@ public class TripEventController {
       @PathVariable Long tripId, @RequestBody CreateEventRequest request) {
     Event created =
         eventService.addEventToTrip(
-            tripId, request.name(), request.startTime(), request.endTime(), request.kosten());
+            tripId,
+            request.name(),
+            request.startTime(),
+            request.endTime(),
+            request.kosten(),
+            request.categoryName());
     return ResponseEntity.ok(EventDTO.from(created));
   }
 }
