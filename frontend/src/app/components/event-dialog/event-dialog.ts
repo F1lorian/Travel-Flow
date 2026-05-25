@@ -6,7 +6,7 @@ import {FormsModule} from '@angular/forms';
   selector: 'app-event-dialog',
   standalone: true,
   imports: [
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './event-dialog.html',
   styleUrl: './event-dialog.css',
@@ -16,6 +16,7 @@ export class EventDialog {
   kosten: number | undefined;
   tripId: bigint | undefined;
   start: string = "";
+  end: string = "";
 
   mode: 'create' | 'edit' | 'show'= 'create';
 

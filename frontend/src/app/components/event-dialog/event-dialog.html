@@ -37,8 +37,20 @@
   @if (mode === 'show') {
     <p>Beginn: {{data.start}}</p>
   } @else {
+    <label for="start">Startzeit</label>
     <input
       [(ngModel)]="start"
+      type="datetime-local"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+  }
+
+  @if (mode === 'show') {
+    <p>Ende: {{data.end}}</p>
+  } @else {
+    <label for="end">Endzeit</label>
+    <input
+      [(ngModel)]="end"
       type="datetime-local"
       class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >

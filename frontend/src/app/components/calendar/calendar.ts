@@ -46,10 +46,16 @@ export class CalendarComponent implements OnInit {
         }
       },
       eventImportButton:{
-        text:'Event importieren'
+        text:'Event importieren',
+        click: () => {
+          this.importEvent();
+        }
       },
       eventExportButton:{
-        text:'Events exportieren'
+        text:'Events exportieren',
+        click: () => {
+          this.exportEvents();
+        }
       }
     },
     headerToolbar: {
@@ -214,6 +220,14 @@ export class CalendarComponent implements OnInit {
       }
     })
     return;
+  }
+
+  importEvent(){
+
+  }
+
+  exportEvents(){
+
   }
 
   loadEvents(){
