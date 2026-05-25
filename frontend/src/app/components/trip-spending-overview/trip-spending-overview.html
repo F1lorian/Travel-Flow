@@ -1,4 +1,4 @@
-<h2>{{ tripname }} - spending overview</h2>
+<h1>{{ tripname }} - spending overview</h1>
 
 <div *ngIf="errorMessage">
   {{ errorMessage }}
@@ -101,7 +101,7 @@
 
   <hr />
 
-  <h3>Ausgaben nach Kategorie</h3>
+  <h2>Ausgaben nach Kategorie</h2>
 
   <select id="overview-auswaehlen" (change)="openOverview($event)">
     <option value="">Anderer Trip</option>
@@ -135,7 +135,7 @@
 
   <hr />
 
-  <h3>Letzte Ausgaben</h3>
+  <h2>Letzte Ausgaben</h2>
 
   <label for="category-filter">Kategorie:</label>
 

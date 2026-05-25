@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-cashbook',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './cashbook.component.html',
   styleUrls: ['./cashbook.component.css']
 })
@@ -61,7 +62,12 @@ export class CashbookComponent implements OnInit {
     const amountValue = Number(this.amount());
     const selectedTrip = this.tripName();
 
-    if (!amountValue || amountValue <= 0) {
+    if (amountValue < 0) {
+      this.errorMessage.set('Negative Ausgaben können nicht hinzugefügt werden.');
+      return;
+    }
+
+    if (!amountValue) {
       this.errorMessage.set('Bitte gib einen gültigen Betrag ein.');
       return;
     }
