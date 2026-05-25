@@ -46,4 +46,14 @@ public class TripController {
     Trip created = tripService.createTrip(request.name());
     return ResponseEntity.ok(TripDTO.from(created));
   }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteTrip(@PathVariable Long id) {
+    try {
+      tripService.deleteTrip(id);
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.notFound().build();
+    }
+  }
 }
