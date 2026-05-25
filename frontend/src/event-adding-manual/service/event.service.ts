@@ -4,6 +4,9 @@ import { Observable } from 'rxjs';
 import {AddEventRequest} from '../models/AddEventRequest';
 import { AddEventResponse } from '../models/AddEventResponse';
 import {CalendarEventImport} from '../models/CalendarEventImport';
+import {EditEventRequest} from '../models/EditEventRequest';
+import {EditEventResponse} from '../models/EditEventResponse';
+
 
 
 @Injectable({
@@ -13,13 +16,24 @@ export class EventService {
   private readonly http = inject(HttpClient);
   private readonly manualEventEndpoint = '/api/event/create/manual';
   private readonly pullEvents = '/api/event/pull/all_events';
+  private readonly editEvents = '/api/event/edit';
+  private readonly deleteEvents = '/api/event/delete';
+
 
   createManualEvent(newEvent: AddEventRequest): Observable<AddEventResponse> {
     return this.http.post<AddEventResponse>(this.manualEventEndpoint, newEvent);
   }
 
   getEvents(): Observable<CalendarEventImport[]> {
-    let test = this.http.get<CalendarEventImport[]>(this.pullEvents);
-    return test;
+    return this.http.get<CalendarEventImport[]>(this.pullEvents);
   }
+
+  editEvent(updatedEvent: EditEventRequest):Observable<EditEventResponse>{
+    return this.http.post<EditEventRequest>(this.editEvents, updatedEvent);
+  }
+
+  deleteEvent(id: string):Observable<string> {
+    return this.http.post<string>(this.deleteEvents, id);
+  }
+
 }
