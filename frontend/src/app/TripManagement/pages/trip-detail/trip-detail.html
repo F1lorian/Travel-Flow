@@ -23,6 +23,17 @@
           placeholder="Cost"
           min="0"
         />
+        <input
+          type="text"
+          [(ngModel)]="newEventCategory"
+          placeholder="Category (pick or type new)"
+          list="recent-categories"
+        />
+        <datalist id="recent-categories">
+          @for (cat of recentCategories(); track cat.id) {
+            <option [value]="cat.name"></option>
+          }
+        </datalist>
         <button (click)="addEvent()">Add Event</button>
       </div>
 
@@ -42,6 +53,9 @@
             <div class="event-main">
               <strong>{{ event.name }}</strong>
               <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+              @if (event.categoryName) {
+                <span class="event-category">{{ event.categoryName }}</span>
+              }
             </div>
             <div class="event-cost">{{ event.kosten }} €</div>
           </li>

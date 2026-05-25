@@ -17,12 +17,19 @@ export interface Event {
   name: string;
   dateTime: string;
   kosten: number;
+  categoryName?: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private http = inject(HttpClient);
   private apiUrl = '/api/trips';
+  private categoriesUrl = '/api/categories';
 
   getAllTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(this.apiUrl);
@@ -36,7 +43,15 @@ export class TripService {
     return this.http.post<Trip>(this.apiUrl, { name });
   }
 
-  addEvent(tripId: number, name: string, dateTime: string, kosten: number): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten });
+  addEvent(tripId: number, name: string, dateTime: string, kosten: number, categoryName?: string): Observable<Event> {
+    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten, categoryName });
+  }
+
+  getRecentCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>(`${this.categoriesUrl}/recent`);
+  }
+
+  createCategory(name: string): Observable<Category> {
+    return this.http.post<Category>(this.categoriesUrl, { name });
   }
 }
