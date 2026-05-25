@@ -54,4 +54,8 @@ export class TripService {
   createCategory(name: string): Observable<Category> {
     return this.http.post<Category>(this.categoriesUrl, { name });
   }
+
+  deleteTrip(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }

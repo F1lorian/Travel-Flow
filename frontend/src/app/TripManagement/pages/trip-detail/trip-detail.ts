@@ -4,7 +4,7 @@
 
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripService, Trip, Event, Category } from '../../services/trip.service';
 
 @Component({
@@ -17,10 +17,12 @@ import { TripService, Trip, Event, Category } from '../../services/trip.service'
 export class TripDetail implements OnInit {
   private tripService = inject(TripService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   trip = signal<Trip | null>(null);
   events = signal<Event[]>([]);
   recentCategories = signal<Category[]>([]);
+  showDeleteConfirm = signal(false);
   errorMessage = '';
 
   newEventName = '';
@@ -81,5 +83,25 @@ export class TripDetail implements OnInit {
 
   formatDateTime(dt: string): string {
     return new Date(dt).toLocaleString();
+  }
+
+  openDeleteConfirm() {
+    this.showDeleteConfirm.set(true);
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirm.set(false);
+  }
+
+  confirmDelete() {
+    const tripId = this.trip()?.id;
+    if (!tripId) return;
+    this.tripService.deleteTrip(tripId).subscribe({
+      next: () => {
+        this.showDeleteConfirm.set(false);
+        this.router.navigate(['/trips']);
+      },
+      error: (err) => this.errorMessage = 'Could not delete trip: ' + err.message
+    });
   }
 }

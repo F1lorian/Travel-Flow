@@ -2,7 +2,10 @@
   <a routerLink="/trips" class="back-link">← Back to all trips</a>
 
   @if (trip()) {
-    <h1>{{ trip()!.name }}</h1>
+    <div class="trip-header">
+      <h1>{{ trip()!.name }}</h1>
+      <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+    </div>
 
     <!-- Add event form -->
     <div class="add-event-section">
@@ -66,5 +69,32 @@
     <div class="error">{{ errorMessage }}</div>
   } @else {
     <p>Loading...</p>
+  }
+
+  @if (showDeleteConfirm()) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>Are you sure you want to delete this trip?</h2>
+        <p>All related events will be deleted too:</p>
+
+        @if (events().length === 0) {
+          <p class="empty">No events on this trip.</p>
+        } @else {
+          <ul class="event-list">
+            @for (event of events(); track event.id) {
+              <li class="event-item">
+                <strong>{{ event.name }}</strong>
+                <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="modal-actions">
+          <button class="cancel-btn" (click)="cancelDelete()">Cancel</button>
+          <button class="delete-btn" (click)="confirmDelete()">Delete Trip</button>
+        </div>
+      </div>
+    </div>
   }
 </div>
