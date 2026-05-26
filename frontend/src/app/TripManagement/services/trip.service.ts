@@ -19,6 +19,15 @@ export interface Event {
   kosten: number;
 }
 
+export interface EventRecommendation {
+  name: string;
+  dateTime: string;
+  price: number | null;
+  description: string;
+  location: string;
+  sourceUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private http = inject(HttpClient);
@@ -38,5 +47,9 @@ export class TripService {
 
   addEvent(tripId: number, name: string, dateTime: string, kosten: number): Observable<Event> {
     return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten });
+  }
+
+  searchEventRecommendations(location: string): Observable<EventRecommendation[]> {
+    return this.http.post<EventRecommendation[]>(`${this.apiUrl}/event-search`, { location });
   }
 }

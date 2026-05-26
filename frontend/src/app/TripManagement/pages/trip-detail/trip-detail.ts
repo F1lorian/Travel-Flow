@@ -5,12 +5,13 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TripService, Trip, Event } from '../../services/trip.service';
+import { EventRecommendation, TripService, Trip, Event } from '../../services/trip.service';
+import { EventSearchComponent } from '../event-search/event-search';
 
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, EventSearchComponent],
   templateUrl: './trip-detail.html',
   styleUrl: './trip-detail.css'
 })
@@ -65,7 +66,37 @@ export class TripDetail implements OnInit {
     });
   }
 
+  addRecommendedEvent(recommendation: EventRecommendation) {
+    const tripId = this.trip()?.id;
+    if (!tripId) return;
+
+    const dateTime = this.normalizeRecommendationDate(recommendation.dateTime);
+    const cost = recommendation.price ?? 0;
+
+    this.tripService.addEvent(tripId, recommendation.name, dateTime, cost).subscribe({
+      next: (event) => {
+        this.events.update(list => [...list, event]);
+        this.errorMessage = '';
+      },
+      error: (err) => this.errorMessage = 'Could not add recommended event: ' + err.message
+    });
+  }
+
   formatDateTime(dt: string): string {
     return new Date(dt).toLocaleString();
+  }
+
+  private normalizeRecommendationDate(dateTime: string): string {
+    if (!dateTime) {
+      return new Date().toISOString().slice(0, 19);
+    }
+
+    const normalized = dateTime.length === 16 ? `${dateTime}:00` : dateTime;
+    const parsedDate = new Date(normalized);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return new Date().toISOString().slice(0, 19);
+    }
+
+    return normalized.slice(0, 19);
   }
 }

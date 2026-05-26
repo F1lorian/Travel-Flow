@@ -4,50 +4,58 @@
   @if (trip()) {
     <h1>{{ trip()!.name }}</h1>
 
-    <!-- Add event form -->
-    <div class="add-event-section">
-      <h2>Add an event</h2>
-      <div class="form-grid">
-        <input
-          type="text"
-          [(ngModel)]="newEventName"
-          placeholder="Event name (e.g. Dinner)"
-        />
-        <input
-          type="datetime-local"
-          [(ngModel)]="newEventDateTime"
-        />
-        <input
-          type="number"
-          [(ngModel)]="newEventKosten"
-          placeholder="Cost"
-          min="0"
-        />
-        <button (click)="addEvent()">Add Event</button>
+    <div class="main-layout">
+      <div class="left-content">
+        <!-- Add event form -->
+        <div class="add-event-section">
+          <h2>Add an event</h2>
+          <div class="form-grid">
+            <input
+              type="text"
+              [(ngModel)]="newEventName"
+              placeholder="Event name (e.g. Dinner)"
+            />
+            <input
+              type="datetime-local"
+              [(ngModel)]="newEventDateTime"
+            />
+            <input
+              type="number"
+              [(ngModel)]="newEventKosten"
+              placeholder="Cost"
+              min="0"
+            />
+            <button (click)="addEvent()">Add Event</button>
+          </div>
+
+          @if (errorMessage) {
+            <div class="error">{{ errorMessage }}</div>
+          }
+        </div>
+
+        <!-- Events list -->
+        <h2>Events</h2>
+        @if (events().length === 0) {
+          <p class="empty">No events yet. Add one above!</p>
+        } @else {
+          <ul class="event-list">
+            @for (event of events(); track event.id) {
+              <li class="event-item">
+                <div class="event-main">
+                  <strong>{{ event.name }}</strong>
+                  <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+                </div>
+                <div class="event-cost">{{ event.kosten }} €</div>
+              </li>
+            }
+          </ul>
+        }
       </div>
 
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
+      <aside class="right-sidebar">
+        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
+      </aside>
     </div>
-
-    <!-- Events list -->
-    <h2>Events</h2>
-    @if (events().length === 0) {
-      <p class="empty">No events yet. Add one above!</p>
-    } @else {
-      <ul class="event-list">
-        @for (event of events(); track event.id) {
-          <li class="event-item">
-            <div class="event-main">
-              <strong>{{ event.name }}</strong>
-              <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
-            </div>
-            <div class="event-cost">{{ event.kosten }} €</div>
-          </li>
-        }
-      </ul>
-    }
   } @else if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   } @else {
