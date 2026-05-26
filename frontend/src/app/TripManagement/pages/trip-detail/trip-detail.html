@@ -7,65 +7,73 @@
       <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
     </div>
 
-    <!-- Add event form -->
-    <div class="add-event-section">
-      <h2>Add an event</h2>
-      <div class="form-grid">
-        <input
-          type="text"
-          [(ngModel)]="newEventName"
-          placeholder="Event name (e.g. Dinner)"
-        />
-        <input
-          type="datetime-local"
-          [(ngModel)]="newEventDateTime"
-        />
-        <input
-          type="number"
-          [(ngModel)]="newEventKosten"
-          placeholder="Cost"
-          min="0"
-        />
-        <input
-          type="text"
-          [(ngModel)]="newEventCategory"
-          placeholder="Category (pick or type new)"
-          list="recent-categories"
-        />
-        <datalist id="recent-categories">
-          @for (cat of recentCategories(); track cat.id) {
-            <option [value]="cat.name"></option>
+    <div class="main-layout">
+      <div class="left-content">
+        <!-- Add event form -->
+        <div class="add-event-section">
+          <h2>Add an event</h2>
+          <div class="form-grid">
+            <input
+              type="text"
+              [(ngModel)]="newEventName"
+              placeholder="Event name (e.g. Dinner)"
+            />
+            <input
+              type="datetime-local"
+              [(ngModel)]="newEventDateTime"
+            />
+            <input
+              type="number"
+              [(ngModel)]="newEventKosten"
+              placeholder="Cost"
+              min="0"
+            />
+            <input
+              type="text"
+              [(ngModel)]="newEventCategory"
+              placeholder="Category (pick or type new)"
+              list="recent-categories"
+            />
+            <datalist id="recent-categories">
+              @for (cat of recentCategories(); track cat.id) {
+                <option [value]="cat.name"></option>
+              }
+            </datalist>
+            <button (click)="addEvent()">Add Event</button>
+          </div>
+
+          @if (errorMessage) {
+            <div class="error">{{ errorMessage }}</div>
           }
-        </datalist>
-        <button (click)="addEvent()">Add Event</button>
+        </div>
+
+        <!-- Events list -->
+        <h2>Events</h2>
+        @if (events().length === 0) {
+          <p class="empty">No events yet. Add one above!</p>
+        } @else {
+          <ul class="event-list">
+            @for (event of events(); track event.id) {
+              <li class="event-item">
+                <div class="event-main">
+                  <strong>{{ event.name }}</strong>
+                  <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+                  @if (event.categoryName) {
+                    <span class="event-category">{{ event.categoryName }}</span>
+                  }
+                </div>
+                <div class="event-cost">{{ event.kosten }} €</div>
+                <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
+              </li>
+            }
+          </ul>
+        }
       </div>
 
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
+      <aside class="right-sidebar">
+        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
+      </aside>
     </div>
-
-    <!-- Events list -->
-    <h2>Events</h2>
-    @if (events().length === 0) {
-      <p class="empty">No events yet. Add one above!</p>
-    } @else {
-      <ul class="event-list">
-        @for (event of events(); track event.id) {
-          <li class="event-item">
-            <div class="event-main">
-              <strong>{{ event.name }}</strong>
-              <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
-              @if (event.categoryName) {
-                <span class="event-category">{{ event.categoryName }}</span>
-              }
-            </div>
-            <div class="event-cost">{{ event.kosten }} €</div>
-            <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
-          </li>
-        }
-      </ul>
-    }
   } @else if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   } @else {

@@ -5,6 +5,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.TripManagement.dto.EventRecommendationDTO;
+import com.sep.sep_backend.TripManagement.services.GeminiEventSearchService;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,8 @@ class TripControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private TripService tripService;
+
+  @MockitoBean private GeminiEventSearchService geminiEventSearchService;
 
   @Test
   void getAllTrips_returnsOkWithTripList() throws Exception {
@@ -66,5 +70,28 @@ class TripControllerTest {
                 .content("{\"name\": \"Paris\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Paris"));
+  }
+
+  @Test
+  void searchEvents_returnsRecommendations() throws Exception {
+    when(geminiEventSearchService.searchEvents("Dortmund"))
+        .thenReturn(
+            List.of(
+                new EventRecommendationDTO(
+                    "Food Festival",
+                    "2026-06-01T18:00:00",
+                    15.0,
+                    "Food and music event.",
+                    "Dortmund",
+                    "https://example.com")));
+
+    mockMvc
+        .perform(
+            post("/api/trips/event-search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"location\": \"Dortmund\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("Food Festival"))
+        .andExpect(jsonPath("$[0].price").value(15.0));
   }
 }

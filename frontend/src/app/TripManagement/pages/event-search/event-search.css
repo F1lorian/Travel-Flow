@@ -1,0 +1,165 @@
+.event-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.event-search-panel h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #172033;
+}
+
+.search-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.search-controls input {
+  min-width: 0;
+  min-height: 40px;
+  box-sizing: border-box;
+  border: 1px solid #c7d0df;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.search-controls input:focus {
+  border-color: #2f6fed;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+}
+
+.search-controls button,
+.event-card-actions button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 14px;
+  background: #172033;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.search-controls button:hover,
+.event-card-actions button:hover {
+  background: #0b101b;
+}
+
+.search-controls button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.search-message {
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.result-list {
+  display: grid;
+  gap: 12px;
+  max-height: min(68vh, 720px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
+}
+
+.event-card {
+  min-width: 0;
+  border: 1px solid #d8e0ed;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+  overflow-wrap: anywhere;
+}
+
+.event-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.event-card h3 {
+  margin: 0;
+  min-width: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: #172033;
+}
+
+.price-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.event-meta {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  color: #586174;
+  font-size: 0.86rem;
+}
+
+.event-card p {
+  margin: 10px 0 0;
+  color: #2f3747;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.event-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.event-card-actions a {
+  color: #2f6fed;
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.event-card-actions a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+  .search-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .event-card-header,
+  .event-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .price-pill,
+  .event-card-actions button {
+    width: fit-content;
+  }
+}
