@@ -32,6 +32,7 @@ public class EventService {
 
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
+  private final AusgabeService ausgabeService;
   private final ObjectMapper objectMapper;
 
     @Value("${gemini.api-key}")
@@ -48,6 +49,7 @@ public class EventService {
       ObjectMapper objectMapper) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
+    this.ausgabeService = ausgabeService;
     this.objectMapper = objectMapper;
   }
 
@@ -57,7 +59,7 @@ public class EventService {
     {
         Trip matchingTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException("Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
         LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
-        LocalDateTime eventEnd = dto.getEnd() != null ? dto.getEnd() : LocalDateTime.now().plusDays(1);
+        LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
         Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
         EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
         eventRepository.save(newEvent);
@@ -66,6 +68,7 @@ public class EventService {
     AusgabeRequestDTO ausgabeRequestDTO =
         new AusgabeRequestDTO(
             (double) dto.getKosten(), matchingTrip, eventStart.toLocalDate(), Kategorie.SONSTIGES);
+    ausgabeService.ausgabeHinzufuegen(ausgabeRequestDTO);
 
     return ausgabe;
   }
@@ -93,6 +96,14 @@ public class EventService {
     {
       event.setKosten(dto.getKosten());
     }
+    if (dto.getStart() != null)
+    {
+      event.setStartTime(dto.getStart());
+    }
+    if (dto.getEnd() != null)
+    {
+      event.setEndTime(dto.getEnd());
+    }
     if (dto.getTripId() != null)
     {
       var newTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException());
@@ -100,7 +111,8 @@ public class EventService {
     }
     eventRepository.save(event);
 
-    return new EventResponseDTO(event.getName(), event.getKosten(), event.getDateTime());
+    return new EventResponseDTO(
+        event.getName(), event.getKosten(), event.getStartTime(), event.getEndTime());
   }
 
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
@@ -113,14 +125,18 @@ public class EventService {
                         "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
     String eventName =
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
-    LocalDateTime eventStart = dto.getUhrzeit() != null ? dto.getUhrzeit() : LocalDateTime.now();
-    Event newEvent = new Event(eventName, eventStart, dto.getKosten(), matchingTrip);
-    EventResponseDTO response = new EventResponseDTO(eventName, dto.getKosten(), eventStart);
+    LocalDateTime eventStart =
+        dto.getStartZeit() != null ? dto.getStartZeit() : LocalDateTime.now();
+    LocalDateTime eventEnd = resolveEndTime(dto.getEndZeit(), eventStart);
+    Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
+    EventResponseDTO response =
+        new EventResponseDTO(eventName, dto.getKosten(), eventStart, eventEnd);
     eventRepository.save(newEvent);
 
     AusgabeRequestDTO ausgabeRequestDTO =
         new AusgabeRequestDTO(
             (double) dto.getKosten(), matchingTrip, eventStart.toLocalDate(), Kategorie.SONSTIGES);
+    ausgabeService.ausgabeHinzufuegen(ausgabeRequestDTO);
 
     return response;
   }
@@ -182,13 +198,10 @@ public class EventService {
 
       String name = node.path("name").asText(subject);
       int kosten = node.path("kosten").asInt(0);
-      String startDate = node.path("startDate").asText();
-      LocalDateTime date =
-          startDate == null || startDate.isBlank()
-              ? LocalDateTime.now()
-              : LocalDateTime.parse(startDate);
+      LocalDateTime start = parseDatetime(node.path("startDate").asText());
+      LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
 
-      return new EventResponseDTO(name, kosten, date);
+      return new EventResponseDTO(name, kosten, start, end);
     } catch (Exception exception) {
       return mapTextToDTO(mailText);
     }
@@ -201,12 +214,14 @@ public class EventService {
                 {
                   "name": "Eventname",
                   "kosten": 0,
-                  "startDate": "2026-06-01T20:00:00"
+                  "startDate": "2026-06-01T20:00:00",
+                  "endDate": "2026-06-01T22:00:00"
                 }
 
                 Regeln:
                 - kosten ist eine ganze Zahl.
                 - startDate ist yyyy-MM-ddTHH:mm:ss.
+                - endDate ist yyyy-MM-ddTHH:mm:ss.
                 - Falls kein Datum gefunden wird: heutiger Tag.
                 - Falls kein Preis gefunden wird: kosten 0.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
@@ -291,7 +306,8 @@ public class EventService {
 
   private EventResponseDTO mapTextToDTO(String text) {
     var name = text == null || text.isBlank() ? "Unbekanntes Event" : text;
-    return new EventResponseDTO(name, 0, LocalDateTime.now());
+    LocalDateTime start = LocalDateTime.now();
+    return new EventResponseDTO(name, 0, start, resolveEndTime(null, start));
   }
 
   private EventResponseDTO mapJsonLdToDTO(JsonNode jsonLdBlocks) {
@@ -307,9 +323,10 @@ public class EventService {
     }
 
     var price = eventNode.path("offers").path("price").asInt();
-    var date = parseDatetime(eventNode.path("startDate").asText());
+    var start = parseDatetime(eventNode.path("startDate").asText());
+    var end = parseEndDatetime(eventNode.path("endDate").asText(), start);
     var name = eventNode.path("name").asText("Unbekanntes Event");
-    return new EventResponseDTO(name, price, date);
+    return new EventResponseDTO(name, price, start, end);
   }
 
   private String extractText(Part part) throws Exception {
@@ -325,6 +342,18 @@ public class EventService {
     }
 
     return LocalDateTime.parse(jsonDatetime);
+  }
+
+  private LocalDateTime parseEndDatetime(String jsonDatetime, LocalDateTime start) {
+    if (jsonDatetime == null || jsonDatetime.isBlank()) {
+      return resolveEndTime(null, start);
+    }
+
+    return LocalDateTime.parse(jsonDatetime);
+  }
+
+  private LocalDateTime resolveEndTime(LocalDateTime end, LocalDateTime start) {
+    return end != null ? end : start.plusDays(1);
   }
 
   private List<JsonNode> extractJsonLd(Part part) throws Exception {
