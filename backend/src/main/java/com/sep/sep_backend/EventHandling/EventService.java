@@ -35,8 +35,9 @@ public class EventService {
     {
         Trip matchingTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException("Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
         LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
-        Event newEvent = new Event(dto.getName(), eventStart, dto.getKosten(), matchingTrip);
-        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart);
+        LocalDateTime eventEnd = dto.getEnd() != null ? dto.getEnd() : LocalDateTime.now().plusDays(1);
+        Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
+        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
         eventRepository.save(newEvent);
 
         // add the expence automatically to the db
@@ -52,7 +53,10 @@ public class EventService {
                 .map(event -> new EventCalendarDTO(
                         String.valueOf(event.getId()),
                         event.getName(),
-                        event.getDateTime()
+                        event.getKosten(),
+                        event.getStartTime(),
+                        event.getEndTime(),
+                        event.getTripId()
                 ))
                 .toList();
     }

@@ -53,7 +53,7 @@ class EventServiceTest {
         assertThat(savedEvent.getName()).isEqualTo("Museum");
         assertThat(savedEvent.getKosten()).isEqualTo(25);
         assertThat(savedEvent.getTrip()).isSameAs(trip);
-        assertThat(savedEvent.getDateTime()).isAfterOrEqualTo(beforeSave);
+        assertThat(savedEvent.getStartTime()).isAfterOrEqualTo(beforeSave);
     }
 
     @Test
@@ -73,7 +73,8 @@ class EventServiceTest {
     void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
         Trip trip = new Trip("London");
         LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
-        Event event = new Event("Museum", start, 25, trip);
+        LocalDateTime end = LocalDateTime.of(2026, 5, 8, 14, 30);
+        Event event = new Event("Museum", start, end, 25, trip);
         event.setId(42L);
 
         when(eventRepository.findAll()).thenReturn(List.of(event));

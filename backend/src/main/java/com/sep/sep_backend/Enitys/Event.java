@@ -14,7 +14,10 @@ public class Event {
     private String name;
 
     @Column(nullable = false)
-    private LocalDateTime dateTime;
+    private LocalDateTime startTime;
+
+    @Column(nullable = false)
+    private LocalDateTime endTime;
 
     private int kosten;
 
@@ -29,9 +32,10 @@ public class Event {
     public Event() {
     }
 
-    public Event(String name, LocalDateTime dateTime, int kosten, Trip trip) {
+    public Event(String name, LocalDateTime startTime, LocalDateTime endTime, int kosten, Trip trip) {
         this.name = name;
-        this.dateTime = dateTime;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.kosten = kosten;
         this.trip = trip;
     }
@@ -53,13 +57,17 @@ public class Event {
         this.name = name;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDateTime getStartTime() {
+        return startTime;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
-        this.dateTime = dateTime;
+    public void setStartTime(LocalDateTime dateTime) {
+        this.startTime = dateTime;
     }
+
+    public LocalDateTime getEndTime(){ return endTime;}
+
+    public void setEndTime(LocalDateTime endTime){ this.endTime = endTime;}
 
     public int getKosten() {
         return kosten;
@@ -83,5 +91,9 @@ public class Event {
 
     public void setCategorie(Categories categorie) {
         this.categorie = categorie;
+    }
+
+    public long getTripId(){
+        return this.trip.getId();
     }
 }

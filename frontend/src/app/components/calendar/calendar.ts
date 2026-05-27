@@ -67,7 +67,7 @@ export class CalendarComponent implements OnInit {
     footerToolbar:{
       left: 'eventAddenButton eventImportButton eventExportButton'
     },
-    events: [],
+    events: [{title: "test", start:"2026-05-27T12:00:00", end:"2026-05-27T14:00:00"}],
 
     eventClick: this.handleEventClick.bind(this),
     dateClick: this.handleDateClick.bind(this)
@@ -90,7 +90,8 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
       }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -109,7 +110,8 @@ export class CalendarComponent implements OnInit {
     const currentEvents = Array.isArray(this.calendarOptions.events)
       ? this.calendarOptions.events
       : [];
-    const startDate = this.selectedDateStr || event.uhrzeit.substring(0, 10);
+    const startDate = this.selectedDateStr || event.startZeit.substring(0, 10);
+    const endDate = this.selectedDateStr || event.endZeit.substring(0, 10);
 
     this.calendarOptions = {
       ...this.calendarOptions,
@@ -118,6 +120,7 @@ export class CalendarComponent implements OnInit {
         {
           title: event.name,
           start: startDate,
+          end: endDate,
         },
       ],
     };
@@ -160,6 +163,7 @@ export class CalendarComponent implements OnInit {
           kosten: result.kosten,
           tripId: result.tripId,
           start: result.start,
+          end: result.end,
         }
         console.log(newEvent);
         this.eventService.createManualEvent(newEvent)
@@ -184,7 +188,9 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr + "T00:00"}, //noch ändern, wenn uhrzeiten hinzugefügt werden
+        start: selectedEvent.startStr + "T00:00",
+        end: selectedEvent.endStr + "T00:00"
+      }, //noch ändern, wenn uhrzeiten hinzugefügt werden
     });
     dialogRef.afterClosed().subscribe(result => {
       if(result){
@@ -194,6 +200,7 @@ export class CalendarComponent implements OnInit {
             kosten: result.kosten,
             name: result.title,
             start: result.start,
+            end: result.end,
             tripId: result.tripId,
           }
           console.log(updatedEvent);
@@ -242,8 +249,15 @@ export class CalendarComponent implements OnInit {
   }
 
   loadEvents(){
-    this.eventService.getEvents().subscribe(events => {
-      this.calendarOptions.events = events;
+    this.eventService.getEvents().subscribe({
+      next: events => {
+        console.log('Geladene Events', events)
+        this.calendarOptions.events = events;
+      },
+      error: err => {
+        console.error('Events konnten nicht geladen werden:', err);
+        console.error('Backend Antwort:', err.error);
+      }
     })
   }
 
