@@ -64,6 +64,32 @@ public class TripEventService {
     return eventRepository.findByTrip_Id(tripId);
   }
 
+  public void deleteEvent(Long eventId) {
+    Event event =
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+    eventRepository.delete(event);
+  }
+
+  public Event moveEventToTrip(Long eventId, Long newTripId) {
+    Event event =
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+    Trip newTrip =
+        tripRepository
+            .findById(newTripId)
+            .orElseThrow(() -> new IllegalArgumentException("Target trip not found: " + newTripId));
+
+    if (event.getTrip() != null && event.getTrip().getId() == newTrip.getId()) {
+      throw new IllegalArgumentException("Event already belongs to this trip");
+    }
+
+    event.setTrip(newTrip);
+    return eventRepository.save(event);
+  }
+
   // Stub: notify users when an event is added — to be implemented
   private void notifyRelatedUsers(Event event) {
     System.out.println(
