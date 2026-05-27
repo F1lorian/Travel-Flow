@@ -47,7 +47,7 @@ class EventControllerTest {
         EventService eventService = mock(EventService.class);
         EventController eventController = new EventController(eventService);
         List<EventCalendarDTO> events = List.of(
-                new EventCalendarDTO("42", "Museum", LocalDateTime.of(2026, 5, 7, 14, 30))
+                new EventCalendarDTO("42", "Museum", 20, LocalDateTime.of(2026, 5, 7, 14, 30), LocalDateTime.of(2026, 5, 8, 14, 30), 1)
         );
 
         when(eventService.GetAllEventsFromDb()).thenReturn(events);

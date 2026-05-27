@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 public class EventDTO {
     private long id;
     private String name;
-    private LocalDateTime dateTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private int kosten;
     private long tripId;
 
@@ -17,7 +18,8 @@ public class EventDTO {
         EventDTO dto = new EventDTO();
         dto.id = event.getId();
         dto.name = event.getName();
-        dto.dateTime = event.getDateTime();
+        dto.startTime = event.getStartTime();
+        dto.endTime = event.getEndTime();
         dto.kosten = event.getKosten();
         dto.tripId = event.getTrip().getId();
         return dto;
@@ -25,7 +27,8 @@ public class EventDTO {
 
     public long getId() { return id; }
     public String getName() { return name; }
-    public LocalDateTime getDateTime() { return dateTime; }
+    public LocalDateTime getStartTime() { return startTime; }
+    public LocalDateTime getEndTime() {return endTime;}
     public int getKosten() { return kosten; }
     public long getTripId() { return tripId; }
 }

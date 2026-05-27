@@ -27,13 +27,14 @@ export class EventDialog {
       this.kosten = data.kosten || undefined;
       this.tripId = data.tripId || undefined;
       this.start = data.start || "";
+      this.end = data.end || "";
     }
     console.log(data);
   }
 
   save() {
     console.log(this.start);
-    this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start});
+    this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start, end: this.end});
   }
 
   close() {

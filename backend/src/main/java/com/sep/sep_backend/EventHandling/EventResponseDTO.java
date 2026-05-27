@@ -6,15 +6,17 @@ import java.time.LocalTime;
 public class EventResponseDTO {
     private String name;
     private int kosten;
-    private LocalDateTime uhrzeit;
+    private LocalDateTime startZeit;
+    private LocalDateTime endZeit;
 
     public EventResponseDTO() {
     }
 
-    public EventResponseDTO(String name, int kosten, LocalDateTime uhrzeit) {
+    public EventResponseDTO(String name, int kosten, LocalDateTime startZeit, LocalDateTime endZeit) {
         this.name = name;
         this.kosten = kosten;
-        this.uhrzeit = uhrzeit;
+        this.startZeit = startZeit;
+        this.endZeit = endZeit;
     }
 
     public String getName() {
@@ -33,11 +35,15 @@ public class EventResponseDTO {
         this.kosten = kosten;
     }
 
-    public LocalDateTime getUhrzeit() {
-        return uhrzeit;
+    public LocalDateTime getStartZeit() {
+        return startZeit;
     }
 
-    public void setUhrzeit(LocalDateTime uhrzeit) {
-        this.uhrzeit = uhrzeit;
+    public void setStartZeit(LocalDateTime uhrzeit) {
+        this.startZeit = uhrzeit;
     }
+
+    public LocalDateTime getEndZeit() {return endZeit;}
+
+    public void setEndZeit(LocalDateTime endZeit) {this.endZeit = endZeit;}
 }

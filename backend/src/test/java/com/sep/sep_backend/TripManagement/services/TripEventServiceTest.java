@@ -29,16 +29,18 @@ class TripEventServiceTest {
     @InjectMocks
     private TripEventService eventService;
 
-    private final LocalDateTime sampleDateTime = LocalDateTime.of(2026, 7, 15, 19, 30);
+    private final LocalDateTime sampleStartTime= LocalDateTime.of(2026, 7, 15, 19, 30);
+    private final LocalDateTime sampleEndTime = LocalDateTime.of(2026, 7, 16, 19, 30);
+
 
     @Test
     void addEventToTrip_savesAndReturnsEvent() {
         Trip trip = new Trip("Paris");
-        Event event = new Event("Dinner", sampleDateTime, 50, trip);
+        Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
         when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
         when(eventRepository.save(any(Event.class))).thenReturn(event);
 
-        Event result = eventService.addEventToTrip(1L, "Dinner", sampleDateTime, 50);
+        Event result = eventService.addEventToTrip(1L, "Dinner", sampleStartTime, sampleEndTime, 50);
 
         assertEquals("Dinner", result.getName());
         assertEquals(50, result.getKosten());
@@ -50,27 +52,27 @@ class TripEventServiceTest {
         when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class,
-                () -> eventService.addEventToTrip(99L, "Dinner", sampleDateTime, 50));
+                () -> eventService.addEventToTrip(99L, "Dinner", sampleStartTime, sampleEndTime, 50));
     }
 
     @Test
     void addEventToTrip_throwsWhenNameIsBlank() {
         // Validation runs before the trip lookup, so no repository stubbing is needed
         assertThrows(IllegalArgumentException.class,
-                () -> eventService.addEventToTrip(1L, "", sampleDateTime, 50));
+                () -> eventService.addEventToTrip(1L, "", sampleStartTime, sampleEndTime, 50));
     }
 
     @Test
     void addEventToTrip_throwsWhenDateTimeIsNull() {
         assertThrows(IllegalArgumentException.class,
-                () -> eventService.addEventToTrip(1L, "Dinner", null, 50));
+                () -> eventService.addEventToTrip(1L, "Dinner", null, null, 50));
     }
 
     @Test
     void getEventsForTrip_returnsEventList() {
         Trip trip = new Trip("Paris");
-        List<Event> events = List.of(new Event("Dinner", sampleDateTime, 50, trip));
-        when(eventRepository.findByTripId(1L)).thenReturn(events);
+        List<Event> events = List.of(new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip));
+        when(eventRepository.findByTrip_Id(1L)).thenReturn(events);
 
         List<Event> result = eventService.getEventsForTrip(1L);
 

@@ -7,19 +7,21 @@ public class EventRequestDTO {
     private int kosten;
     private Long tripId;
     private LocalDateTime start;
+    private LocalDateTime end;
 
     public EventRequestDTO() {
     }
 
-    public EventRequestDTO(String name, int kosten, Long tripId, LocalDateTime start) {
+    public EventRequestDTO(String name, int kosten, Long tripId, LocalDateTime start, LocalDateTime end) {
         this.name = name;
         this.kosten = kosten;
         this.tripId = tripId;
         this.start = start;
+        this.end = end;
     }
 
     public EventRequestDTO(String name, int kosten, Long tripId) {
-        this(name, kosten, tripId, null);
+        this(name, kosten, tripId, null, null);
     }
 
     public String getName() {
@@ -53,4 +55,8 @@ public class EventRequestDTO {
     public void setStart(LocalDateTime start) {
         this.start = start;
     }
+
+    public LocalDateTime getEnd() {return end;}
+
+    public void setEnd(LocalDateTime end) {this.end = end;}
 }

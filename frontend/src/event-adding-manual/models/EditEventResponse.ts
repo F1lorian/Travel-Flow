@@ -4,4 +4,5 @@ export type EditEventResponse = {
   kosten: number;
   tripId: number;
   start: string;
+  end: string;
 };

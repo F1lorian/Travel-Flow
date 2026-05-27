@@ -19,7 +19,7 @@ import java.util.List;
 public class TripEventController {
 
     // Shape of the JSON body sent by the frontend when adding an event
-    public record CreateEventRequest(String name, LocalDateTime dateTime, int kosten) {}
+    public record CreateEventRequest(String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {}
 
     private final TripEventService eventService;
 
@@ -39,7 +39,7 @@ public class TripEventController {
     public ResponseEntity<EventDTO> addEvent(
             @PathVariable Long tripId,
             @RequestBody CreateEventRequest request) {
-        Event created = eventService.addEventToTrip(tripId, request.name(), request.dateTime(), request.kosten());
+        Event created = eventService.addEventToTrip(tripId, request.name(), request.startTime(), request.endTime(), request.kosten());
         return ResponseEntity.ok(EventDTO.from(created));
     }
 }

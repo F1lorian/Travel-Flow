@@ -16,6 +16,7 @@ import {EditEventResponse} from '../../../event-adding-manual/models/EditEventRe
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
 import {EventImpl} from '@fullcalendar/core/internal';
+import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialog';
 
 
 @Component({
@@ -66,7 +67,7 @@ export class CalendarComponent implements OnInit {
     footerToolbar:{
       left: 'eventAddenButton eventImportButton eventExportButton'
     },
-    events: [],
+    events: [{title: "test", start:"2026-05-27T12:00:00", end:"2026-05-27T14:00:00"}],
 
     eventClick: this.handleEventClick.bind(this),
     dateClick: this.handleDateClick.bind(this)
@@ -88,8 +89,9 @@ export class CalendarComponent implements OnInit {
         id: selectedEvent.id,
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
-        tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr
+        tripId: selectedEvent.extendedProps['tripId'],
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
       }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -104,19 +106,22 @@ export class CalendarComponent implements OnInit {
     this.createEvent(clickInfo.dateStr);
   }
 
-  addCreatedEvent(event: AddEventResponse) {
+  addCreatedEvent(event: AddEventResponse, tripId?: number) {
     const currentEvents = Array.isArray(this.calendarOptions.events)
       ? this.calendarOptions.events
       : [];
-    const startDate = this.selectedDateStr || event.uhrzeit.substring(0, 10);
-
     this.calendarOptions = {
       ...this.calendarOptions,
       events: [
         ...currentEvents,
         {
           title: event.name,
-          start: startDate,
+          start: event.startZeit,
+          end: event.endZeit,
+          extendedProps: {
+            kosten: event.kosten,
+            tripId,
+          },
         },
       ],
     };
@@ -133,8 +138,9 @@ export class CalendarComponent implements OnInit {
 
     calendarEvent.setProp('title', event.name);
     calendarEvent.setStart(event.start);
+    calendarEvent.setEnd(event.end);
     calendarEvent.setExtendedProp('kosten', event.kosten);
-    calendarEvent.setExtendedProp('trip', event.tripId);
+    calendarEvent.setExtendedProp('tripId', event.tripId);
   }
 
   removeDeletedEvent(id: string) {
@@ -159,13 +165,14 @@ export class CalendarComponent implements OnInit {
           kosten: result.kosten,
           tripId: result.tripId,
           start: result.start,
+          end: result.end,
         }
         console.log(newEvent);
         this.eventService.createManualEvent(newEvent)
           .subscribe({
             next: (response) => {
               console.log("Event Response:", response);
-              this.addCreatedEvent(response);
+              this.addCreatedEvent(response, newEvent.tripId);
             },
             error: () => {
               console.error("Event konnte nicht erstellt werden!");
@@ -182,8 +189,10 @@ export class CalendarComponent implements OnInit {
       data: {mode: 'edit',
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
-        tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr + "T00:00"}, //noch ändern, wenn uhrzeiten hinzugefügt werden
+        tripId: selectedEvent.extendedProps['tripId'],
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
+      },
     });
     dialogRef.afterClosed().subscribe(result => {
       if(result){
@@ -193,6 +202,7 @@ export class CalendarComponent implements OnInit {
             kosten: result.kosten,
             name: result.title,
             start: result.start,
+            end: result.end,
             tripId: result.tripId,
           }
           console.log(updatedEvent);
@@ -223,16 +233,33 @@ export class CalendarComponent implements OnInit {
   }
 
   importEvent(){
+    const dialogRef = this.dialog.open(EventTransferDialog, {
+      data: {mode: 'import',}
+    })
 
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        this.addCreatedEvent(result);
+      }
+    })
   }
 
   exportEvents(){
-
+    this.dialog.open(EventTransferDialog, {
+      data: {mode: 'export',}
+    })
   }
 
   loadEvents(){
-    this.eventService.getEvents().subscribe(events => {
-      this.calendarOptions.events = events;
+    this.eventService.getEvents().subscribe({
+      next: events => {
+        console.log('Geladene Events', events)
+        this.calendarOptions.events = events;
+      },
+      error: err => {
+        console.error('Events konnten nicht geladen werden:', err);
+        console.error('Backend Antwort:', err.error);
+      }
     })
   }
 
