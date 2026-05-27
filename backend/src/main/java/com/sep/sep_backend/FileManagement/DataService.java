@@ -113,11 +113,7 @@ class DataService {
     END:VEVENT
     """
         .formatted(
-            event.uid(),
-            dtStamp,
-            dates,
-            escapeIcs(event.title()),
-            escapeIcs(event.description()));
+            event.uid(), dtStamp, dates, escapeIcs(event.title()), escapeIcs(event.description()));
   }
 
   private String buildTimedDates(IcalRecord event) {
@@ -140,5 +136,4 @@ class DataService {
         .replace("\n", "\\n")
         .replace("\r", "");
   }
-
 }

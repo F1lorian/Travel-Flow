@@ -22,7 +22,11 @@ record IcalRecord(
   }
 
   static IcalRecord allDay(
-      String uid, String title, String description, LocalDate startDate, LocalDate endDateExclusive) {
+      String uid,
+      String title,
+      String description,
+      LocalDate startDate,
+      LocalDate endDateExclusive) {
     return new IcalRecord(uid, title, description, null, null, startDate, endDateExclusive);
   }
 
