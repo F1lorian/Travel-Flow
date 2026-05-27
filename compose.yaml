@@ -10,6 +10,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sep
       SPRING_DATASOURCE_USERNAME: sep
       SPRING_DATASOURCE_PASSWORD: sepsep123
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     depends_on:
       - db
 

@@ -1,59 +1,66 @@
 package com.sep.sep_backend.EventHandling;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDateTime;
 
 public class EventCalendarDTO {
-    private String id;
-    private String title;
-    private int kosten;
-    private long tripId;
-    private LocalDateTime start;
-    private LocalDateTime end;
-    //hier müssen noch die uhrzeiten hinzugefügt werden!
+  private String id;
+  private String title;
+  private int kosten;
+  private long tripId;
+  private LocalDateTime start;
+  private LocalDateTime end;
 
-    public EventCalendarDTO() {
-    }
+  // hier müssen noch die uhrzeiten hinzugefügt werden!
 
-    public EventCalendarDTO(String id, String title, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
-        this.id = id;
-        this.title = title;
-        this.start = start;
-        this.end = end;
-        this.kosten = kosten;
-        this.tripId = tripId;
-    }
+  public EventCalendarDTO() {}
 
-    public String getId() {
-        return id;
-    }
+  public EventCalendarDTO(
+      String id, String title, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
+    this.id = id;
+    this.title = title;
+    this.start = start;
+    this.end = end;
+    this.kosten = kosten;
+    this.tripId = tripId;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public String getTitle() {
-        return title;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public LocalDateTime getStart() {
-        return start;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public void setStart(LocalDateTime start) {
-        this.start = start;
-    }
+  public LocalDateTime getStart() {
+    return start;
+  }
 
-    public LocalDateTime getEnd(){return this.end;}
+  public void setStart(LocalDateTime start) {
+    this.start = start;
+  }
 
-    public void setEnd(LocalDateTime end) {this.end = end;}
+  public LocalDateTime getEnd() {
+    return this.end;
+  }
 
-    public int getKosten(){return this.kosten;}
+  public void setEnd(LocalDateTime end) {
+    this.end = end;
+  }
 
-    public void setKosten(int kosten){ this.kosten=kosten;}
+  public int getKosten() {
+    return this.kosten;
+  }
+
+  public void setKosten(int kosten) {
+    this.kosten = kosten;
+  }
 }

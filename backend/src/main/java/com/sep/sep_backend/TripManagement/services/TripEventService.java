@@ -1,52 +1,57 @@
 package com.sep.sep_backend.TripManagement.services;
 
 /* back-front relation: TripEventService handles all trip-event business logic.
-   Called by TripEventController, which exposes the results to the Angular frontend. */
+Called by TripEventController, which exposes the results to the Angular frontend. */
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TripEventService {
 
-    private final EventRepository eventRepository;
-    private final TripRepository tripRepository;
+  private final EventRepository eventRepository;
+  private final TripRepository tripRepository;
 
-    public TripEventService(EventRepository eventRepository, TripRepository tripRepository) {
-        this.eventRepository = eventRepository;
-        this.tripRepository = tripRepository;
+  public TripEventService(EventRepository eventRepository, TripRepository tripRepository) {
+    this.eventRepository = eventRepository;
+    this.tripRepository = tripRepository;
+  }
+
+  public Event addEventToTrip(
+      Long tripId, String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {
+    // Validate input first — fail fast before touching the database
+    if (name == null || name.isBlank()) {
+      throw new IllegalArgumentException("Event name cannot be empty");
+    }
+    if (startTime == null) {
+      throw new IllegalArgumentException("Event date/time is required");
     }
 
-    public Event addEventToTrip(Long tripId, String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {
-        // Validate input first — fail fast before touching the database
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Event name cannot be empty");
-        }
-        if (startTime == null) {
-            throw new IllegalArgumentException("Event date/time is required");
-        }
+    Trip trip =
+        tripRepository
+            .findById(tripId)
+            .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
 
-        Trip trip = tripRepository.findById(tripId)
-                .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
+    Event savedEvent = eventRepository.save(new Event(name, startTime, endTime, kosten, trip));
+    notifyRelatedUsers(savedEvent);
+    return savedEvent;
+  }
 
-        Event savedEvent = eventRepository.save(new Event(name, startTime, endTime, kosten, trip));
-        notifyRelatedUsers(savedEvent);
-        return savedEvent;
-    }
+  public List<Event> getEventsForTrip(Long tripId) {
+    return eventRepository.findByTrip_Id(tripId);
+  }
 
-    public List<Event> getEventsForTrip(Long tripId) {
-        return eventRepository.findByTrip_Id(tripId);
-    }
-
-    // Stub: notify users when an event is added — to be implemented
-    private void notifyRelatedUsers(Event event) {
-        System.out.println("Notification: New event '" + event.getName()
-                + "' added to trip ID " + event.getTrip().getId());
-    }
+  // Stub: notify users when an event is added — to be implemented
+  private void notifyRelatedUsers(Event event) {
+    System.out.println(
+        "Notification: New event '"
+            + event.getName()
+            + "' added to trip ID "
+            + event.getTrip().getId());
+  }
 }

@@ -1,30 +1,52 @@
 package com.sep.sep_backend.EventHandling;
 
+import java.util.List;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api")
 public class EventController {
 
-    private final EventService eventService;
+  private final EventService eventService;
 
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
-    }
+  public EventController(EventService eventService) {
+    this.eventService = eventService;
+  }
 
-    @PostMapping("event/create/manual")
-    public ResponseEntity<EventResponseDTO> EventsManuellErstellen(@RequestBody EventRequestDTO dto) {
-            var responsedto = eventService.SaveEventToDB(dto);
-            return ResponseEntity.ok().body(responsedto);
-    }
+  @PostMapping("event/create/manual")
+  public ResponseEntity<EventResponseDTO> EventsManuellErstellen(@RequestBody EventRequestDTO dto) {
+    var responsedto = eventService.SaveEventToDB(dto);
+    return ResponseEntity.ok().body(responsedto);
+  }
 
+  @GetMapping("event/pull/all_events")
+  public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
+    return ResponseEntity.ok(eventService.GetAllEventsFromDb());
+  }
 
-    @GetMapping("event/pull/all_events")
-    public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
-        return ResponseEntity.ok(eventService.GetAllEventsFromDb());
-    }
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/automatic")
+  public EventResponseDTO uploadEmail(
+      @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
+      throws Exception {
+    var eventDTO = eventService.ParseMailFile(file.getInputStream());
+    eventService.SaveEventResponseToDB(eventDTO, tripId);
+    return eventDTO;
+  }
+
+  @PostMapping("event/delete")
+  public ResponseEntity<Void> DeleteEventFromDB(@RequestBody Long EventID) {
+    eventService.DeleteEventFromDB(EventID);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("event/edit")
+  public ResponseEntity<EventResponseDTO> EditEvent(
+      @RequestBody Long EventID, EventRequestDTO dto) {
+    var response = eventService.EditEvent(EventID, dto);
+    return ResponseEntity.ok(response);
+  }
 }

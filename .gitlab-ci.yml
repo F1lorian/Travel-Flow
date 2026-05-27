@@ -1,4 +1,5 @@
 stages:
+  - lint
   - build
 
 variables:
@@ -10,6 +11,27 @@ variables:
   DOCKER_BUILDKIT: "1"
   # Optional but recommended for performance
   DOCKER_DRIVER: overlay2
+
+backend_lint:
+  stage: lint
+  image: eclipse-temurin:21-jdk
+  tags:
+    - dind
+    - ude-sse
+  variables:
+    GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  cache:
+    key: gradle
+    paths:
+      - .gradle/caches/
+      - .gradle/wrapper/
+  script:
+    - cd backend
+    - sh ./gradlew spotlessCheck
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
 
 .build_template: &build_template
   stage: build
