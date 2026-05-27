@@ -61,6 +61,7 @@
               }
             </div>
             <div class="event-cost">{{ event.kosten }} €</div>
+            <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
           </li>
         }
       </ul>
@@ -94,6 +95,57 @@
           <button class="cancel-btn" (click)="cancelDelete()">Cancel</button>
           <button class="delete-btn" (click)="confirmDelete()">Delete Trip</button>
         </div>
+      </div>
+    </div>
+  }
+
+  @if (eventToDelete(); as evt) {
+    <div class="modal-overlay" (click)="closeEventModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+
+        @if (deleteStep() === 'choice') {
+          <h2>Delete event "{{ evt.name }}"</h2>
+          <p>What do you want to do?</p>
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="closeEventModal()">Cancel</button>
+            <button class="move-btn" (click)="startMoveFlow()">Move to another trip</button>
+            <button class="delete-btn" (click)="confirmDeleteEvent()">Delete permanently</button>
+          </div>
+        }
+
+        @if (deleteStep() === 'pick-trip') {
+          <h2>Move "{{ evt.name }}" to which trip?</h2>
+          <input
+            type="text"
+            class="trip-search"
+            [(ngModel)]="tripSearch"
+            placeholder="Search trips by name..."
+          />
+          @if (filteredOtherTrips().length === 0) {
+            <p class="empty">No matching trips.</p>
+          } @else {
+            <ul class="trip-picker-list">
+              @for (t of filteredOtherTrips(); track t.id) {
+                <li class="trip-picker-item" (click)="selectTargetTrip(t)">
+                  {{ t.name }}
+                </li>
+              }
+            </ul>
+          }
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="closeEventModal()">Cancel</button>
+          </div>
+        }
+
+        @if (deleteStep() === 'confirm-move') {
+          <h2>Relink event?</h2>
+          <p>Are you sure you want to relink "<strong>{{ evt.name }}</strong>" to trip "<strong>{{ targetTrip()!.name }}</strong>"?</p>
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="deleteStep.set('pick-trip')">Back</button>
+            <button class="delete-btn" (click)="confirmMove()">Yes, relink</button>
+          </div>
+        }
+
       </div>
     </div>
   }

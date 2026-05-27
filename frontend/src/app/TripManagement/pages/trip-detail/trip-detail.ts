@@ -25,6 +25,13 @@ export class TripDetail implements OnInit {
   showDeleteConfirm = signal(false);
   errorMessage = '';
 
+  // Delete-event modal state
+  eventToDelete = signal<Event | null>(null);
+  deleteStep = signal<'choice' | 'pick-trip' | 'confirm-move'>('choice');
+  otherTrips = signal<Trip[]>([]);
+  tripSearch = '';
+  targetTrip = signal<Trip | null>(null);
+
   newEventName = '';
   newEventDateTime = '';
   newEventKosten = 0;
@@ -102,6 +109,69 @@ export class TripDetail implements OnInit {
         this.router.navigate(['/trips']);
       },
       error: (err) => this.errorMessage = 'Could not delete trip: ' + err.message
+    });
+  }
+
+  openEventDelete(event: Event) {
+    this.eventToDelete.set(event);
+    this.deleteStep.set('choice');
+    this.tripSearch = '';
+    this.targetTrip.set(null);
+  }
+
+  closeEventModal() {
+    this.eventToDelete.set(null);
+    this.targetTrip.set(null);
+    this.tripSearch = '';
+  }
+
+  confirmDeleteEvent() {
+    const tripId = this.trip()?.id;
+    const event = this.eventToDelete();
+    if (!tripId || !event) return;
+    this.tripService.deleteEvent(tripId, event.id).subscribe({
+      next: () => {
+        this.events.update(list => list.filter(e => e.id !== event.id));
+        this.closeEventModal();
+      },
+      error: (err) => this.errorMessage = 'Could not delete event: ' + err.message
+    });
+  }
+
+  startMoveFlow() {
+    const currentTripId = this.trip()?.id;
+    if (!currentTripId) return;
+    this.tripService.getAllTrips().subscribe({
+      next: (trips) => {
+        this.otherTrips.set(trips.filter(t => t.id !== currentTripId));
+        this.deleteStep.set('pick-trip');
+      },
+      error: (err) => this.errorMessage = 'Could not load trips: ' + err.message
+    });
+  }
+
+  filteredOtherTrips(): Trip[] {
+    const q = this.tripSearch.trim().toLowerCase();
+    if (!q) return this.otherTrips();
+    return this.otherTrips().filter(t => t.name.toLowerCase().includes(q));
+  }
+
+  selectTargetTrip(trip: Trip) {
+    this.targetTrip.set(trip);
+    this.deleteStep.set('confirm-move');
+  }
+
+  confirmMove() {
+    const tripId = this.trip()?.id;
+    const event = this.eventToDelete();
+    const target = this.targetTrip();
+    if (!tripId || !event || !target) return;
+    this.tripService.moveEvent(tripId, event.id, target.id).subscribe({
+      next: () => {
+        this.events.update(list => list.filter(e => e.id !== event.id));
+        this.closeEventModal();
+      },
+      error: (err) => this.errorMessage = 'Could not move event: ' + err.message
     });
   }
 }

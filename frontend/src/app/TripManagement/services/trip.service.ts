@@ -58,4 +58,12 @@ export class TripService {
   deleteTrip(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  deleteEvent(tripId: number, eventId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${tripId}/events/${eventId}`);
+  }
+
+  moveEvent(tripId: number, eventId: number, newTripId: number): Observable<Event> {
+    return this.http.put<Event>(`${this.apiUrl}/${tripId}/events/${eventId}/move/${newTripId}`, {});
+  }
 }
