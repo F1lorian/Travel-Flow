@@ -19,7 +19,6 @@ export class EventService {
   private readonly editEvents = '/api/event/edit';
   private readonly deleteEvents = '/api/event/delete';
 
-
   createManualEvent(newEvent: AddEventRequest): Observable<AddEventResponse> {
     return this.http.post<AddEventResponse>(this.manualEventEndpoint, newEvent);
   }
@@ -34,6 +33,14 @@ export class EventService {
 
   deleteEvent(id: string):Observable<string> {
     return this.http.post<string>(this.deleteEvents, id);
+  }
+
+  importEvents(formData: FormData) {
+    return this.http.post('/api/event/import', formData);
+  }
+
+  exportEvent() {
+
   }
 
 }

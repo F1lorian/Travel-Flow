@@ -16,6 +16,7 @@ import {EditEventResponse} from '../../../event-adding-manual/models/EditEventRe
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
 import {EventImpl} from '@fullcalendar/core/internal';
+import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialog';
 
 
 @Component({
@@ -223,11 +224,21 @@ export class CalendarComponent implements OnInit {
   }
 
   importEvent(){
+    const dialogRef = this.dialog.open(EventTransferDialog, {
+      data: {mode: 'import',}
+    })
 
+    dialogRef.afterClosed().subscribe(result => {
+      if(result){
+        this.addCreatedEvent(result);
+      }
+    })
   }
 
   exportEvents(){
-
+    this.dialog.open(EventTransferDialog, {
+      data: {mode: 'export',}
+    })
   }
 
   loadEvents(){
