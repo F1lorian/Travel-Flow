@@ -23,17 +23,16 @@ class TripEventControllerTest {
 
   @MockitoBean private TripEventService eventService;
 
-    private final LocalDateTime sampleStartTime = LocalDateTime.of(2026, 7, 15, 19, 30, 0);
-    private final LocalDateTime sampleEndTime = LocalDateTime.of(2026, 7, 16, 19, 30, 0);
+  private final LocalDateTime sampleStartTime = LocalDateTime.of(2026, 7, 15, 19, 30, 0);
+  private final LocalDateTime sampleEndTime = LocalDateTime.of(2026, 7, 16, 19, 30, 0);
 
-
-    @Test
-    void getEvents_returnsOkWithEventList() throws Exception {
-        Trip trip = new Trip("Paris");
-        trip.setId(1L);
-        Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
-        event.setId(1L);
-        when(eventService.getEventsForTrip(1L)).thenReturn(List.of(event));
+  @Test
+  void getEvents_returnsOkWithEventList() throws Exception {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
+    event.setId(1L);
+    when(eventService.getEventsForTrip(1L)).thenReturn(List.of(event));
 
     mockMvc
         .perform(get("/api/trips/1/events"))
@@ -42,14 +41,15 @@ class TripEventControllerTest {
         .andExpect(jsonPath("$[0].kosten").value(50));
   }
 
-    @Test
-    void addEvent_returnsOkWithCreatedEvent() throws Exception {
-        Trip trip = new Trip("Paris");
-        trip.setId(1L);
-        Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
-        event.setId(1L);
-        when(eventService.addEventToTrip(eq(1L), eq("Dinner"), eq(sampleStartTime), eq(sampleEndTime), eq(50)))
-                .thenReturn(event);
+  @Test
+  void addEvent_returnsOkWithCreatedEvent() throws Exception {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
+    event.setId(1L);
+    when(eventService.addEventToTrip(
+            eq(1L), eq("Dinner"), eq(sampleStartTime), eq(sampleEndTime), eq(50)))
+        .thenReturn(event);
 
     mockMvc
         .perform(

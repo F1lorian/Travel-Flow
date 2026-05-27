@@ -17,8 +17,9 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class TripEventController {
 
-    // Shape of the JSON body sent by the frontend when adding an event
-    public record CreateEventRequest(String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {}
+  // Shape of the JSON body sent by the frontend when adding an event
+  public record CreateEventRequest(
+      String name, LocalDateTime startTime, LocalDateTime endTime, int kosten) {}
 
   private final TripEventService eventService;
 
@@ -31,11 +32,12 @@ public class TripEventController {
     return eventService.getEventsForTrip(tripId).stream().map(EventDTO::from).toList();
   }
 
-    @PostMapping
-    public ResponseEntity<EventDTO> addEvent(
-            @PathVariable Long tripId,
-            @RequestBody CreateEventRequest request) {
-        Event created = eventService.addEventToTrip(tripId, request.name(), request.startTime(), request.endTime(), request.kosten());
-        return ResponseEntity.ok(EventDTO.from(created));
-    }
+  @PostMapping
+  public ResponseEntity<EventDTO> addEvent(
+      @PathVariable Long tripId, @RequestBody CreateEventRequest request) {
+    Event created =
+        eventService.addEventToTrip(
+            tripId, request.name(), request.startTime(), request.endTime(), request.kosten());
+    return ResponseEntity.ok(EventDTO.from(created));
+  }
 }

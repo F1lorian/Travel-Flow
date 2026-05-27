@@ -35,8 +35,8 @@ public class EventService {
   private final AusgabeService ausgabeService;
   private final ObjectMapper objectMapper;
 
-    @Value("${gemini.api-key}")
-    private String geminiApiKey;
+  @Value("${gemini.api-key}")
+  private String geminiApiKey;
 
   @Value("${gemini.model}")
   private String geminiModel;
@@ -53,16 +53,21 @@ public class EventService {
     this.objectMapper = objectMapper;
   }
 
-
-    //Todo Name bei Trip muss besser gelöst werden jetzt vereinfacht über id
-    public EventResponseDTO SaveEventToDB(EventRequestDTO dto)
-    {
-        Trip matchingTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException("Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
-        LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
-        LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
-        Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
-        EventResponseDTO ausgabe = new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
-        eventRepository.save(newEvent);
+  // Todo Name bei Trip muss besser gelöst werden jetzt vereinfacht über id
+  public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
+    Trip matchingTrip =
+        tripRepository
+            .findById(dto.getTripId())
+            .orElseThrow(
+                () ->
+                    new RuntimeException(
+                        "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+    LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
+    LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
+    EventResponseDTO ausgabe =
+        new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
+    eventRepository.save(newEvent);
 
     // add the expence automatically to the db
     AusgabeRequestDTO ausgabeRequestDTO =
@@ -83,30 +88,28 @@ public class EventService {
 
   public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
     Event event =
-            eventRepository
-                    .findById(eventId)
-                    .orElseThrow(
-                            () -> new EntityNotFoundException("Event mit ID " + eventId + " wurde nicht gefunden"));
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(
+                        "Event mit ID " + eventId + " wurde nicht gefunden"));
 
-    if(dto.getName() != null)
-    {
+    if (dto.getName() != null) {
       event.setName(dto.getName());
     }
-    if(dto.getKosten() != -1)
-    {
+    if (dto.getKosten() != -1) {
       event.setKosten(dto.getKosten());
     }
-    if (dto.getStart() != null)
-    {
+    if (dto.getStart() != null) {
       event.setStartTime(dto.getStart());
     }
-    if (dto.getEnd() != null)
-    {
+    if (dto.getEnd() != null) {
       event.setEndTime(dto.getEnd());
     }
-    if (dto.getTripId() != null)
-    {
-      var newTrip = tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException());
+    if (dto.getTripId() != null) {
+      var newTrip =
+          tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException());
       event.setTrip(newTrip);
     }
     eventRepository.save(event);
@@ -141,20 +144,19 @@ public class EventService {
     return response;
   }
 
-    public List<EventCalendarDTO> GetAllEventsFromDb()
-    {
-        return eventRepository.findAll()
-                .stream()
-                .map(event -> new EventCalendarDTO(
-                        String.valueOf(event.getId()),
-                        event.getName(),
-                        event.getKosten(),
-                        event.getStartTime(),
-                        event.getEndTime(),
-                        event.getTripId()
-                ))
-                .toList();
-    }
+  public List<EventCalendarDTO> GetAllEventsFromDb() {
+    return eventRepository.findAll().stream()
+        .map(
+            event ->
+                new EventCalendarDTO(
+                    String.valueOf(event.getId()),
+                    event.getName(),
+                    event.getKosten(),
+                    event.getStartTime(),
+                    event.getEndTime(),
+                    event.getTripId()))
+        .toList();
+  }
 
   public EventResponseDTO ParseMailFile(InputStream inputStream) throws Exception {
     Session session = Session.getDefaultInstance(new Properties());

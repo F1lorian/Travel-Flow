@@ -24,19 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
 
@@ -61,12 +48,12 @@ class EventServiceTest {
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
 
-        Event savedEvent = eventCaptor.getValue();
-        assertThat(savedEvent.getName()).isEqualTo("Museum");
-        assertThat(savedEvent.getKosten()).isEqualTo(25);
-        assertThat(savedEvent.getTrip()).isSameAs(trip);
-        assertThat(savedEvent.getStartTime()).isAfterOrEqualTo(beforeSave);
-    }
+    Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getName()).isEqualTo("Museum");
+    assertThat(savedEvent.getKosten()).isEqualTo(25);
+    assertThat(savedEvent.getTrip()).isSameAs(trip);
+    assertThat(savedEvent.getStartTime()).isAfterOrEqualTo(beforeSave);
+  }
 
   @Test
   void saveEventToDBWirftExceptionWennTripNichtExistiert() {
@@ -105,13 +92,13 @@ class EventServiceTest {
     assertThat(result.getUhrzeit()).isEqualTo(start);
   }
 
-    @Test
-    void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
-        Trip trip = new Trip("London");
-        LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
-        LocalDateTime end = LocalDateTime.of(2026, 5, 8, 14, 30);
-        Event event = new Event("Museum", start, end, 25, trip);
-        event.setId(42L);
+  @Test
+  void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
+    Trip trip = new Trip("London");
+    LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
+    LocalDateTime end = LocalDateTime.of(2026, 5, 8, 14, 30);
+    Event event = new Event("Museum", start, end, 25, trip);
+    event.setId(42L);
 
     when(eventRepository.findAll()).thenReturn(List.of(event));
 
