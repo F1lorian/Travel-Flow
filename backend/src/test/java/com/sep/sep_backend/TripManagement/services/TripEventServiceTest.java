@@ -72,7 +72,7 @@ class TripEventServiceTest {
     void getEventsForTrip_returnsEventList() {
         Trip trip = new Trip("Paris");
         List<Event> events = List.of(new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip));
-        when(eventRepository.findByTripId(1L)).thenReturn(events);
+        when(eventRepository.findByTrip_Id(1L)).thenReturn(events);
 
         List<Event> result = eventService.getEventsForTrip(1L);
 

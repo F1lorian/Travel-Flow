@@ -41,7 +41,7 @@ public class TripEventService {
     }
 
     public List<Event> getEventsForTrip(Long tripId) {
-        return eventRepository.findByTripId(tripId);
+        return eventRepository.findByTrip_Id(tripId);
     }
 
     // Stub: notify users when an event is added — to be implemented

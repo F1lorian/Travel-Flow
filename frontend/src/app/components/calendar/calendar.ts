@@ -89,7 +89,7 @@ export class CalendarComponent implements OnInit {
         id: selectedEvent.id,
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
-        tripId: selectedEvent.extendedProps['trip'],
+        tripId: selectedEvent.extendedProps['tripId'],
         start: selectedEvent.startStr,
         end: selectedEvent.endStr
       }
@@ -106,21 +106,22 @@ export class CalendarComponent implements OnInit {
     this.createEvent(clickInfo.dateStr);
   }
 
-  addCreatedEvent(event: AddEventResponse) {
+  addCreatedEvent(event: AddEventResponse, tripId?: number) {
     const currentEvents = Array.isArray(this.calendarOptions.events)
       ? this.calendarOptions.events
       : [];
-    const startDate = this.selectedDateStr || event.startZeit.substring(0, 10);
-    const endDate = this.selectedDateStr || event.endZeit.substring(0, 10);
-
     this.calendarOptions = {
       ...this.calendarOptions,
       events: [
         ...currentEvents,
         {
           title: event.name,
-          start: startDate,
-          end: endDate,
+          start: event.startZeit,
+          end: event.endZeit,
+          extendedProps: {
+            kosten: event.kosten,
+            tripId,
+          },
         },
       ],
     };
@@ -137,8 +138,9 @@ export class CalendarComponent implements OnInit {
 
     calendarEvent.setProp('title', event.name);
     calendarEvent.setStart(event.start);
+    calendarEvent.setEnd(event.end);
     calendarEvent.setExtendedProp('kosten', event.kosten);
-    calendarEvent.setExtendedProp('trip', event.tripId);
+    calendarEvent.setExtendedProp('tripId', event.tripId);
   }
 
   removeDeletedEvent(id: string) {
@@ -170,7 +172,7 @@ export class CalendarComponent implements OnInit {
           .subscribe({
             next: (response) => {
               console.log("Event Response:", response);
-              this.addCreatedEvent(response);
+              this.addCreatedEvent(response, newEvent.tripId);
             },
             error: () => {
               console.error("Event konnte nicht erstellt werden!");
@@ -187,10 +189,10 @@ export class CalendarComponent implements OnInit {
       data: {mode: 'edit',
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
-        tripId: selectedEvent.extendedProps['trip'],
-        start: selectedEvent.startStr + "T00:00",
-        end: selectedEvent.endStr + "T00:00"
-      }, //noch ändern, wenn uhrzeiten hinzugefügt werden
+        tripId: selectedEvent.extendedProps['tripId'],
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
+      },
     });
     dialogRef.afterClosed().subscribe(result => {
       if(result){

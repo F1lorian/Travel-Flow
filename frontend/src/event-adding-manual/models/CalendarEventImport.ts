@@ -4,5 +4,5 @@ export type CalendarEventImport = {
   start: string;
   end: string;
   kosten: number;
-  trip: string;
+  tripId: number;
 }

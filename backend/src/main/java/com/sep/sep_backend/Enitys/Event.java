@@ -13,10 +13,8 @@ public class Event {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
     private LocalDateTime startTime;
 
-    @Column(nullable = false)
     private LocalDateTime endTime;
 
     private int kosten;

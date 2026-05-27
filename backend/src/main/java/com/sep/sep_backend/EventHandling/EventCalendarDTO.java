@@ -9,8 +9,6 @@ public class EventCalendarDTO {
     private String title;
     private int kosten;
     private long tripId;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime start;
     private LocalDateTime end;
     //hier müssen noch die uhrzeiten hinzugefügt werden!

@@ -14,10 +14,8 @@ public class Trip {
     @Column (nullable = false)
     private String name;
 
-    @Column(nullable = false)
     private LocalDate startDate;
 
-    @Column(nullable = false)
     private LocalDate endDate;
 
     @OneToMany(mappedBy = "trip")
