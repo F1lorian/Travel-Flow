@@ -6,10 +6,7 @@ GET /api/trips/{id}    → frontend trip-detail page (loads one trip)
 POST /api/trips        → frontend create-trip form */
 
 import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.TripManagement.dto.EventRecommendationDTO;
-import com.sep.sep_backend.TripManagement.dto.EventSearchRequest;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
-import com.sep.sep_backend.TripManagement.services.GeminiEventSearchService;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import java.util.List;
 import java.util.Optional;
@@ -25,11 +22,9 @@ public class TripController {
   public record CreateTripRequest(String name) {}
 
   private final TripService tripService;
-  private final GeminiEventSearchService geminiEventSearchService;
 
-  public TripController(TripService tripService, GeminiEventSearchService geminiEventSearchService) {
+  public TripController(TripService tripService) {
     this.tripService = tripService;
-    this.geminiEventSearchService = geminiEventSearchService;
   }
 
   @GetMapping
@@ -60,11 +55,5 @@ public class TripController {
     } catch (IllegalArgumentException e) {
       return ResponseEntity.notFound().build();
     }
-  }
-
-  @PostMapping("/event-search")
-  public ResponseEntity<List<EventRecommendationDTO>> searchEvents(
-      @RequestBody EventSearchRequest request) {
-    return ResponseEntity.ok(geminiEventSearchService.searchEvents(request.location()));
   }
 }

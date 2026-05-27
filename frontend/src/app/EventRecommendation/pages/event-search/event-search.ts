@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { EventRecommendation, TripService } from '../../services/trip.service';
+import { EventRecommendation, TripService } from '../../../TripManagement/services/trip.service';
 
 @Component({
   selector: 'app-event-search',

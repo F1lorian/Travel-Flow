@@ -1,10 +1,10 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.EventRecommendation.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sep.sep_backend.TripManagement.dto.EventRecommendationDTO;
+import com.sep.sep_backend.EventRecommendation.dto.EventRecommendationDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;

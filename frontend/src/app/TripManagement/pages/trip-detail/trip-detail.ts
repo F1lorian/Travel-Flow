@@ -6,7 +6,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EventRecommendation, TripService, Trip, Event, Category } from '../../services/trip.service';
-import { EventSearchComponent } from '../event-search/event-search';
+import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
 
 @Component({
   selector: 'app-trip-detail',
