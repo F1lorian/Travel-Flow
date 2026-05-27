@@ -5,6 +5,8 @@ import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 class DataService {
   private static final DateTimeFormatter EVENT_TIME_FORMATTER =
       DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
   private static final DateTimeFormatter UTC_FORMATTER =
       DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
 
@@ -28,10 +31,14 @@ class DataService {
   }
 
   public String exportAllEventsAsIcal() {
-    List<IcalRecord> events = eventRepository.findAll().stream().map(this::toIcalRecord).toList();
+    List<IcalRecord> events =
+        eventRepository.findAll().stream()
+            .filter(event -> event.getStartTime() != null)
+            .map(this::toIcalRecord)
+            .toList();
     List<IcalRecord> trips =
         tripRepository.findAll().stream()
-            .filter(trip -> trip.getDateTime() != null)
+            .filter(trip -> trip.getStartDate() != null)
             .map(this::toIcalRecord)
             .toList();
     return buildCalendar(events, trips);
@@ -39,16 +46,29 @@ class DataService {
 
   private IcalRecord toIcalRecord(Event event) {
     String description = event.getTrip() == null ? "" : "Trip: " + event.getTrip().getName();
-    return new IcalRecord(
+    LocalDateTime endDateTime =
+        event.getEndTime() != null && event.getEndTime().isAfter(event.getStartTime())
+            ? event.getEndTime()
+            : null;
+    return IcalRecord.timed(
         "event-" + event.getId() + "@sep-backend",
         event.getName(),
         description,
-        event.getDateTime());
+        event.getStartTime(),
+        endDateTime);
   }
 
   private IcalRecord toIcalRecord(Trip trip) {
-    return new IcalRecord(
-        "trip-" + trip.getId() + "@sep-backend", trip.getName(), "Reise", trip.getDateTime());
+    LocalDate endDateInclusive =
+        trip.getEndDate() != null && !trip.getEndDate().isBefore(trip.getStartDate())
+            ? trip.getEndDate()
+            : trip.getStartDate();
+    return IcalRecord.allDay(
+        "trip-" + trip.getId() + "@sep-backend",
+        "Reise: " + trip.getName(),
+        "Reise",
+        trip.getStartDate(),
+        endDateInclusive.plusDays(1));
   }
 
   private String buildCalendar(List<IcalRecord> events, List<IcalRecord> trips) {
@@ -74,21 +94,38 @@ class DataService {
   }
 
   private String buildEvent(IcalRecord event, String dtStamp) {
+    String dates =
+        event.isAllDay()
+            ? """
+            DTSTART;VALUE=DATE:%s
+            DTEND;VALUE=DATE:%s
+            """
+                .formatted(
+                    DATE_FORMATTER.format(event.startDate()),
+                    DATE_FORMATTER.format(event.endDateExclusive()))
+            : buildTimedDates(event);
     return """
     BEGIN:VEVENT
     UID:%s
     DTSTAMP:%s
-    DTSTART:%s
-    SUMMARY:%s
+    %sSUMMARY:%s
     DESCRIPTION:%s
     END:VEVENT
     """
         .formatted(
             event.uid(),
             dtStamp,
-            EVENT_TIME_FORMATTER.format(event.startDateTime()),
+            dates,
             escapeIcs(event.title()),
             escapeIcs(event.description()));
+  }
+
+  private String buildTimedDates(IcalRecord event) {
+    String start = "DTSTART:" + EVENT_TIME_FORMATTER.format(event.startDateTime()) + "\n";
+    if (event.endDateTime() == null) {
+      return start;
+    }
+    return start + "DTEND:" + EVENT_TIME_FORMATTER.format(event.endDateTime()) + "\n";
   }
 
   private String escapeIcs(String value) {
