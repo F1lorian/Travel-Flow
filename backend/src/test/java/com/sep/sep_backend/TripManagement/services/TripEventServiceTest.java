@@ -61,13 +61,6 @@ class TripEventServiceTest {
   }
 
   @Test
-  void addEventToTrip_throwsWhenDateTimeIsNull() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> eventService.addEventToTrip(1L, "Dinner", null, null, 50, null));
-  }
-
-  @Test
   void getEventsForTrip_returnsEventList() {
     Trip trip = new Trip("Paris");
     List<Event> events = List.of(new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip));

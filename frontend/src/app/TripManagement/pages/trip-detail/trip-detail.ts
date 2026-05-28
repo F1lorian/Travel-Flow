@@ -34,7 +34,8 @@ export class TripDetail implements OnInit {
   targetTrip = signal<Trip | null>(null);
 
   newEventName = '';
-  newEventDateTime = '';
+  newEventStartTime = '';
+  newEventEndTime = '';
   newEventKosten = 0;
   newEventCategory = '';
 
@@ -62,20 +63,18 @@ export class TripDetail implements OnInit {
       this.errorMessage = 'Please enter an event name';
       return;
     }
-    if (!this.newEventDateTime) {
-      this.errorMessage = 'Please pick a date and time';
-      return;
-    }
 
     // datetime-local gives YYYY-MM-DDTHH:MM, backend needs seconds appended
-    const startTime = this.newEventDateTime + ':00';
+    const startTime = this.newEventStartTime ? this.newEventStartTime + ':00' : undefined;
+    const endTime = this.newEventEndTime ? this.newEventEndTime + ':00' : undefined;
     const category = this.newEventCategory.trim() || undefined;
 
-    this.tripService.addEvent(tripId, this.newEventName, startTime, this.newEventKosten, category).subscribe({
+    this.tripService.addEvent(tripId, this.newEventName, startTime, endTime, this.newEventKosten, category).subscribe({
       next: (event) => {
         this.events.update(list => [...list, event]);
         this.newEventName = '';
-        this.newEventDateTime = '';
+        this.newEventStartTime = '';
+        this.newEventEndTime = '';
         this.newEventKosten = 0;
         this.newEventCategory = '';
         this.errorMessage = '';
@@ -96,7 +95,7 @@ export class TripDetail implements OnInit {
     const startTime = this.normalizeRecommendationDate(recommendation.dateTime);
     const cost = recommendation.price ?? 0;
 
-    this.tripService.addEvent(tripId, recommendation.name, startTime, cost).subscribe({
+    this.tripService.addEvent(tripId, recommendation.name, startTime, undefined, cost).subscribe({
       next: (event) => {
         this.events.update(list => [...list, event]);
         this.errorMessage = '';
@@ -105,8 +104,8 @@ export class TripDetail implements OnInit {
     });
   }
 
-  formatDateTime(dt: string): string {
-    return new Date(dt).toLocaleString();
+  formatDateTime(dt?: string): string {
+    return dt ? new Date(dt).toLocaleString() : '';
   }
 
   openDeleteConfirm() {

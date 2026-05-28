@@ -66,9 +66,9 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 100px auto;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
-  align-items: center;
+  align-items: end;
 }
 
 @media (max-width: 600px) {
@@ -91,6 +91,18 @@
   border-color: #2f6fed;
   outline: none;
   box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.req {
+  color: #dc2626;
 }
 
 .form-grid button {

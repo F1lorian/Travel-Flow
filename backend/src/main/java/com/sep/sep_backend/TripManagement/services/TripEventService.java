@@ -35,12 +35,9 @@ public class TripEventService {
       LocalDateTime endTime,
       int kosten,
       String categoryName) {
-    // Validate input first — fail fast before touching the database
+    // Only the name is required (matches the Event entity's nullable=false)
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Event name cannot be empty");
-    }
-    if (startTime == null) {
-      throw new IllegalArgumentException("Event date/time is required");
     }
 
     Trip trip =
