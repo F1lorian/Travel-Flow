@@ -5,8 +5,9 @@
   </h2>
 
   @if (mode === 'show'){
-    <p>Titel: {{ data.title }}</p>
+    <p class="text-base font-semibold text-slate-800">Titel: {{ data.title }}</p>
   } @else {
+    <label class="mb-2 block text-sm font-semibold text-slate-700" for="title">Titel:</label>
     <input
       [(ngModel)]="title"
       placeholder="Titel eingeben"
@@ -17,8 +18,9 @@
   }
 
   @if(mode === 'show'){
-    <p>Kosten: {{data.kosten}} </p>
+    <p class="text-base font-semibold text-slate-800">Kosten: {{data.kosten}} </p>
   } @else {
+    <label class="mb-2 block text-sm font-semibold text-slate-700" for="kosten">Kosten</label>
     <input
       [(ngModel)]="kosten"
       placeholder="Kosten eingeben"
@@ -29,19 +31,31 @@
   }
 
   @if (mode === 'show') {
-    <p>Trip: {{ data.tripId }}</p>
+    <p class="text-base font-semibold text-slate-800">Trip: {{ tripName }}</p>
   } @else {
-    <input
+    <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip wählen</label>
+    <select
       [(ngModel)]="tripId"
-      placeholder="TripId eingeben"
       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
+         text-slate-900 outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+      <option [ngValue]="undefined" disabled>
+        Bitte Trip auswählen
+      </option>
+
+      @for (trip of trips; track trip.id) {
+
+        <option [ngValue]="trip.id">
+          {{ trip.name }}
+        </option>
+
+      }
+    </select>
   }
 
   @if (mode === 'show') {
-    <p>Beginn: {{data.start}}</p>
+    <p class="text-base font-semibold text-slate-800">Beginn: {{data.start}}</p>
   } @else {
     <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">Startzeit</label>
     <input
@@ -54,7 +68,7 @@
   }
 
   @if (mode === 'show') {
-    <p>Ende: {{data.end}}</p>
+    <p class="text-base font-semibold text-slate-800">Ende: {{data.end}}</p>
   } @else {
     <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">Endzeit</label>
     <input

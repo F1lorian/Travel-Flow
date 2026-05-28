@@ -37,12 +37,24 @@
       </div>
 
       <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip auswählen</label>
-      <input
+      <select
         [(ngModel)]="tripId"
         class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
+         text-slate-900 outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+        <option [ngValue]="undefined" disabled>
+          Bitte Trip auswählen
+        </option>
+
+        @for (trip of trips; track trip.id) {
+
+          <option [ngValue]="trip.id">
+            {{ trip.name }}
+          </option>
+
+        }
+      </select>
 
       <input
         #fileInput

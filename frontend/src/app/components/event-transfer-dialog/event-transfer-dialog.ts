@@ -2,6 +2,7 @@ import {Component, inject, Inject} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
+import {Trip, TripService} from '../../TripManagement/services/trip.service';
 
 @Component({
   selector: 'app-event-transfer-dialog',
@@ -14,13 +15,19 @@ export class EventTransferDialog {
   file?: File;
   fileName = '';
   eventService = inject(EventService);
-  tripId: number = 0;
+  tripId: number | undefined;
+  tripService = inject(TripService);
+  trips: Trip[] = [];
 
   constructor(private dialogRef: MatDialogRef<EventTransferDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
     if (data) {
       this.mode = data.mode;
 
     }
+  }
+
+  ngOnInit() {
+    this.loadTrips();
   }
 
   onFileSelected(event: Event) {
@@ -83,6 +90,9 @@ export class EventTransferDialog {
     console.log(this.file);
     console.log(importId);
 
+    if(!this.tripId){
+      return;
+    }
     this.eventService.importEvents(formData, this.tripId).subscribe({
       next: (event) => {
         this.dialogRef.close(event);
@@ -112,6 +122,17 @@ export class EventTransferDialog {
 
   private isEmlFile(file: File): boolean {
     return file.name.toLowerCase().endsWith('.eml');
+  }
+
+  loadTrips() {
+    this.tripService.getAllTrips().subscribe({
+      next: trips => {
+        this.trips = trips;
+      },
+      error: err => {
+        console.error('Trips konnten nicht geladen werden:', err);
+      }
+    });
   }
 
   close(){
