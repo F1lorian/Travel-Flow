@@ -1,4 +1,4 @@
- /* back-front relation: trip-detail page — calls GET /api/trips/{id}
+/* back-front relation: trip-detail page — calls GET /api/trips/{id}
    and POST /api/trips/{id}/events via TripService. Events are included
    in the trip response, so no separate events fetch is needed. */
 

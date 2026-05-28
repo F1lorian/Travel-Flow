@@ -55,9 +55,7 @@ public class TripEventService {
       newEvent.setCategorie(category);
     }
 
-    Event savedEvent = eventRepository.save(newEvent);
-    notifyRelatedUsers(savedEvent);
-    return savedEvent;
+    return eventRepository.save(newEvent);
   }
 
   public List<Event> getEventsForTrip(Long tripId) {
@@ -88,14 +86,5 @@ public class TripEventService {
 
     event.setTrip(newTrip);
     return eventRepository.save(event);
-  }
-
-  // Stub: notify users when an event is added — to be implemented
-  private void notifyRelatedUsers(Event event) {
-    System.out.println(
-        "Notification: New event '"
-            + event.getName()
-            + "' added to trip ID "
-            + event.getTrip().getId());
   }
 }
