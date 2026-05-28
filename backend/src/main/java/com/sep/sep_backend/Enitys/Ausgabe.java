@@ -1,68 +1,72 @@
 package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
+
 @Entity
 public class Ausgabe {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
-    private double kosten;
-    private LocalDate date;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private long id;
 
-    public Ausgabe() {}
+  private double kosten;
+  private LocalDate date;
 
-    public Ausgabe(double kosten, Trip trip, LocalDate date, Categories kategorie) {
-        this.kosten = kosten;
-        this.trip = trip;
-        this.date = date;
-        this.kategorie = kategorie;
-    }
+  public Ausgabe() {}
 
-    @ManyToOne
-    @JoinColumn(name = "trip_id")
-    private Trip trip;
+  public Ausgabe(double kosten, Trip trip, LocalDate date, Categories kategorie) {
+    this.kosten = kosten;
+    this.trip = trip;
+    this.date = date;
+    this.kategorie = kategorie;
+  }
 
-    @ManyToOne
-    @JoinColumn(name = "kategorie_id")
-    private Categories kategorie;
+  @ManyToOne
+  @JoinColumn(name = "trip_id")
+  private Trip trip;
 
-    // Getter und Setter
-    public long getId() {
-        return id;
-    }
+  @ManyToOne
+  @JoinColumn(name = "kategorie_id")
+  private Categories kategorie;
 
-    public void setId(long id) {
-        this.id = id;
-    }
+  // Getter und Setter
+  public long getId() {
+    return id;
+  }
 
-    public double getKosten() {
-        return kosten;
-    }
+  public void setId(long id) {
+    this.id = id;
+  }
 
-    public void setKosten(double kosten) {
-        this.kosten = kosten;
-    }
+  public double getKosten() {
+    return kosten;
+  }
 
-    public Trip getTrip() {
-        return trip;
-    }
+  public void setKosten(double kosten) {
+    this.kosten = kosten;
+  }
 
-    public void setTrip(Trip trip) {
-        this.trip = trip;
-    }
+  public Trip getTrip() {
+    return trip;
+  }
 
-    public LocalDate getDate(){
-        return this.date;
-    }
+  public void setTrip(Trip trip) {
+    this.trip = trip;
+  }
 
-    public void setDate(LocalDate date){
-        this.date = date;
-    }
+  public LocalDate getDate() {
+    return this.date;
+  }
 
-    public Categories getKategorie(){ return this.kategorie; }
+  public void setDate(LocalDate date) {
+    this.date = date;
+  }
 
-    public void setKategorie(Categories kategorie){ this.kategorie = kategorie; }
+  public Categories getKategorie() {
+    return this.kategorie;
+  }
 
+  public void setKategorie(Categories kategorie) {
+    this.kategorie = kategorie;
+  }
 }

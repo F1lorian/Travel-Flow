@@ -1,51 +1,55 @@
 package com.sep.sep_backend.ausgabe;
 
-import com.sep.sep_backend.Enitys.Categories;
 import com.sep.sep_backend.Enitys.Trip;
-
 import java.time.LocalDate;
 
 public class AusgabeRequestDTO {
-    private long id;
-    private double kosten;
-    private Trip trip;
-    private LocalDate date;
-    private String kategorie;
-    public AusgabeRequestDTO() {}
+  private long id;
+  private double kosten;
+  private Trip trip;
+  private LocalDate date;
+  private String kategorie;
 
-    public AusgabeRequestDTO(double kosten, Trip trip, LocalDate date, String kategorie) {
-        this.kosten = kosten;
-        this.trip = trip;
-        this.date = date;
-        this.kategorie = kategorie;
-    }
+  public AusgabeRequestDTO() {}
 
-    // Getter
-    public double getKosten(){
-        return this.kosten;
-    }
+  public AusgabeRequestDTO(double kosten, Trip trip, LocalDate date, String kategorie) {
+    this.kosten = kosten;
+    this.trip = trip;
+    this.date = date;
+    this.kategorie = kategorie;
+  }
 
-    public Trip getTrip(){
-        return this.trip;
-    }
+  // Getter
+  public double getKosten() {
+    return this.kosten;
+  }
 
-    public LocalDate getDate(){
-        return this.date;
-    }
+  public Trip getTrip() {
+    return this.trip;
+  }
 
-    public String getKategorie(){ return this.kategorie; }
+  public LocalDate getDate() {
+    return this.date;
+  }
 
-    // Setter
-    public void setKosten(double kosten){
-        this.kosten = kosten;
-    }
+  public String getKategorie() {
+    return this.kategorie;
+  }
 
-    public void setTrip(Trip trip){
-        this.trip = trip;
-    }
+  // Setter
+  public void setKosten(double kosten) {
+    this.kosten = kosten;
+  }
 
-    public void setDate(LocalDate date){ this.date = date; }
+  public void setTrip(Trip trip) {
+    this.trip = trip;
+  }
 
-    public void setKategorie(String kategorie){ this.kategorie = kategorie; }
+  public void setDate(LocalDate date) {
+    this.date = date;
+  }
 
+  public void setKategorie(String kategorie) {
+    this.kategorie = kategorie;
+  }
 }

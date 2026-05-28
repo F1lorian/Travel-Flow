@@ -8,7 +8,6 @@ import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.ausgabe.AusgabeService;
-import com.sep.sep_backend.ausgabe.Kategorie;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import jakarta.mail.Multipart;
@@ -25,10 +24,6 @@ import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class EventService {
@@ -71,7 +66,6 @@ public class EventService {
     EventResponseDTO ausgabe =
         new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
     eventRepository.save(newEvent);
-
 
     return ausgabe;
   }
@@ -133,11 +127,6 @@ public class EventService {
     EventResponseDTO response =
         new EventResponseDTO(eventName, dto.getKosten(), eventStart, eventEnd);
     eventRepository.save(newEvent);
-
-    AusgabeRequestDTO ausgabeRequestDTO =
-        new AusgabeRequestDTO(
-            (double) dto.getKosten(), matchingTrip, eventStart.toLocalDate(), Kategorie.SONSTIGES);
-    ausgabeService.ausgabeHinzufuegen(ausgabeRequestDTO);
 
     return response;
   }
