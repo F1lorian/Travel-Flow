@@ -1,6 +1,6 @@
-<div class="p-6 w-[400px]">
+<div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
 
-  <h2 class="text-2xl font-bold mb-4">
+  <h2 class="mb-1 text-3xl font-bold tracking-tight text-slate-900">
     {{ mode === 'create' ? 'Neues Event' : mode === 'edit' ? 'Event bearbeiten' : 'Aktuelles Event:'}}
   </h2>
 
@@ -10,8 +10,10 @@
     <input
       [(ngModel)]="title"
       placeholder="Titel eingeben"
-      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
   }
 
   @if(mode === 'show'){
@@ -20,8 +22,10 @@
     <input
       [(ngModel)]="kosten"
       placeholder="Kosten eingeben"
-      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
   }
 
   @if (mode === 'show') {
@@ -30,30 +34,36 @@
     <input
       [(ngModel)]="tripId"
       placeholder="TripId eingeben"
-      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
   }
 
   @if (mode === 'show') {
     <p>Beginn: {{data.start}}</p>
   } @else {
-    <label for="start">Startzeit</label>
+    <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">Startzeit</label>
     <input
       [(ngModel)]="start"
       type="datetime-local"
-      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
   }
 
   @if (mode === 'show') {
     <p>Ende: {{data.end}}</p>
   } @else {
-    <label for="end">Endzeit</label>
+    <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">Endzeit</label>
     <input
       [(ngModel)]="end"
       type="datetime-local"
-      class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
   }
 
   <!--@if(mode === 'create' || mode === 'edit'){
@@ -73,8 +83,9 @@
     @if(mode ==='create' || mode ==='edit'){
       <button
         (click)="save()"
-        class="bg-blue-500 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
-      >
+        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]">
+
         {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
       </button>
     }
@@ -82,8 +93,10 @@
     @if (mode === 'edit') {
       <button
         (click)="delete()"
-        class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
-      >
+        class="rounded-lg border border-slate-300 bg-white px-5 py-3
+         font-semibold text-slate-700
+         transition hover:bg-slate-100">
+
         Löschen
       </button>
     }
@@ -91,16 +104,19 @@
     @if (mode ==='show'){
       <button
         (click)="edit()"
-        class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
-      >
+        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]">
+
         Event bearbeiten
       </button>
     }
 
     <button
       (click)="close()"
-      class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition"
-    >
+      class="rounded-lg border border-slate-300 bg-white px-5 py-3
+         font-semibold text-slate-700
+         transition hover:bg-slate-100">
+
       Abbrechen
     </button>
 
