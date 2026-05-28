@@ -35,7 +35,8 @@ class TripEventServiceTest {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(eventRepository.save(any(Event.class))).thenReturn(event);
 
-    Event result = eventService.addEventToTrip(1L, "Dinner", sampleStartTime, sampleEndTime, 50);
+    Event result =
+        eventService.addEventToTrip(1L, "Dinner", sampleStartTime, sampleEndTime, 50, null);
 
     assertEquals("Dinner", result.getName());
     assertEquals(50, result.getKosten());
@@ -48,7 +49,7 @@ class TripEventServiceTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> eventService.addEventToTrip(99L, "Dinner", sampleStartTime, sampleEndTime, 50));
+        () -> eventService.addEventToTrip(99L, "Dinner", sampleStartTime, sampleEndTime, 50, null));
   }
 
   @Test
@@ -56,14 +57,14 @@ class TripEventServiceTest {
     // Validation runs before the trip lookup, so no repository stubbing is needed
     assertThrows(
         IllegalArgumentException.class,
-        () -> eventService.addEventToTrip(1L, "", sampleStartTime, sampleEndTime, 50));
+        () -> eventService.addEventToTrip(1L, "", sampleStartTime, sampleEndTime, 50, null));
   }
 
   @Test
   void addEventToTrip_throwsWhenDateTimeIsNull() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> eventService.addEventToTrip(1L, "Dinner", null, null, 50));
+        () -> eventService.addEventToTrip(1L, "Dinner", null, null, 50, null));
   }
 
   @Test
