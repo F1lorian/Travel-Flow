@@ -28,29 +28,19 @@ export class EventService {
   }
 
   editEvent(updatedEvent: EditEventRequest):Observable<EditEventResponse>{
-    return this.http.post<EditEventRequest>(`${this.editEvents}/${updatedEvent.id}`, updatedEvent);
+    return this.http.post<EditEventRequest>(this.editEvents, updatedEvent);
   }
 
   deleteEvent(id: string):Observable<string> {
-    return this.http.post<string>(this.deleteEvents, Number(id));
+    return this.http.post<string>(this.deleteEvents, id);
   }
 
-  importEvents(formData: FormData, tripId: number): Observable<AddEventResponse> {
-    return this.http.post<AddEventResponse>(
-      '/api/event/create/import',
-      formData,
-      {
-        params: {
-          tripId: tripId.toString()
-        }
-      }
-    );
+  importEvents(formData: FormData) {
+    return this.http.post('/api/event/import', formData);
   }
 
-  exportEvents():Observable<Blob> {
-    return this.http.get('/api/data/ical', {
-      responseType: 'blob'
-    });
+  exportEvent() {
+
   }
 
 }

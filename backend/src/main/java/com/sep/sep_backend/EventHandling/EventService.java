@@ -63,9 +63,11 @@ public class EventService {
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
-    Event savedEvent = eventRepository.save(newEvent);
+    EventResponseDTO ausgabe =
+        new EventResponseDTO(dto.getName(), dto.getKosten(), eventStart, eventEnd);
+    eventRepository.save(newEvent);
 
-    return mapToResponseDTO(savedEvent);
+    return ausgabe;
   }
 
   public void DeleteEventFromDB(Long EventID) {
@@ -104,7 +106,8 @@ public class EventService {
     }
     eventRepository.save(event);
 
-    return mapToResponseDTO(event);
+    return new EventResponseDTO(
+        event.getName(), event.getKosten(), event.getStartTime(), event.getEndTime());
   }
 
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
@@ -117,12 +120,15 @@ public class EventService {
                         "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
     String eventName =
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
-    LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
-    LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    LocalDateTime eventStart =
+        dto.getStartZeit() != null ? dto.getStartZeit() : LocalDateTime.now();
+    LocalDateTime eventEnd = resolveEndTime(dto.getEndZeit(), eventStart);
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
-    Event savedEvent = eventRepository.save(newEvent);
+    EventResponseDTO response =
+        new EventResponseDTO(eventName, dto.getKosten(), eventStart, eventEnd);
+    eventRepository.save(newEvent);
 
-    return mapToResponseDTO(savedEvent);
+    return response;
   }
 
   public List<EventCalendarDTO> GetAllEventsFromDb() {
@@ -310,16 +316,6 @@ public class EventService {
     var end = parseEndDatetime(eventNode.path("endDate").asText(), start);
     var name = eventNode.path("name").asText("Unbekanntes Event");
     return new EventResponseDTO(name, price, start, end);
-  }
-
-  private EventResponseDTO mapToResponseDTO(Event event) {
-    return new EventResponseDTO(
-        String.valueOf(event.getId()),
-        event.getName(),
-        event.getKosten(),
-        event.getStartTime(),
-        event.getEndTime(),
-        event.getTripId());
   }
 
   private String extractText(Part part) throws Exception {

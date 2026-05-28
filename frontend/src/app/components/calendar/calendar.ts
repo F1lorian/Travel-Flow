@@ -83,7 +83,6 @@ export class CalendarComponent implements OnInit {
 
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
-    console.log(selectedEvent);
     const dialogRef = this.dialog.open(EventDialog, {
       data: {
         mode: 'show',
@@ -91,8 +90,8 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
-        start: selectedEvent.startStr.substring(0,16),
-        end: selectedEvent.endStr.substring(0,16)
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
       }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -116,25 +115,24 @@ export class CalendarComponent implements OnInit {
       events: [
         ...currentEvents,
         {
-          id: event.id,
           title: event.name,
-          start: event.start,
-          end: event.end,
+          start: event.startZeit,
+          end: event.endZeit,
           extendedProps: {
             kosten: event.kosten,
-            tripId: event.tripId,
+            tripId,
           },
         },
       ],
     };
   }
 
-  updateEditedEvent(id: string, event: EditEventResponse) {
+  updateEditedEvent(event: EditEventResponse) {
     const calendarApi = this.calendarComponent.getApi();
-    const calendarEvent = calendarApi.getEventById(id);
+    const calendarEvent = calendarApi.getEventById(event.id);
 
     if (!calendarEvent) {
-      console.error('Event im Kalender nicht gefunden:', id);
+      console.error('Event im Kalender nicht gefunden:', event.id);
       return;
     }
 
@@ -192,14 +190,12 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
-        start: selectedEvent.startStr.substring(0,16),
-        end: selectedEvent.endStr.substring(0,16)
+        start: selectedEvent.startStr,
+        end: selectedEvent.endStr
       },
     });
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        console.log("result")
-        console.log(result)
         if(result.action === 'save'){
           let updatedEvent: EditEventRequest = {
             id: id,
@@ -209,12 +205,11 @@ export class CalendarComponent implements OnInit {
             end: result.end,
             tripId: result.tripId,
           }
-          console.log("Updated Event:");
           console.log(updatedEvent);
           this.eventService.editEvent(updatedEvent).subscribe({
             next:(response: EditEventResponse) => {
               console.log(response);
-              this.updateEditedEvent(id, response);
+              this.updateEditedEvent(response);
             },
             error: () => {
               console.error("Event konnte nicht geändert werden!");
@@ -244,7 +239,7 @@ export class CalendarComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        this.loadEvents();
+        this.addCreatedEvent(result);
       }
     })
   }
