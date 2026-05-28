@@ -28,25 +28,24 @@ public class EventController {
     return ResponseEntity.ok(eventService.GetAllEventsFromDb());
   }
 
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/automatic")
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/import")
   public EventResponseDTO uploadEmail(
       @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
       throws Exception {
     var eventDTO = eventService.ParseMailFile(file.getInputStream());
-    eventService.SaveEventResponseToDB(eventDTO, tripId);
-    return eventDTO;
+    return eventService.SaveEventResponseToDB(eventDTO, tripId);
   }
 
   @PostMapping("event/delete")
-  public ResponseEntity<Void> DeleteEventFromDB(@RequestBody Long EventID) {
+  public ResponseEntity<DeleteEventResponseDTO> DeleteEventFromDB(@RequestBody Long EventID) {
     eventService.DeleteEventFromDB(EventID);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
   }
 
-  @PostMapping("event/edit")
+  @PostMapping("event/edit/{id}")
   public ResponseEntity<EventResponseDTO> EditEvent(
-      @RequestBody Long EventID, EventRequestDTO dto) {
-    var response = eventService.EditEvent(EventID, dto);
+      @PathVariable Long id, @RequestBody EventRequestDTO dto) {
+    var response = eventService.EditEvent(id, dto);
     return ResponseEntity.ok(response);
   }
 }

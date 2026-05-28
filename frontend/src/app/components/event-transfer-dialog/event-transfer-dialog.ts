@@ -2,6 +2,7 @@ import {Component, inject, Inject} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
+import {Trip, TripService} from '../../TripManagement/services/trip.service';
 
 @Component({
   selector: 'app-event-transfer-dialog',
@@ -14,12 +15,19 @@ export class EventTransferDialog {
   file?: File;
   fileName = '';
   eventService = inject(EventService);
+  tripId: number | undefined;
+  tripService = inject(TripService);
+  trips: Trip[] = [];
 
   constructor(private dialogRef: MatDialogRef<EventTransferDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
     if (data) {
       this.mode = data.mode;
 
     }
+  }
+
+  ngOnInit() {
+    this.loadTrips();
   }
 
   onFileSelected(event: Event) {
@@ -29,8 +37,17 @@ export class EventTransferDialog {
       return;
     }
 
-    this.file = input.files[0];
-    this.fileName = this.file.name;
+    const file = input.files[0];
+
+    if (!this.isEmlFile(file)) {
+      console.error('Nur .eml-Dateien erlaubt');
+      this.file = undefined;
+      this.fileName = '';
+      return;
+    }
+
+    this.file = file;
+    this.fileName = file.name;
   }
 
   onFileDrop(event: DragEvent) {
@@ -42,8 +59,17 @@ export class EventTransferDialog {
       return;
     }
 
-    this.file = files[0];
-    this.fileName = this.file.name;
+    const file = files[0];
+
+    if (!this.isEmlFile(file)) {
+      console.error('Nur .eml-Dateien erlaubt');
+      this.file = undefined;
+      this.fileName = '';
+      return;
+    }
+
+    this.file = file;
+    this.fileName = file.name;
   }
 
   onDragOver(event: DragEvent) {
@@ -52,43 +78,61 @@ export class EventTransferDialog {
 
   uploadFile() {
     if (!this.file) {
+      console.error('Keine .eml-Datei ausgewählt');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', this.file);
+    const importId = Date.now();
 
-    this.eventService.importEvents(formData).subscribe({
-      next: (events) => {
-        this.dialogRef.close(events);
+    const formData = new FormData();
+    formData.append('MailFile', this.file);
+
+    console.log(this.file);
+    console.log(importId);
+
+    if(!this.tripId){
+      return;
+    }
+    this.eventService.importEvents(formData, this.tripId).subscribe({
+      next: (event) => {
+        this.dialogRef.close(event);
       },
-      error: () => {
-        console.error('Import fehlgeschlagen');
+      error: (err) => {
+        console.error('Import fehlgeschlagen', err);
       }
     });
   }
 
   downloadEvents() {
-    const data = [
-      {
-        title: 'Meeting',
-        start: '2026-05-11T10:00'
+    this.eventService.exportEvents().subscribe(blob => {
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+
+      a.href = url;
+      a.download = 'events.ics';
+
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+
+    });
+  }
+
+  private isEmlFile(file: File): boolean {
+    return file.name.toLowerCase().endsWith('.eml');
+  }
+
+  loadTrips() {
+    this.tripService.getAllTrips().subscribe({
+      next: trips => {
+        this.trips = trips;
+      },
+      error: err => {
+        console.error('Trips konnten nicht geladen werden:', err);
       }
-    ];
-
-    const blob = new Blob(
-      [JSON.stringify(data, null, 2)],
-      { type: 'application/json' }
-    );
-
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'events.json';
-    a.click();
-
-    window.URL.revokeObjectURL(url);
+    });
   }
 
   close(){
