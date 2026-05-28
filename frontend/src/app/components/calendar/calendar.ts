@@ -116,12 +116,13 @@ export class CalendarComponent implements OnInit {
       events: [
         ...currentEvents,
         {
+          id: event.id,
           title: event.name,
-          start: event.startZeit,
-          end: event.endZeit,
+          start: event.start,
+          end: event.end,
           extendedProps: {
             kosten: event.kosten,
-            tripId,
+            tripId: event.tripId,
           },
         },
       ],
@@ -243,7 +244,7 @@ export class CalendarComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        this.addCreatedEvent(result);
+        this.loadEvents();
       }
     })
   }

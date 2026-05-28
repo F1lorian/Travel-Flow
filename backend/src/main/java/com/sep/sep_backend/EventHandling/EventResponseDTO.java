@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class EventResponseDTO {
   private String name;
   private int kosten;
+  //private long tripId; noch implementieren, aktuell zu viele probleme
   private LocalDateTime startZeit;
   private LocalDateTime endZeit;
 
@@ -13,6 +14,7 @@ public class EventResponseDTO {
   public EventResponseDTO(String name, int kosten, LocalDateTime startZeit, LocalDateTime endZeit) {
     this.name = name;
     this.kosten = kosten;
+    //this.tripId = tripId;
     this.startZeit = startZeit;
     this.endZeit = endZeit;
   }
@@ -48,4 +50,5 @@ public class EventResponseDTO {
   public void setEndZeit(LocalDateTime endZeit) {
     this.endZeit = endZeit;
   }
+
 }

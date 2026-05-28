@@ -1,6 +1,8 @@
 export type AddEventResponse = {
+  id: string;
   name: string;
   kosten: number;
-  startZeit: string;
-  endZeit:string;
+  tripId: number;
+  start: string;
+  end: string;
 };

@@ -32,15 +32,25 @@ export class EventService {
   }
 
   deleteEvent(id: string):Observable<string> {
-    return this.http.post<string>(this.deleteEvents, id);
+    return this.http.post<string>(this.deleteEvents, Number(id));
   }
 
-  importEvents(formData: FormData) {
-    return this.http.post('/api/event/import', formData);
+  importEvents(formData: FormData, tripId: number): Observable<AddEventResponse> {
+    return this.http.post<AddEventResponse>(
+      '/api/event/create/import',
+      formData,
+      {
+        params: {
+          tripId: tripId.toString()
+        }
+      }
+    );
   }
 
-  exportEvent() {
-
+  exportEvents():Observable<Blob> {
+    return this.http.get('/api/data/ical', {
+      responseType: 'blob'
+    });
   }
 
 }

@@ -190,6 +190,7 @@ public class EventService {
       LocalDateTime start = parseDatetime(node.path("startDate").asText());
       LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
 
+
       return new EventResponseDTO(name, kosten, start, end);
     } catch (Exception exception) {
       return mapTextToDTO(mailText);

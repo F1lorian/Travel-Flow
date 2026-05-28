@@ -28,7 +28,7 @@ public class EventController {
     return ResponseEntity.ok(eventService.GetAllEventsFromDb());
   }
 
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/automatic")
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/import")
   public EventResponseDTO uploadEmail(
       @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
       throws Exception {
@@ -38,9 +38,9 @@ public class EventController {
   }
 
   @PostMapping("event/delete")
-  public ResponseEntity<Void> DeleteEventFromDB(@RequestBody Long EventID) {
+  public ResponseEntity<DeleteEventResponseDTO> DeleteEventFromDB(@RequestBody Long EventID) {
     eventService.DeleteEventFromDB(EventID);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
   }
 
   @PostMapping("event/edit/{id}")
