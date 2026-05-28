@@ -3,20 +3,35 @@ package com.sep.sep_backend.EventHandling;
 import java.time.LocalDateTime;
 
 public class EventResponseDTO {
+  private String id;
   private String name;
   private int kosten;
-  //private long tripId; noch implementieren, aktuell zu viele probleme
-  private LocalDateTime startZeit;
-  private LocalDateTime endZeit;
+  private long tripId;
+  private LocalDateTime start;
+  private LocalDateTime end;
 
   public EventResponseDTO() {}
 
-  public EventResponseDTO(String name, int kosten, LocalDateTime startZeit, LocalDateTime endZeit) {
+  public EventResponseDTO(String name, int kosten, LocalDateTime start, LocalDateTime end) {
+    this(null, name, kosten, start, end, 0);
+  }
+
+  public EventResponseDTO(
+      String id, String name, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
+    this.id = id;
     this.name = name;
     this.kosten = kosten;
-    //this.tripId = tripId;
-    this.startZeit = startZeit;
-    this.endZeit = endZeit;
+    this.tripId = tripId;
+    this.start = start;
+    this.end = end;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   public String getName() {
@@ -35,20 +50,27 @@ public class EventResponseDTO {
     this.kosten = kosten;
   }
 
-  public LocalDateTime getStartZeit() {
-    return startZeit;
+  public long getTripId() {
+    return tripId;
   }
 
-  public void setStartZeit(LocalDateTime uhrzeit) {
-    this.startZeit = uhrzeit;
+  public void setTripId(long tripId) {
+    this.tripId = tripId;
   }
 
-  public LocalDateTime getEndZeit() {
-    return endZeit;
+  public LocalDateTime getStart() {
+    return start;
   }
 
-  public void setEndZeit(LocalDateTime endZeit) {
-    this.endZeit = endZeit;
+  public void setStart(LocalDateTime start) {
+    this.start = start;
   }
 
+  public LocalDateTime getEnd() {
+    return end;
+  }
+
+  public void setEnd(LocalDateTime end) {
+    this.end = end;
+  }
 }

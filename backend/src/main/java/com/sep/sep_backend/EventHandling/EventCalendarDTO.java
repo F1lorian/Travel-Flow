@@ -64,7 +64,11 @@ public class EventCalendarDTO {
     this.kosten = kosten;
   }
 
-  public long getTripId(){return this.tripId;}
+  public long getTripId() {
+    return this.tripId;
+  }
 
-  public void setTripId(long tripId) {this.tripId = tripId;}
+  public void setTripId(long tripId) {
+    this.tripId = tripId;
+  }
 }

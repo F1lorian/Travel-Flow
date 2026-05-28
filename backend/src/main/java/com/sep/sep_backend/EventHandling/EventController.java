@@ -33,8 +33,7 @@ public class EventController {
       @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
       throws Exception {
     var eventDTO = eventService.ParseMailFile(file.getInputStream());
-    eventService.SaveEventResponseToDB(eventDTO, tripId);
-    return eventDTO;
+    return eventService.SaveEventResponseToDB(eventDTO, tripId);
   }
 
   @PostMapping("event/delete")
@@ -45,9 +44,7 @@ public class EventController {
 
   @PostMapping("event/edit/{id}")
   public ResponseEntity<EventResponseDTO> EditEvent(
-          @PathVariable Long id,
-          @RequestBody EventRequestDTO dto
-  ) {
+      @PathVariable Long id, @RequestBody EventRequestDTO dto) {
     var response = eventService.EditEvent(id, dto);
     return ResponseEntity.ok(response);
   }
