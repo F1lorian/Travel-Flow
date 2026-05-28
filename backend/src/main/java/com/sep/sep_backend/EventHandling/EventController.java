@@ -43,10 +43,12 @@ public class EventController {
     return ResponseEntity.noContent().build();
   }
 
-  @PostMapping("event/edit")
+  @PostMapping("event/edit/{id}")
   public ResponseEntity<EventResponseDTO> EditEvent(
-      @RequestBody Long EventID, EventRequestDTO dto) {
-    var response = eventService.EditEvent(EventID, dto);
+          @PathVariable Long id,
+          @RequestBody EventRequestDTO dto
+  ) {
+    var response = eventService.EditEvent(id, dto);
     return ResponseEntity.ok(response);
   }
 }

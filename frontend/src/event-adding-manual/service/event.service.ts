@@ -28,7 +28,7 @@ export class EventService {
   }
 
   editEvent(updatedEvent: EditEventRequest):Observable<EditEventResponse>{
-    return this.http.post<EditEventRequest>(this.editEvents, updatedEvent);
+    return this.http.post<EditEventRequest>(`${this.editEvents}/${updatedEvent.id}`, updatedEvent);
   }
 
   deleteEvent(id: string):Observable<string> {

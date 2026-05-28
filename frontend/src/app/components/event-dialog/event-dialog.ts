@@ -17,6 +17,7 @@ export class EventDialog {
   tripId: bigint | undefined;
   start: string = "";
   end: string = "";
+  allDay: boolean = false;
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
@@ -29,11 +30,13 @@ export class EventDialog {
       this.start = data.start || "";
       this.end = data.end || "";
     }
+    console.log("data dialog");
     console.log(data);
   }
 
   save() {
-    console.log(this.start);
+    console.log("start end");
+    console.log(this.start, this.end);
     this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start, end: this.end});
   }
 

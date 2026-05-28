@@ -83,6 +83,7 @@ export class CalendarComponent implements OnInit {
 
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
+    console.log(selectedEvent);
     const dialogRef = this.dialog.open(EventDialog, {
       data: {
         mode: 'show',
@@ -90,8 +91,8 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
-        start: selectedEvent.startStr,
-        end: selectedEvent.endStr
+        start: selectedEvent.startStr.substring(0,16),
+        end: selectedEvent.endStr.substring(0,16)
       }
     });
     dialogRef.afterClosed().subscribe(result => {
@@ -127,12 +128,12 @@ export class CalendarComponent implements OnInit {
     };
   }
 
-  updateEditedEvent(event: EditEventResponse) {
+  updateEditedEvent(id: string, event: EditEventResponse) {
     const calendarApi = this.calendarComponent.getApi();
-    const calendarEvent = calendarApi.getEventById(event.id);
+    const calendarEvent = calendarApi.getEventById(id);
 
     if (!calendarEvent) {
-      console.error('Event im Kalender nicht gefunden:', event.id);
+      console.error('Event im Kalender nicht gefunden:', id);
       return;
     }
 
@@ -190,12 +191,14 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
-        start: selectedEvent.startStr,
-        end: selectedEvent.endStr
+        start: selectedEvent.startStr.substring(0,16),
+        end: selectedEvent.endStr.substring(0,16)
       },
     });
     dialogRef.afterClosed().subscribe(result => {
       if(result){
+        console.log("result")
+        console.log(result)
         if(result.action === 'save'){
           let updatedEvent: EditEventRequest = {
             id: id,
@@ -205,11 +208,12 @@ export class CalendarComponent implements OnInit {
             end: result.end,
             tripId: result.tripId,
           }
+          console.log("Updated Event:");
           console.log(updatedEvent);
           this.eventService.editEvent(updatedEvent).subscribe({
             next:(response: EditEventResponse) => {
               console.log(response);
-              this.updateEditedEvent(response);
+              this.updateEditedEvent(id, response);
             },
             error: () => {
               console.error("Event konnte nicht geändert werden!");
