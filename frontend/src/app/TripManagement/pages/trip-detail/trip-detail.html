@@ -57,7 +57,7 @@
               <li class="event-item">
                 <div class="event-main">
                   <strong>{{ event.name }}</strong>
-                  <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+                  <span class="event-date">{{ formatDateTime(event.startTime) }}</span>
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
                   }
@@ -93,7 +93,7 @@
             @for (event of events(); track event.id) {
               <li class="event-item">
                 <strong>{{ event.name }}</strong>
-                <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
+                <span class="event-date">{{ formatDateTime(event.startTime) }}</span>
               </li>
             }
           </ul>

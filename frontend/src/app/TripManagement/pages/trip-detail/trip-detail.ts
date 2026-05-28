@@ -68,10 +68,10 @@ export class TripDetail implements OnInit {
     }
 
     // datetime-local gives YYYY-MM-DDTHH:MM, backend needs seconds appended
-    const dateTime = this.newEventDateTime + ':00';
+    const startTime = this.newEventDateTime + ':00';
     const category = this.newEventCategory.trim() || undefined;
 
-    this.tripService.addEvent(tripId, this.newEventName, dateTime, this.newEventKosten, category).subscribe({
+    this.tripService.addEvent(tripId, this.newEventName, startTime, this.newEventKosten, category).subscribe({
       next: (event) => {
         this.events.update(list => [...list, event]);
         this.newEventName = '';
@@ -93,10 +93,10 @@ export class TripDetail implements OnInit {
     const tripId = this.trip()?.id;
     if (!tripId) return;
 
-    const dateTime = this.normalizeRecommendationDate(recommendation.dateTime);
+    const startTime = this.normalizeRecommendationDate(recommendation.dateTime);
     const cost = recommendation.price ?? 0;
 
-    this.tripService.addEvent(tripId, recommendation.name, dateTime, cost).subscribe({
+    this.tripService.addEvent(tripId, recommendation.name, startTime, cost).subscribe({
       next: (event) => {
         this.events.update(list => [...list, event]);
         this.errorMessage = '';

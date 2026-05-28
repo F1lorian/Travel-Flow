@@ -15,7 +15,8 @@ export interface Trip {
 export interface Event {
   id: number;
   name: string;
-  dateTime: string;
+  startTime: string;
+  endTime?: string;
   kosten: number;
   categoryName?: string;
 }
@@ -52,8 +53,8 @@ export class TripService {
     return this.http.post<Trip>(this.apiUrl, { name });
   }
 
-  addEvent(tripId: number, name: string, dateTime: string, kosten: number, categoryName?: string): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten, categoryName });
+  addEvent(tripId: number, name: string, startTime: string, kosten: number, categoryName?: string): Observable<Event> {
+    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, startTime, kosten, categoryName });
   }
 
   getRecentCategories(): Observable<Category[]> {
