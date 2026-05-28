@@ -15,14 +15,31 @@ export interface Trip {
 export interface Event {
   id: number;
   name: string;
-  dateTime: string;
+  startTime?: string;
+  endTime?: string;
   kosten: number;
+  categoryName?: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+}
+
+export interface EventRecommendation {
+  name: string;
+  dateTime: string;
+  price: number | null;
+  description: string;
+  location: string;
+  sourceUrl: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private http = inject(HttpClient);
   private apiUrl = '/api/trips';
+  private categoriesUrl = '/api/categories';
 
   getAllTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(this.apiUrl);
@@ -36,7 +53,27 @@ export class TripService {
     return this.http.post<Trip>(this.apiUrl, { name });
   }
 
-  addEvent(tripId: number, name: string, dateTime: string, kosten: number): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, dateTime, kosten });
+  addEvent(tripId: number, name: string, startTime: string | undefined, endTime: string | undefined, kosten: number, categoryName?: string): Observable<Event> {
+    return this.http.post<Event>(`${this.apiUrl}/${tripId}/events`, { name, startTime, endTime, kosten, categoryName });
+  }
+
+  getRecentCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>(`${this.categoriesUrl}/recent`);
+  }
+
+  deleteTrip(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  deleteEvent(tripId: number, eventId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${tripId}/events/${eventId}`);
+  }
+
+  moveEvent(tripId: number, eventId: number, newTripId: number): Observable<Event> {
+    return this.http.put<Event>(`${this.apiUrl}/${tripId}/events/${eventId}/move/${newTripId}`, {});
+  }
+
+  searchEventRecommendations(location: string): Observable<EventRecommendation[]> {
+    return this.http.post<EventRecommendation[]>(`${this.apiUrl}/event-search`, { location });
   }
 }

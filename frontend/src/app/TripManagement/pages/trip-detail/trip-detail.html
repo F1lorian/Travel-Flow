@@ -2,55 +2,170 @@
   <a routerLink="/trips" class="back-link">← Back to all trips</a>
 
   @if (trip()) {
-    <h1>{{ trip()!.name }}</h1>
-
-    <!-- Add event form -->
-    <div class="add-event-section">
-      <h2>Add an event</h2>
-      <div class="form-grid">
-        <input
-          type="text"
-          [(ngModel)]="newEventName"
-          placeholder="Event name (e.g. Dinner)"
-        />
-        <input
-          type="datetime-local"
-          [(ngModel)]="newEventDateTime"
-        />
-        <input
-          type="number"
-          [(ngModel)]="newEventKosten"
-          placeholder="Cost"
-          min="0"
-        />
-        <button (click)="addEvent()">Add Event</button>
-      </div>
-
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
+    <div class="trip-header">
+      <h1>{{ trip()!.name }}</h1>
+      <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
     </div>
 
-    <!-- Events list -->
-    <h2>Events</h2>
-    @if (events().length === 0) {
-      <p class="empty">No events yet. Add one above!</p>
-    } @else {
-      <ul class="event-list">
-        @for (event of events(); track event.id) {
-          <li class="event-item">
-            <div class="event-main">
-              <strong>{{ event.name }}</strong>
-              <span class="event-date">{{ formatDateTime(event.dateTime) }}</span>
-            </div>
-            <div class="event-cost">{{ event.kosten }} €</div>
-          </li>
+    <div class="main-layout">
+      <div class="left-content">
+        <!-- Add event form -->
+        <div class="add-event-section">
+          <h2>Add an event</h2>
+          <div class="form-grid">
+            <label class="field">
+              <span>Name <span class="req">*</span></span>
+              <input type="text" [(ngModel)]="newEventName" placeholder="e.g. Dinner" />
+            </label>
+            <label class="field">
+              Start time
+              <input type="datetime-local" [(ngModel)]="newEventStartTime" />
+            </label>
+            <label class="field">
+              End time
+              <input type="datetime-local" [(ngModel)]="newEventEndTime" />
+            </label>
+            <label class="field">
+              Cost (€)
+              <input type="number" [(ngModel)]="newEventKosten" min="0" />
+            </label>
+            <label class="field">
+              Category
+              <input
+                type="text"
+                [(ngModel)]="newEventCategory"
+                placeholder="pick or type new"
+                list="recent-categories"
+              />
+            </label>
+            <datalist id="recent-categories">
+              @for (cat of recentCategories(); track cat.id) {
+                <option [value]="cat.name"></option>
+              }
+            </datalist>
+            <button (click)="addEvent()">Add Event</button>
+          </div>
+
+          @if (errorMessage) {
+            <div class="error">{{ errorMessage }}</div>
+          }
+        </div>
+
+        <!-- Events list -->
+        <h2>Events</h2>
+        @if (events().length === 0) {
+          <p class="empty">No events yet. Add one above!</p>
+        } @else {
+          <ul class="event-list">
+            @for (event of events(); track event.id) {
+              <li class="event-item">
+                <div class="event-main">
+                  <strong>{{ event.name }}</strong>
+                  @if (event.startTime) {
+                    <span class="event-date">
+                      {{ formatDateTime(event.startTime) }}
+                      @if (event.endTime) {
+                        – {{ formatDateTime(event.endTime) }}
+                      }
+                    </span>
+                  }
+                  @if (event.categoryName) {
+                    <span class="event-category">{{ event.categoryName }}</span>
+                  }
+                </div>
+                <div class="event-cost">{{ event.kosten }} €</div>
+                <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
+              </li>
+            }
+          </ul>
         }
-      </ul>
-    }
+      </div>
+
+      <aside class="right-sidebar">
+        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
+      </aside>
+    </div>
   } @else if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   } @else {
     <p>Loading...</p>
+  }
+
+  @if (showDeleteConfirm()) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>Are you sure you want to delete this trip?</h2>
+        <p>All related events will be deleted too:</p>
+
+        @if (events().length === 0) {
+          <p class="empty">No events on this trip.</p>
+        } @else {
+          <ul class="event-list">
+            @for (event of events(); track event.id) {
+              <li class="event-item">
+                <strong>{{ event.name }}</strong>
+                <span class="event-date">{{ formatDateTime(event.startTime) }}</span>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="modal-actions">
+          <button class="cancel-btn" (click)="cancelDelete()">Cancel</button>
+          <button class="delete-btn" (click)="confirmDelete()">Delete Trip</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (eventToDelete(); as evt) {
+    <div class="modal-overlay" (click)="closeEventModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+
+        @if (deleteStep() === 'choice') {
+          <h2>Delete event "{{ evt.name }}"</h2>
+          <p>What do you want to do?</p>
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="closeEventModal()">Cancel</button>
+            <button class="move-btn" (click)="startMoveFlow()">Move to another trip</button>
+            <button class="delete-btn" (click)="confirmDeleteEvent()">Delete permanently</button>
+          </div>
+        }
+
+        @if (deleteStep() === 'pick-trip') {
+          <h2>Move "{{ evt.name }}" to which trip?</h2>
+          <input
+            type="text"
+            class="trip-search"
+            [(ngModel)]="tripSearch"
+            placeholder="Search trips by name..."
+          />
+          @if (filteredOtherTrips().length === 0) {
+            <p class="empty">No matching trips.</p>
+          } @else {
+            <ul class="trip-picker-list">
+              @for (t of filteredOtherTrips(); track t.id) {
+                <li class="trip-picker-item" (click)="selectTargetTrip(t)">
+                  {{ t.name }}
+                </li>
+              }
+            </ul>
+          }
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="closeEventModal()">Cancel</button>
+          </div>
+        }
+
+        @if (deleteStep() === 'confirm-move') {
+          <h2>Relink event?</h2>
+          <p>Are you sure you want to relink "<strong>{{ evt.name }}</strong>" to trip "<strong>{{ targetTrip()!.name }}</strong>"?</p>
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="deleteStep.set('pick-trip')">Back</button>
+            <button class="delete-btn" (click)="confirmMove()">Yes, relink</button>
+          </div>
+        }
+
+      </div>
+    </div>
   }
 </div>

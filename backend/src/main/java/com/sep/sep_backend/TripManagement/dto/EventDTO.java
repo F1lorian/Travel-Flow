@@ -13,6 +13,7 @@ public class EventDTO {
   private LocalDateTime endTime;
   private int kosten;
   private long tripId;
+  private String categoryName;
 
   public static EventDTO from(Event event) {
     EventDTO dto = new EventDTO();
@@ -22,6 +23,7 @@ public class EventDTO {
     dto.endTime = event.getEndTime();
     dto.kosten = event.getKosten();
     dto.tripId = event.getTrip().getId();
+    dto.categoryName = event.getCategorie() != null ? event.getCategorie().getName() : null;
     return dto;
   }
 
@@ -47,5 +49,9 @@ public class EventDTO {
 
   public long getTripId() {
     return tripId;
+  }
+
+  public String getCategoryName() {
+    return categoryName;
   }
 }

@@ -1,0 +1,44 @@
+<section class="event-search-panel">
+  <h2>Find Events</h2>
+
+  <div class="search-controls">
+    <input
+      type="text"
+      [(ngModel)]="location"
+      (keyup.enter)="searchEvents()"
+      placeholder="City or country"
+    />
+    <button type="button" (click)="searchEvents()" [disabled]="isLoading || !location.trim()">
+      {{ isLoading ? 'Searching...' : 'Search' }}
+    </button>
+  </div>
+
+  @if (errorMessage) {
+    <div class="search-message">{{ errorMessage }}</div>
+  }
+
+  <div class="result-list">
+    @for (event of results(); track event.name + event.dateTime) {
+      <article class="event-card">
+        <div class="event-card-header">
+          <h3>{{ event.name }}</h3>
+          <span class="price-pill">{{ formatPrice(event.price) }}</span>
+        </div>
+
+        <div class="event-meta">
+          <span>{{ formatDateTime(event.dateTime) }}</span>
+          <span>{{ event.location || 'Location not listed' }}</span>
+        </div>
+
+        <p>{{ event.description }}</p>
+
+        <div class="event-card-actions">
+          @if (event.sourceUrl) {
+            <a [href]="event.sourceUrl" target="_blank" rel="noopener noreferrer">Info</a>
+          }
+          <button type="button" (click)="addEvent(event)">Add</button>
+        </div>
+      </article>
+    }
+  </div>
+</section>
