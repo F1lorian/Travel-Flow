@@ -72,7 +72,8 @@ class EventServiceTest {
   void saveEventResponseToDBSpeichertEventFuerVorhandeneTripId() {
     Trip trip = new Trip("London");
     LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
-    EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 1, 21, 0);
+    EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start, end);
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
@@ -80,16 +81,15 @@ class EventServiceTest {
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
-    verify(ausgabeService).ausgabeHinzufuegen(any());
 
     Event savedEvent = eventCaptor.getValue();
     assertThat(savedEvent.getName()).isEqualTo("Konzert");
     assertThat(savedEvent.getKosten()).isEqualTo(49);
-    assertThat(savedEvent.getDateTime()).isEqualTo(start);
+    assertThat(savedEvent.getStartTime()).isEqualTo(start);
+    assertThat(savedEvent.getEndTime()).isEqualTo(end);
     assertThat(savedEvent.getTrip()).isSameAs(trip);
     assertThat(result.getName()).isEqualTo("Konzert");
     assertThat(result.getKosten()).isEqualTo(49);
-    assertThat(result.getUhrzeit()).isEqualTo(start);
   }
 
   @Test

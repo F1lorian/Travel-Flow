@@ -45,10 +45,14 @@ class TripEventControllerTest {
   void addEvent_returnsOkWithCreatedEvent() throws Exception {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
+
+    LocalDateTime startTime = LocalDateTime.of(2026, 7, 15, 19, 30, 0);
+    LocalDateTime endTime = LocalDateTime.of(2026, 7, 15, 20, 30, 0);
+
+    Event event = new Event("Dinner", startTime, endTime, 50, trip);
     event.setId(1L);
-    when(eventService.addEventToTrip(
-            eq(1L), eq("Dinner"), eq(sampleStartTime), eq(sampleEndTime), eq(50)))
+
+    when(eventService.addEventToTrip(eq(1L), eq("Dinner"), eq(startTime), eq(endTime), eq(50)))
         .thenReturn(event);
 
     mockMvc
@@ -56,7 +60,14 @@ class TripEventControllerTest {
             post("/api/trips/1/events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"name\": \"Dinner\", \"dateTime\": \"2026-07-15T19:30:00\", \"kosten\": 50}"))
+                    """
+                                    {
+                                      "name": "Dinner",
+                                      "startTime": "2026-07-15T19:30:00",
+                                      "endTime": "2026-07-15T20:30:00",
+                                      "kosten": 50
+                                    }
+                                    """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Dinner"))
         .andExpect(jsonPath("$.kosten").value(50));

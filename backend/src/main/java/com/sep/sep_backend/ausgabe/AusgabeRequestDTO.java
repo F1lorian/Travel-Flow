@@ -8,11 +8,11 @@ public class AusgabeRequestDTO {
   private double kosten;
   private Trip trip;
   private LocalDate date;
-  private Kategorie kategorie;
+  private String kategorie;
 
   public AusgabeRequestDTO() {}
 
-  public AusgabeRequestDTO(double kosten, Trip trip, LocalDate date, Kategorie kategorie) {
+  public AusgabeRequestDTO(double kosten, Trip trip, LocalDate date, String kategorie) {
     this.kosten = kosten;
     this.trip = trip;
     this.date = date;
@@ -32,7 +32,7 @@ public class AusgabeRequestDTO {
     return this.date;
   }
 
-  public Kategorie getKategorie() {
+  public String getKategorie() {
     return this.kategorie;
   }
 
@@ -49,7 +49,7 @@ public class AusgabeRequestDTO {
     this.date = date;
   }
 
-  public void setKategorie(Kategorie kategorie) {
+  public void setKategorie(String kategorie) {
     this.kategorie = kategorie;
   }
 }

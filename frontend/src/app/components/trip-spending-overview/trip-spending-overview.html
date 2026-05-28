@@ -1,0 +1,193 @@
+<h1>{{ tripname }} - spending overview</h1>
+
+<div *ngIf="errorMessage">
+  {{ errorMessage }}
+</div>
+
+<div>
+
+  <div class="budget-summary">
+
+    <button
+      class="budget budget-box-budget"
+      type="button"
+      (click)="openBudgetDialog()"
+    >
+      <span>Budget</span>
+      <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
+    </button>
+    <div class="ausgegeben">
+      <span>Ausgegeben</span>
+      <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
+    </div>
+
+    <div class="verfuegbar">
+      <span>Verfügbar</span>
+      <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
+    </div>
+
+  </div>
+
+  <div class="budget-dialog-backdrop" *ngIf="showBudgetDialog">
+    <div class="budget-dialog">
+      <h3>Budget bearbeiten</h3>
+
+      <p>
+        Trip:
+        <strong>{{ tripname }}</strong>
+      </p>
+
+      <p>
+        Aktuelles Budget:
+        <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <p>
+        Bereits ausgegeben:
+        <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <p>
+        Aktuell verfügbar:
+        <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <p>
+        Aktueller Warnbereich:
+        <strong>{{ warningRange | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </p>
+
+      <div>
+        <label for="budget-input">Neues Budget (€):</label>
+        <input
+          id="budget-input"
+          type="number"
+          min="0"
+          [(ngModel)]="budgetInput"
+        />
+      </div>
+
+      <div>
+        <label for="warning-range-input">Warnbereich (€):</label>
+        <input
+          id="warning-range-input"
+          type="number"
+          min="0"
+          [(ngModel)]="warningRangeInput"
+        />
+      </div>
+
+      <p *ngIf="budgetErrorMessage" class="budget-error">
+        {{ budgetErrorMessage }}
+      </p>
+
+      <div class="budget-dialog-actions">
+        <button type="button" (click)="saveBudget()">
+          Speichern
+        </button>
+
+        <button type="button" (click)="closeBudgetDialog()">
+          Abbrechen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="budgetSuccessMessage" class="budget-success">
+    {{ budgetSuccessMessage }}
+  </p>
+
+  <a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+
+  <hr />
+
+  <h2>Ausgaben nach Kategorie</h2>
+
+  <select id="overview-auswaehlen" (change)="openOverview($event)">
+    <option value="">Anderer Trip</option>
+    <option *ngFor="let trip of trips" [value]="trip.id">
+      {{ trip.name }}
+    </option>
+    <option value="interval">Selbstgewählter Intervall</option>
+  </select>
+
+  <apx-chart
+    [labels] = "chartlabels"
+    [series] = "chartseries"
+    [chart] = "chartDetails">
+  </apx-chart>
+
+  <table class="category-table">
+    <thead>
+    <tr>
+      <th>Kategorie</th>
+      <th>Ausgaben</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let item of categorySummary">
+      <td>{{ item.category }}</td>
+      <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+    </tr>
+
+    </tbody>
+  </table>
+
+  <hr />
+
+  <h2>Letzte Ausgaben</h2>
+
+  <label for="category-filter">Kategorie:</label>
+
+  <select
+    id="category-filter"
+    [(ngModel)]="selectedCategory"
+  >
+    <option value="ALL">Alle Kategorien</option>
+    <option *ngFor="let category of categories" [value]="category">
+      {{ category }}
+    </option>
+  </select>
+
+  <div *ngIf="expenses.length === 0">
+    Keine Ausgaben gefunden.
+  </div>
+
+  <table *ngIf="expenses.length > 0" class="expenses-table">
+    <thead>
+    <tr>
+      <th>Kosten</th>
+      <th>Trip</th>
+      <th>Datum</th>
+      <th>Kategorie</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let expense of displayedExpenses">
+      <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+      <td>{{ expense.trip }}</td>
+      <td>{{ expense.date }}</td>
+      <td>{{ expense.kategorie }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <button
+    *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
+    class="button"
+    type="button"
+    (click)="showAllExpenses = true"
+  >
+    Mehr anzeigen
+  </button>
+
+  <button
+    *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
+    class="button"
+    type="button"
+    (click)="showAllExpenses = false"
+  >
+    Weniger anzeigen
+  </button>
+
+</div>

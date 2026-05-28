@@ -1,5 +1,6 @@
 package com.sep.sep_backend.ausgabe;
 
+import com.sep.sep_backend.Enitys.Categories;
 import com.sep.sep_backend.Enitys.Trip;
 import java.time.LocalDate;
 
@@ -8,15 +9,15 @@ public class AusgabeResponseDTO {
   private double kosten;
   private String trip;
   private LocalDate date;
-  private Kategorie kategorie;
+  private String kategorie;
 
   public AusgabeResponseDTO() {}
 
-  public AusgabeResponseDTO(double kosten, Trip trip, LocalDate date, Kategorie kategorie) {
+  public AusgabeResponseDTO(double kosten, Trip trip, LocalDate date, Categories kategorie) {
     this.kosten = kosten;
     this.trip = trip != null ? trip.getName() : "";
     this.date = date;
-    this.kategorie = kategorie;
+    this.kategorie = kategorie != null ? kategorie.getName() : "SONSTIGES";
   }
 
   // Getter
@@ -32,7 +33,7 @@ public class AusgabeResponseDTO {
     return this.date;
   }
 
-  public Kategorie getKategorie() {
+  public String getKategorie() {
     return this.kategorie;
   }
 
@@ -49,7 +50,7 @@ public class AusgabeResponseDTO {
     this.date = date;
   }
 
-  public void setKategorie(Kategorie kategorie) {
+  public void setKategorie(String kategorie) {
     this.kategorie = kategorie;
   }
 }

@@ -1,6 +1,5 @@
 package com.sep.sep_backend.Enitys;
 
-import com.sep.sep_backend.ausgabe.Kategorie;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -12,11 +11,10 @@ public class Ausgabe {
 
   private double kosten;
   private LocalDate date;
-  private Kategorie kategorie;
 
   public Ausgabe() {}
 
-  public Ausgabe(double kosten, Trip trip, LocalDate date, Kategorie kategorie) {
+  public Ausgabe(double kosten, Trip trip, LocalDate date, Categories kategorie) {
     this.kosten = kosten;
     this.trip = trip;
     this.date = date;
@@ -26,6 +24,10 @@ public class Ausgabe {
   @ManyToOne
   @JoinColumn(name = "trip_id")
   private Trip trip;
+
+  @ManyToOne
+  @JoinColumn(name = "kategorie_id")
+  private Categories kategorie;
 
   // Getter und Setter
   public long getId() {
@@ -60,11 +62,11 @@ public class Ausgabe {
     this.date = date;
   }
 
-  public Kategorie getKategorie() {
+  public Categories getKategorie() {
     return this.kategorie;
   }
 
-  public void setKategorie(Kategorie kategorie) {
+  public void setKategorie(Categories kategorie) {
     this.kategorie = kategorie;
   }
 }

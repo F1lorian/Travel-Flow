@@ -2,6 +2,8 @@
   "dependencies": {
     "@angular/forms": "^21.2.12",
     "@angular/router": "^21.2.12",
-    "chart.js": "^4.5.1"
+    "apexcharts": "^5.12.0",
+    "chart.js": "^4.5.1",
+    "ng-apexcharts": "^2.4.0"
   }
 }
