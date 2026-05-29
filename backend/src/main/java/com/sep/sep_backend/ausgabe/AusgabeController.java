@@ -10,6 +10,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * REST controller for all expense-related operations.
+ *
+ * This controller is used by the Angular frontend for:
+ * - adding expenses
+ * - loading expenses by date interval
+ * - loading expenses by trip
+ * - loading category summaries for charts
+ * - reading/updating trip budgets
+ * - reading/updating custom warning ranges
+ * - calculating available budget
+ */
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -21,66 +33,112 @@ public class AusgabeController {
 
   @Autowired
   public AusgabeController(
-      AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
+          AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
     this.ausgabeRepo = ausgabeRepo;
     this.ausgabeService = ausgabeService;
     this.tripRepository = tripRepository;
   }
 
+  /**
+   * Adds a new expense to an existing trip.
+   *
+   * The frontend sends the trip as an object containing the trip name.
+   * Before saving the expense, the controller verifies that the trip exists.
+   *
+   * Returns:
+   * - 400 if no trip name was provided
+   * - 404 if the trip does not exist
+   */
   @PostMapping("/ausgabe")
   public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO dto) {
     if (dto.getTrip() == null
-        || dto.getTrip().getName() == null
-        || dto.getTrip().getName().isBlank()) {
+            || dto.getTrip().getName() == null
+            || dto.getTrip().getName().isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip name is required");
     }
+
     Trip trip = tripRepository.findByName(dto.getTrip().getName());
+
     if (trip == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
+    // Replace the lightweight trip object from the request with the persisted entity.
     dto.setTrip(trip);
+
     ausgabeService.ausgabeHinzufuegen(dto);
   }
 
+  /**
+   * Returns all expenses within a selected date interval.
+   * Used by the general spending overview.
+   */
   @GetMapping("/ausgabenliste")
   public List<AusgabeResponseDTO> ausgabenliste(
-      @RequestParam LocalDate start, @RequestParam LocalDate end) {
+          @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenliste(start, end);
   }
 
+  /**
+   * Returns the summarized expenses per category for a selected date interval.
+   * Used for the category table and chart in the general spending overview.
+   */
   @GetMapping("/proKategorie")
   public List<KategorieSummeDTO> ausgabenProKategorie(
-      @RequestParam LocalDate start, @RequestParam LocalDate end) {
+          @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenProKategorie(start, end);
   }
 
+  /**
+   * Returns all expenses for one specific trip.
+   * Used by the trip-specific spending overview.
+   */
   @GetMapping("/ausgabenlisteTrip")
   public List<AusgabeResponseDTO> ausgabenListeTrip(@RequestParam String tripname) {
     List<AusgabeResponseDTO> result = ausgabeService.ausgabenlisteTrip(tripname);
+
     if (result == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
     return result;
   }
 
+  /**
+   * Returns summarized expenses per category for one specific trip.
+   * Used for the pie chart and category table on the trip spending overview page.
+   */
   @GetMapping("/proKategorieTrip")
   public List<KategorieSummeDTO> ausgabenProKategorieTrip(@RequestParam String tripname) {
     List<KategorieSummeDTO> result = ausgabeService.ausgabenProKategorieTrip(tripname);
+
     if (result == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
     return result;
   }
 
+  /**
+   * Returns the custom budget limit of a trip.
+   */
   @GetMapping("/budget")
   public double budget(@RequestParam String tripname) {
     Trip trip = tripRepository.findByName(tripname);
+
     if (trip == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
     return trip.getBudget();
   }
 
+  /**
+   * Updates the custom budget limit of a trip.
+   *
+   * The budget must not be negative.
+   * Returns the updated budget value.
+   */
   @PutMapping("/budget")
   public double budgetAktualisieren(@RequestParam String tripname, @RequestParam double budget) {
     if (budget < 0) {
@@ -99,6 +157,12 @@ public class AusgabeController {
     return trip.getBudget();
   }
 
+  /**
+   * Returns the custom warning range of a trip.
+   *
+   * The warning range is interpreted as a remaining-budget threshold.
+   * Example: warningRange = 100 means the user is warned if 100 € or less remain.
+   */
   @GetMapping("/warningRange")
   public double warningRange(@RequestParam String tripname) {
     Trip trip = tripRepository.findByName(tripname);
@@ -110,12 +174,18 @@ public class AusgabeController {
     return trip.getWarningRange();
   }
 
+  /**
+   * Updates the custom warning range of a trip.
+   *
+   * The warning range must not be negative.
+   * Returns the updated warning range.
+   */
   @PutMapping("/warningRange")
   public double warningRangeAktualisieren(
-      @RequestParam String tripname, @RequestParam double warningRange) {
+          @RequestParam String tripname, @RequestParam double warningRange) {
     if (warningRange < 0) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Warning range must not be negative");
+              HttpStatus.BAD_REQUEST, "Warning range must not be negative");
     }
 
     Trip trip = tripRepository.findByName(tripname);
@@ -130,24 +200,41 @@ public class AusgabeController {
     return trip.getWarningRange();
   }
 
+  /**
+   * Returns the sum of all expenses for a specific trip.
+   *
+   * The service returns a negative value if the trip was not found.
+   */
   @GetMapping("/gesamtausgabenTrip")
   public double gesamtausgabenTrip(@RequestParam String tripname) {
     double result = ausgabeService.gesamtausgabenTrip(tripname);
+
     if (result < 0) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
     return result;
   }
 
+  /**
+   * Returns the remaining available budget for a trip.
+   *
+   * Service return values:
+   * - -1 means the trip was not found
+   * - -2 means no available budget could be calculated; the frontend receives 0 instead
+   */
   @GetMapping("/verfuegbar")
   public double verfuegbar(@RequestParam String tripname) {
     double result = ausgabeService.verfuegbarTrip(tripname);
+
     if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
+
     if (result == -2) {
       return 0;
     }
+
     return result;
   }
 }

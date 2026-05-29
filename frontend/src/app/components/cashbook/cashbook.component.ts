@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
-import {RouterLink} from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-cashbook',
@@ -14,16 +14,22 @@ import {RouterLink} from '@angular/router';
 })
 export class CashbookComponent implements OnInit {
 
+  // Available categories for expenses. The values must match the backend enum/category names.
   categories = ['ESSEN', 'TRANSPORT', 'HOTEL', 'FREIZEIT', 'SONSTIGES'];
 
+  // Form state for creating a new expense.
+  // Signals are used so the template can reactively access and update the values.
   amount = signal(0);
   tripName = signal('');
   date = signal('');
   category = signal('');
 
+  // Trips are loaded from the backend and displayed as a dropdown.
+  // This prevents users from entering invalid or non-existing trip names.
   trips = signal<Trip[]>([]);
   loadingTrips = signal(false);
 
+  // User feedback messages shown in the template.
   errorMessage = signal('');
   successMessage = signal('');
   warningMessage = signal('');
@@ -33,10 +39,18 @@ export class CashbookComponent implements OnInit {
     private tripService: TripService
   ) {}
 
+  /**
+   * Loads all existing trips when the component is initialized.
+   * The trips are needed for the trip dropdown in the cashbook form.
+   */
   ngOnInit(): void {
     this.loadTrips();
   }
 
+  /**
+   * Retrieves all trips from the backend.
+   * Only existing trips can be selected when adding an expense.
+   */
   loadTrips(): void {
     this.loadingTrips.set(true);
     this.errorMessage.set('');
@@ -54,6 +68,16 @@ export class CashbookComponent implements OnInit {
     });
   }
 
+  /**
+   * Handles the complete expense creation flow.
+   *
+   * Steps:
+   * 1. Validate the form input.
+   * 2. Load the currently available budget and warning range for the selected trip.
+   * 3. Warn the user if the expense exceeds the budget.
+   * 4. Warn the user if the expense enters the configured warning range.
+   * 5. Save the expense if the user confirms or no warning is needed.
+   */
   addExpense(): void {
     this.errorMessage.set('');
     this.successMessage.set('');
@@ -62,11 +86,13 @@ export class CashbookComponent implements OnInit {
     const amountValue = Number(this.amount());
     const selectedTrip = this.tripName();
 
+    // Expenses with negative values are not allowed.
     if (amountValue < 0) {
       this.errorMessage.set('Negative Ausgaben können nicht hinzugefügt werden.');
       return;
     }
 
+    // Reject empty, zero or invalid values.
     if (!amountValue) {
       this.errorMessage.set('Bitte gib einen gültigen Betrag ein.');
       return;
@@ -87,6 +113,13 @@ export class CashbookComponent implements OnInit {
       return;
     }
 
+    /*
+     * Load both values in parallel:
+     * - available: how much budget is still available for the selected trip
+     * - warningRange: custom threshold where the user wants to be warned
+     *
+     * forkJoin waits until both backend requests are completed.
+     */
     forkJoin({
       available: this.expenseService.getAvailable(selectedTrip),
       warningRange: this.expenseService.getWarningRange(selectedTrip)
@@ -96,6 +129,11 @@ export class CashbookComponent implements OnInit {
         const warningRangeValue = Number(warningRange);
         const remainingAfterExpense = availableValue - amountValue;
 
+        /*
+         * Case 1: The new expense would exceed the available budget.
+         * The expense is not blocked automatically because real expenses should still be recordable.
+         * Instead, the user must explicitly confirm whether the expense should still be saved.
+         */
         if (amountValue > availableValue) {
           const exceededBy = amountValue - availableValue;
 
@@ -117,6 +155,13 @@ export class CashbookComponent implements OnInit {
           return;
         }
 
+        /*
+         * Case 2: The expense does not exceed the budget, but it enters the warning range.
+         * Example:
+         * Budget warning range = 100 €
+         * Remaining after expense = 80 €
+         * => The user is warned because only 80 € would remain.
+         */
         if (warningRangeValue > 0 && remainingAfterExpense <= warningRangeValue) {
           const shouldStillAdd = window.confirm(
             `Achtung: Nach dieser Ausgabe bleiben nur noch ${remainingAfterExpense.toFixed(2)} € verfügbar.\n` +
@@ -132,6 +177,7 @@ export class CashbookComponent implements OnInit {
           }
         }
 
+        // No warning was needed or the user confirmed the warning.
         this.saveExpense();
       },
       error: (error) => {
@@ -141,6 +187,10 @@ export class CashbookComponent implements OnInit {
     });
   }
 
+  /**
+   * Sends the new expense to the backend.
+   * This method is called only after validation and budget/warning checks have passed.
+   */
   private saveExpense(): void {
     this.expenseService.addExpense({
       kosten: Number(this.amount()),
@@ -151,6 +201,7 @@ export class CashbookComponent implements OnInit {
       kategorie: this.category()
     }).subscribe({
       next: () => {
+        // Reset the form after the backend successfully stored the expense.
         this.amount.set(0);
         this.tripName.set('');
         this.date.set('');
