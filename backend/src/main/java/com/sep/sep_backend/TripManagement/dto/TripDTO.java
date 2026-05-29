@@ -5,17 +5,22 @@ Fields match the Trip interface in trip.service.ts */
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import java.time.LocalDate;
 import java.util.List;
 
 public class TripDTO {
   private long id;
   private String name;
+  private LocalDate startDate;
+  private LocalDate endDate;
   private List<EventDTO> events;
 
   public static TripDTO from(Trip trip) {
     TripDTO dto = new TripDTO();
     dto.id = trip.getId();
     dto.name = trip.getName();
+    dto.startDate = trip.getStartDate();
+    dto.endDate = trip.getEndDate();
 
     List<Event> tripEvents = trip.getEvents();
     if (tripEvents == null) {
@@ -32,6 +37,14 @@ public class TripDTO {
 
   public String getName() {
     return name;
+  }
+
+  public LocalDate getStartDate() {
+    return startDate;
+  }
+
+  public LocalDate getEndDate() {
+    return endDate;
   }
 
   public List<EventDTO> getEvents() {

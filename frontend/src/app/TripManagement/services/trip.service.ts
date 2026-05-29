@@ -9,6 +9,8 @@ import { Observable } from 'rxjs';
 export interface Trip {
   id: number;
   name: string;
+  startDate?: string;
+  endDate?: string;
   events: Event[];
 }
 
@@ -49,8 +51,8 @@ export class TripService {
     return this.http.get<Trip>(`${this.apiUrl}/${id}`);
   }
 
-  createTrip(name: string): Observable<Trip> {
-    return this.http.post<Trip>(this.apiUrl, { name });
+  createTrip(name: string, startDate?: string, endDate?: string): Observable<Trip> {
+    return this.http.post<Trip>(this.apiUrl, { name, startDate, endDate });
   }
 
   addEvent(tripId: number, name: string, startTime: string | undefined, endTime: string | undefined, kosten: number, categoryName?: string): Observable<Event> {

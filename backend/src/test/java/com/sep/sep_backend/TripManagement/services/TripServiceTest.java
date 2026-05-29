@@ -25,7 +25,7 @@ class TripServiceTest {
     Trip trip = new Trip("Paris");
     when(tripRepository.save(any(Trip.class))).thenReturn(trip);
 
-    Trip result = tripService.createTrip("Paris");
+    Trip result = tripService.createTrip("Paris", null, null);
 
     assertEquals("Paris", result.getName());
     verify(tripRepository).save(any(Trip.class));
@@ -33,13 +33,13 @@ class TripServiceTest {
 
   @Test
   void createTrip_throwsWhenNameIsBlank() {
-    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip(""));
-    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip("   "));
+    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip("", null, null));
+    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip("   ", null, null));
   }
 
   @Test
   void createTrip_throwsWhenNameIsNull() {
-    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip(null));
+    assertThrows(IllegalArgumentException.class, () -> tripService.createTrip(null, null, null));
   }
 
   @Test
