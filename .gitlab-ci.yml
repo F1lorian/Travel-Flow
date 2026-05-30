@@ -1,5 +1,6 @@
 stages:
   - lint
+  - test
   - build
 
 variables:
@@ -29,7 +30,20 @@ backend_lint:
     - cd backend
     - sh ./gradlew spotlessCheck
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+backend_test:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  tags:
+    - dind
+    - ude-sse
+  script: 
+    - cd backend
+    - chmod +x ./gradlew
+    - ./gradlew test
+  rules:
     - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG
 
