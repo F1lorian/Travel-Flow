@@ -73,7 +73,7 @@ export class CalendarComponent implements OnInit {
     footerToolbar:{
       left: 'eventAddenButton eventImportButton eventExportButton'
     },
-    events: [{title: "test", start:"2026-05-27T12:00:00", end:"2026-05-27T14:00:00"}],
+    events: [],
 
     eventClick: this.handleEventClick.bind(this),
     dateClick: this.handleDateClick.bind(this)
@@ -145,6 +145,7 @@ export class CalendarComponent implements OnInit {
           title: event.name,
           start: event.start,
           end: event.end,
+          classNames: ['calendar-event'],
           extendedProps: {
             kosten: event.kosten,
             tripId: event.tripId,
@@ -204,8 +205,11 @@ export class CalendarComponent implements OnInit {
               console.log("Event Response:", response);
               this.addCreatedEvent(response, newEvent.tripId);
             },
-            error: () => {
-              this.showMessage("Event konnte nicht erstellt werden!");
+            error: (err) => {
+              console.error(err);
+              this.showMessage(
+                err.error || "Event konnte nicht erstellt werden!"
+              );
             }
           });
       }

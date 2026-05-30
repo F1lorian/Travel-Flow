@@ -52,6 +52,7 @@ export class EventService {
     );
   }
 
+  //returns the events from the database as a .ics file
   exportEvents():Observable<Blob> {
     return this.http.get('/api/data/ical', {
       responseType: 'blob'

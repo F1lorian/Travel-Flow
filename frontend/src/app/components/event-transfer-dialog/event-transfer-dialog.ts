@@ -1,5 +1,5 @@
 import {Component, inject, Inject} from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
@@ -19,6 +19,7 @@ export class EventTransferDialog {
   tripId: number | undefined;
   tripService = inject(TripService);
   trips: Trip[] = [];
+  dialog = inject(MatDialog);
 
   constructor(private dialogRef: MatDialogRef<EventTransferDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
     if (data) {
@@ -43,7 +44,7 @@ export class EventTransferDialog {
     const file = input.files[0];
 
     if (!this.isEmlFile(file)) {
-      console.error('Nur .eml-Dateien erlaubt');
+      this.showMessage('Nur .eml-Dateien erlaubt');
       this.file = undefined;
       this.fileName = '';
       return;
@@ -66,7 +67,7 @@ export class EventTransferDialog {
     const file = files[0];
 
     if (!this.isEmlFile(file)) {
-      console.error('Nur .eml-Dateien erlaubt');
+      this.showMessage('Nur .eml-Dateien erlaubt');
       this.file = undefined;
       this.fileName = '';
       return;
@@ -84,17 +85,12 @@ export class EventTransferDialog {
   //uploads the file to the backend and returns the created event back to the calendar
   uploadFile() {
     if (!this.file) {
-      console.error('Keine .eml-Datei ausgewählt');
+      this.showMessage('Keine .eml-Datei ausgewählt');
       return;
     }
 
-    const importId = Date.now();
-
     const formData = new FormData();
     formData.append('MailFile', this.file);
-
-    console.log(this.file);
-    console.log(importId);
 
     if(!this.tripId){
       return;
@@ -104,7 +100,9 @@ export class EventTransferDialog {
         this.dialogRef.close(event);
       },
       error: (err) => {
-        console.error('Import fehlgeschlagen', err);
+        this.showMessage(
+          err.error || "Event konnte nicht erstellt werden!"
+        );
       }
     });
   }
@@ -142,6 +140,11 @@ export class EventTransferDialog {
         console.error('Trips konnten nicht geladen werden:', err);
       }
     });
+  }
+
+  //shows the user possible error messages from the backend
+  showMessage(message: string){
+    this.dialog.open(MessageDialog, {data: {message: message}})
   }
 
   //closes the dialog

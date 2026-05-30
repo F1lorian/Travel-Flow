@@ -8,6 +8,7 @@ import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import jakarta.mail.Multipart;
@@ -56,6 +57,13 @@ public class EventService {
     Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    if (matchingTrip != null) {
+      boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
+      boolean endsAfterTrip = eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
+      if (startsBeforeTrip || endsAfterTrip) {
+        throw new EventOutsideTripException("Event liegt außerhalb des Trips");
+      }
+    }
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
 
@@ -111,6 +119,13 @@ public class EventService {
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    if (matchingTrip != null) {
+      boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
+      boolean endsAfterTrip = eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
+      if (startsBeforeTrip || endsAfterTrip) {
+        throw new EventOutsideTripException("Event liegt außerhalb des Trips");
+      }
+    }
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
 
