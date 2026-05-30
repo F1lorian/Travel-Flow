@@ -51,7 +51,7 @@ public class EventService {
     this.objectMapper = objectMapper;
   }
 
-  // Todo Name bei Trip muss besser gelöst werden jetzt vereinfacht über id
+  //Einfaches Speichern von Events
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
     Trip matchingTrip =
         tripRepository
@@ -60,6 +60,7 @@ public class EventService {
                 () ->
                     new RuntimeException(
                         "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+    //Behandlung wenn Startdate == null heutiger Tag wenn endDate == null dann startdate +1
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
@@ -68,6 +69,7 @@ public class EventService {
     return mapToResponseDTO(savedEvent);
   }
 
+  //Löschen eines Events aus der Db
   public void DeleteEventFromDB(Long EventID) {
     if (!eventRepository.existsById(EventID)) {
       throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
@@ -76,6 +78,7 @@ public class EventService {
     eventRepository.deleteById(EventID);
   }
 
+  //Event bearbeiten auf Basis der mitgegebenen Daten im DTO
   public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
     Event event =
         eventRepository
@@ -88,6 +91,7 @@ public class EventService {
     if (dto.getName() != null) {
       event.setName(dto.getName());
     }
+    // -1 bei Kosten als Error State
     if (dto.getKosten() != -1) {
       event.setKosten(dto.getKosten());
     }
@@ -107,6 +111,7 @@ public class EventService {
     return mapToResponseDTO(event);
   }
 
+  //Gleiche Speicher Logik wie Oben nur für Response DTOs
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
     Trip matchingTrip =
         tripRepository
@@ -125,6 +130,7 @@ public class EventService {
     return mapToResponseDTO(savedEvent);
   }
 
+  // Holt alle Events aus de DB um den Kalender zu Füllen (Alle Trips werden im Trip Management geholt)
   public List<EventCalendarDTO> GetAllEventsFromDb() {
     return eventRepository.findAll().stream()
         .map(
@@ -139,10 +145,12 @@ public class EventService {
         .toList();
   }
 
+  // Zweistufiges Email Parsing um Events zu erzeugen
   public EventResponseDTO ParseMailFile(InputStream inputStream) throws Exception {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
     var jsonLdBlocks = extractJsonLd(message);
+    // 1.Stufe überprüfen ob Json LD File vorliegt
     if (!jsonLdBlocks.isEmpty()) {
       var jsonEvent =
           jsonLdBlocks.stream()
@@ -155,7 +163,7 @@ public class EventService {
         return mapJsonLdToDTO(jsonEvent);
       }
     }
-
+  // 2. Stufe wenn kein Json LD gefunden wurde wird der Text und der Betreff mit Gemini Interpretiert
     var body = extractText(message);
     return parseTextWithGemini(message.getSubject(), body);
   }
@@ -168,6 +176,7 @@ public class EventService {
     try {
       Client client = Client.builder().apiKey(geminiApiKey).build();
 
+      //Ausgabe typ Festkegen. temperature == Grad der Hallozination
       GenerateContentConfig config =
           GenerateContentConfig.builder()
               .responseMimeType("application/json")
@@ -179,6 +188,7 @@ public class EventService {
 
       JsonNode node = objectMapper.readTree(response.text());
 
+      //Ergebnis wurde als Json erzeugt daher wird dass als Json node durchlaufen um dass DTO zu bauen
       String name = node.path("name").asText(subject);
       int kosten = node.path("kosten").asInt(0);
       LocalDateTime start = parseDatetime(node.path("startDate").asText());
@@ -190,6 +200,7 @@ public class EventService {
     }
   }
 
+  //Prompt für Gemini
   private String buildGeminiPrompt(String subject, String mailText) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
@@ -219,6 +230,7 @@ public class EventService {
         .formatted(subject, mailText);
   }
 
+  //Überprüfung ob ein Part der Email nach Schema.org aufgebaut ist
   private boolean isSchemaOrg(JsonNode node) {
     JsonNode context = node.get("@context");
 
@@ -230,6 +242,7 @@ public class EventService {
       return true;
     }
 
+    //Json kann verschachtekt sein daher hier die Extra Prüfung über Json Nodes
     if (context.isArray()) {
       for (JsonNode child : context) {
         if (child.isTextual() && child.asText().contains("schema.org")) {
@@ -238,6 +251,7 @@ public class EventService {
       }
     }
 
+    //Falls kein text vorliegt
     if (context.isObject() && context.toString().contains("schema.org")) {
       return true;
     }
@@ -252,6 +266,7 @@ public class EventService {
       return true;
     }
 
+    //Umgang mit verschachtelungen
     if (node.get("@graph") != null && node.get("@graph").isArray()) {
       var graph = node.get("@graph");
       for (JsonNode child : graph) {
@@ -263,11 +278,14 @@ public class EventService {
     return false;
   }
 
+  //Überprüfung ob es sich um ein Schem event handelt (Aufbau nach
+  // Schema.org sollte vorher überprüft werden)
   private boolean isEventType(JsonNode type) {
     if (type == null || type.isNull()) {
       return false;
     }
 
+    //Behandlung von unterschiedlichen Schreibweisen
     if (type.isTextual()) {
       String typeValue = type.asText();
       return typeValue.equals("Event")
@@ -276,6 +294,7 @@ public class EventService {
           || typeValue.equals("http://schema.org/Event");
     }
 
+    // Umgang mit verschachtelung durch Rekursion
     if (type.isArray()) {
       for (JsonNode child : type) {
         if (isEventType(child)) {
@@ -287,6 +306,7 @@ public class EventService {
     return false;
   }
 
+  //Wird nur genutz falls gemini keine Gültige antwort findet (vermeidet Absturz)
   private EventResponseDTO mapTextToDTO(String text) {
     var name = text == null || text.isBlank() ? "Unbekanntes Event" : text;
     LocalDateTime start = LocalDateTime.now();
@@ -296,6 +316,8 @@ public class EventService {
   private EventResponseDTO mapJsonLdToDTO(JsonNode jsonLdBlocks) {
     var eventNode = jsonLdBlocks;
 
+    //Falls dass Event selber in einem Graph verschachtelt ist wird solange durchgegangen
+    // bis man den passenden Teil findet
     if (!isEventType(eventNode.get("@type")) && eventNode.path("@graph").isArray()) {
       for (JsonNode child : eventNode.path("@graph")) {
         if (isEventType(child.get("@type"))) {
@@ -349,6 +371,7 @@ public class EventService {
     return end != null ? end : start.plusDays(1);
   }
 
+  //Durchläuft die Multipart Email und sucht nach dem Json LD
   private List<JsonNode> extractJsonLd(Part part) throws Exception {
     List<JsonNode> result = new ArrayList<>();
 
