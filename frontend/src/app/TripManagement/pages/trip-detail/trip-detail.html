@@ -73,7 +73,7 @@
                     <span class="event-category">{{ event.categoryName }}</span>
                   }
                 </div>
-                <div class="event-cost">{{ event.kosten }} €</div>
+                <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
                 <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
               </li>
             }
