@@ -59,7 +59,8 @@ public class EventService {
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     if (matchingTrip != null) {
       boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
-      boolean endsAfterTrip = eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
+      boolean endsAfterTrip =
+          eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
       if (startsBeforeTrip || endsAfterTrip) {
         throw new EventOutsideTripException("Event liegt außerhalb des Trips");
       }
@@ -121,7 +122,8 @@ public class EventService {
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     if (matchingTrip != null) {
       boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
-      boolean endsAfterTrip = eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
+      boolean endsAfterTrip =
+          eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
       if (startsBeforeTrip || endsAfterTrip) {
         throw new EventOutsideTripException("Event liegt außerhalb des Trips");
       }
