@@ -3,6 +3,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
+import {MessageDialog} from '../message-dialog/message-dialog';
 
 @Component({
   selector: 'app-event-transfer-dialog',
@@ -147,5 +148,6 @@ export class EventTransferDialog {
   close(){
     this.dialogRef.close();
   }
+
 }
 

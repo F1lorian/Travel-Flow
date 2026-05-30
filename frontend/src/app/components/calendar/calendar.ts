@@ -19,6 +19,7 @@ import {EventImpl} from '@fullcalendar/core/internal';
 import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialog';
 import {TripService} from '../../TripManagement/services/trip.service';
 import { Router } from '@angular/router';
+import {MessageDialog} from '../message-dialog/message-dialog';
 
 
 @Component({
@@ -88,7 +89,7 @@ export class CalendarComponent implements OnInit {
   }
 
   //handles what happens when a calendar event is clickes
-  //if its a trip, the user gets directed to the trip page, if its an event, the event opens as a dialog for the user
+  //if it is a trip, the user gets directed to the trip page, if it is an event, the event opens as a dialog for the user
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
     const type = clickInfo.event.extendedProps['type'];
@@ -159,7 +160,7 @@ export class CalendarComponent implements OnInit {
     const calendarEvent = calendarApi.getEventById(id);
 
     if (!calendarEvent) {
-      console.error('Event im Kalender nicht gefunden:', id);
+      this.showMessage('Event im Kalender nicht gefunden');
       return;
     }
 
@@ -204,7 +205,7 @@ export class CalendarComponent implements OnInit {
               this.addCreatedEvent(response, newEvent.tripId);
             },
             error: () => {
-              console.error("Event konnte nicht erstellt werden!");
+              this.showMessage("Event konnte nicht erstellt werden!");
             }
           });
       }
@@ -245,7 +246,7 @@ export class CalendarComponent implements OnInit {
               this.updateEditedEvent(id, response);
             },
             error: () => {
-              console.error("Event konnte nicht geändert werden!");
+              this.showMessage("Event konnte nicht geändert werden!");
             }
           })
         }
@@ -256,7 +257,7 @@ export class CalendarComponent implements OnInit {
               this.removeDeletedEvent(id)
             },
             error: () => {
-              console.error("Event konnte nicht gelöscht werden!");
+              this.showMessage("Event konnte nicht gelöscht werden!");
             }
           })
         }
@@ -282,7 +283,7 @@ export class CalendarComponent implements OnInit {
   //opens the dialog for downloading the events as an .ics file
   exportEvents(){
     this.dialog.open(EventTransferDialog, {
-      data: {mode: 'export',}
+      data: {mode: 'export'}
     })
   }
 
@@ -355,6 +356,11 @@ export class CalendarComponent implements OnInit {
       }
     });
 
+  }
+
+  //shows a message for the User on the screen
+  showMessage(message: string){
+    this.dialog.open(MessageDialog, {data: {message: message}})
   }
 
 }
