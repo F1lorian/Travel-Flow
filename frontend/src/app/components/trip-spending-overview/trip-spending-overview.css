@@ -181,3 +181,26 @@
   color: green;
   font-weight: bold;
 }
+
+/* Wraps each wide table so it scrolls sideways inside its box instead of
+   stretching the page on a narrow phone. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Phones: the three budget boxes sit in one flex row that is too wide,
+   so stack them vertically. */
+@media (max-width: 640px) {
+  .budget-summary {
+    flex-direction: column;
+  }
+
+  /* The dialog's fixed min-width can overrun the smallest phones; let it
+     shrink to fit while keeping a small side margin from the backdrop. */
+  .budget-dialog {
+    min-width: 0;
+    width: 100%;
+    margin: 0 16px;
+  }
+}
