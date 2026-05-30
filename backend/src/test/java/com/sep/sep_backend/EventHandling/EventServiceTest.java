@@ -42,6 +42,8 @@ class EventServiceTest {
     LocalDateTime beforeSave = LocalDateTime.now();
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     saveEventToDB(request);
 
@@ -76,6 +78,8 @@ class EventServiceTest {
     EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start, end);
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
 

@@ -57,7 +57,7 @@ class TripControllerTest {
   void createTrip_returnsOkWithCreatedTrip() throws Exception {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    when(tripService.createTrip("Paris")).thenReturn(trip);
+    when(tripService.createTrip(eq("Paris"), any(), any())).thenReturn(trip);
 
     mockMvc
         .perform(

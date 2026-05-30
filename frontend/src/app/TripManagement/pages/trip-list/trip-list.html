@@ -9,6 +9,14 @@
       placeholder="Trip name (e.g. Paris Vacation)"
       (keyup.enter)="createTrip()"
     />
+    <label>
+      Start
+      <input type="date" [(ngModel)]="newTripStartDate" />
+    </label>
+    <label>
+      End
+      <input type="date" [(ngModel)]="newTripEndDate" />
+    </label>
     <button (click)="createTrip()">Create Trip</button>
   </div>
 

@@ -39,15 +39,19 @@ public class TripEventController {
   @PostMapping
   public ResponseEntity<EventDTO> addEvent(
       @PathVariable Long tripId, @RequestBody CreateEventRequest request) {
-    Event created =
-        eventService.addEventToTrip(
-            tripId,
-            request.name(),
-            request.startTime(),
-            request.endTime(),
-            request.kosten(),
-            request.categoryName());
-    return ResponseEntity.ok(EventDTO.from(created));
+    try {
+      Event created =
+          eventService.addEventToTrip(
+              tripId,
+              request.name(),
+              request.startTime(),
+              request.endTime(),
+              request.kosten(),
+              request.categoryName());
+      return ResponseEntity.ok(EventDTO.from(created));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().build();
+    }
   }
 
   @DeleteMapping("/{eventId}")

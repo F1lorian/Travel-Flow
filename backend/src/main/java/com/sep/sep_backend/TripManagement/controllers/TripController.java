@@ -8,6 +8,7 @@ POST /api/trips        → frontend create-trip form */
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class TripController {
 
   // Shape of the JSON body sent by the frontend when creating a trip
-  public record CreateTripRequest(String name) {}
+  public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;
 
@@ -43,8 +44,12 @@ public class TripController {
 
   @PostMapping
   public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request) {
-    Trip created = tripService.createTrip(request.name());
-    return ResponseEntity.ok(TripDTO.from(created));
+    try {
+      Trip created = tripService.createTrip(request.name(), request.startDate(), request.endDate());
+      return ResponseEntity.ok(TripDTO.from(created));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().build();
+    }
   }
 
   @DeleteMapping("/{id}")

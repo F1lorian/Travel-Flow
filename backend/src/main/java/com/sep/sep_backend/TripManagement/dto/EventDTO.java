@@ -22,7 +22,7 @@ public class EventDTO {
     dto.startTime = event.getStartTime();
     dto.endTime = event.getEndTime();
     dto.kosten = event.getKosten();
-    dto.tripId = event.getTrip().getId();
+    dto.tripId = event.getTrip() != null ? event.getTrip().getId() : 0L;
     dto.categoryName = event.getCategorie() != null ? event.getCategorie().getName() : null;
     return dto;
   }

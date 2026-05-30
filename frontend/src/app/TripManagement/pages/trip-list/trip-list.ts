@@ -17,6 +17,8 @@ export class TripList implements OnInit {
 
   trips = signal<Trip[]>([]);
   newTripName = '';
+  newTripStartDate = '';
+  newTripEndDate = '';
   errorMessage = '';
 
   ngOnInit() {
@@ -31,10 +33,16 @@ export class TripList implements OnInit {
       this.errorMessage = 'Please enter a trip name';
       return;
     }
-    this.tripService.createTrip(this.newTripName).subscribe({
+    this.tripService.createTrip(
+      this.newTripName,
+      this.newTripStartDate || undefined,
+      this.newTripEndDate || undefined
+    ).subscribe({
       next: (trip) => {
         this.trips.update(list => [...list, trip]);
         this.newTripName = '';
+        this.newTripStartDate = '';
+        this.newTripEndDate = '';
         this.errorMessage = '';
       },
       error: (err) => this.errorMessage = 'Could not create trip: ' + err.message
