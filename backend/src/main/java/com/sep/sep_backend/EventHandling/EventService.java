@@ -52,7 +52,7 @@ public class EventService {
     this.objectMapper = objectMapper;
   }
 
-  // Einfaches Speichern von Events
+  //Einfaches Speichern von Events
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
     Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
@@ -66,7 +66,7 @@ public class EventService {
     return mapToResponseDTO(savedEvent);
   }
 
-  // Löschen eines Events aus der Db
+  //Löschen eines Events aus der Db
   public void DeleteEventFromDB(Long EventID) {
     if (!eventRepository.existsById(EventID)) {
       throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
@@ -75,7 +75,7 @@ public class EventService {
     eventRepository.deleteById(EventID);
   }
 
-  // Event bearbeiten auf Basis der mitgegebenen Daten im DTO
+  //Event bearbeiten auf Basis der mitgegebenen Daten im DTO
   public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
     Event event =
         eventRepository
@@ -108,7 +108,7 @@ public class EventService {
     return mapToResponseDTO(event);
   }
 
-  // Gleiche Speicher Logik wie Oben nur für Response DTOs
+  //Gleiche Speicher Logik wie Oben nur für Response DTOs
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
     Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
@@ -227,7 +227,7 @@ public class EventService {
         .formatted(subject, mailText);
   }
 
-  // Überprüfung ob ein Part der Email nach Schema.org aufgebaut ist
+  //Überprüfung ob ein Part der Email nach Schema.org aufgebaut ist
   private boolean isSchemaOrg(JsonNode node) {
     JsonNode context = node.get("@context");
 
@@ -239,7 +239,7 @@ public class EventService {
       return true;
     }
 
-    // Json kann verschachtekt sein daher hier die Extra Prüfung über Json Nodes
+    //Json kann verschachtekt sein daher hier die Extra Prüfung über Json Nodes
     if (context.isArray()) {
       for (JsonNode child : context) {
         if (child.isTextual() && child.asText().contains("schema.org")) {
@@ -313,7 +313,7 @@ public class EventService {
   private EventResponseDTO mapJsonLdToDTO(JsonNode jsonLdBlocks) {
     var eventNode = jsonLdBlocks;
 
-    // Falls dass Event selber in einem Graph verschachtelt ist wird solange durchgegangen
+    //Falls dass Event selber in einem Graph verschachtelt ist wird solange durchgegangen
     // bis man den passenden Teil findet
     if (!isEventType(eventNode.get("@type")) && eventNode.path("@graph").isArray()) {
       for (JsonNode child : eventNode.path("@graph")) {
