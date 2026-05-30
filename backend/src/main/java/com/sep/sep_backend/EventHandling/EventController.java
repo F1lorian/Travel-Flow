@@ -23,18 +23,18 @@ public class EventController {
     return ResponseEntity.ok().body(responsedto);
   }
 
-  //Zum Befüllen des Kalenders
+  // Zum Befüllen des Kalenders
   @GetMapping("event/pull/all_events")
   public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
     return ResponseEntity.ok(eventService.GetAllEventsFromDb());
   }
 
-  //Nimmt ein eml File entgegen (Multipart email)
+  // Nimmt ein eml File entgegen (Multipart email)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/import")
   public EventResponseDTO uploadEmail(
       @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
       throws Exception {
-    //Inputstream Notwendig für jakarta
+    // Inputstream Notwendig für jakarta
     var eventDTO = eventService.ParseMailFile(file.getInputStream());
     return eventService.SaveEventResponseToDB(eventDTO, tripId);
   }

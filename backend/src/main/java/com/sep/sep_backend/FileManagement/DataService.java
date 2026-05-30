@@ -44,7 +44,7 @@ class DataService {
     return buildCalendar(events, trips);
   }
 
-  //Events und trips werden zu einem Record gemacht (Expliziete darrstellung von Trips ist bei
+  // Events und trips werden zu einem Record gemacht (Expliziete darrstellung von Trips ist bei
   // Ical nicht vorgesehen daher gleiche behandlung)
   private IcalRecord toIcalRecord(Event event) {
     String description = event.getTrip() == null ? "" : "Trip: " + event.getTrip().getName();
@@ -73,10 +73,11 @@ class DataService {
         endDateInclusive.plusDays(1));
   }
 
-  //Setzt dass Gesamte file als String zusammen (Umwandlung in ics im frontend informationen werden im
+  // Setzt dass Gesamte file als String zusammen (Umwandlung in ics im frontend informationen werden
+  // im
   // header mirgegeben)
   private String buildCalendar(List<IcalRecord> events, List<IcalRecord> trips) {
-    //Anfang von ics files
+    // Anfang von ics files
     StringBuilder calendar =
         new StringBuilder(
             """
@@ -98,7 +99,7 @@ class DataService {
     return calendar.toString().replace("\n", "\r\n");
   }
 
-  //Baut aus den Records die formatierten strings für das ics file(Evnts können auch Trips sein ->
+  // Baut aus den Records die formatierten strings für das ics file(Evnts können auch Trips sein ->
   // gleich Behandlung)
   private String buildEvent(IcalRecord event, String dtStamp) {
     String dates =
@@ -123,7 +124,7 @@ class DataService {
             event.uid(), dtStamp, dates, escapeIcs(event.title()), escapeIcs(event.description()));
   }
 
-  //Bringt Datumsfelder ins richtige Format für ics files
+  // Bringt Datumsfelder ins richtige Format für ics files
   private String buildTimedDates(IcalRecord event) {
     String start = "DTSTART:" + EVENT_TIME_FORMATTER.format(event.startDateTime()) + "\n";
     if (event.endDateTime() == null) {
@@ -132,7 +133,7 @@ class DataService {
     return start + "DTEND:" + EVENT_TIME_FORMATTER.format(event.endDateTime()) + "\n";
   }
 
-  //Innerhalb con ics files haben bestimmte Zeichen eine bedeutung daher werden diese heir ersetzt
+  // Innerhalb con ics files haben bestimmte Zeichen eine bedeutung daher werden diese heir ersetzt
   private String escapeIcs(String value) {
     if (value == null) {
       return "";

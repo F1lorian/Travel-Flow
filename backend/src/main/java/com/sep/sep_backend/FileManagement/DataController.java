@@ -18,7 +18,7 @@ class DataController {
     this.dataService = dataService;
   }
 
-  //Gibt Dass ics file zurück
+  // Gibt Dass ics file zurück
   @GetMapping(value = "/ical", produces = "text/calendar")
   public ResponseEntity<String> exportAllEvents() {
     return ResponseEntity.ok()
