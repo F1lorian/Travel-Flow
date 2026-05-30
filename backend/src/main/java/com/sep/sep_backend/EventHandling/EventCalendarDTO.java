@@ -6,7 +6,7 @@ public class EventCalendarDTO {
   private String id;
   private String title;
   private int kosten;
-  private long tripId;
+  private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
 
@@ -15,7 +15,7 @@ public class EventCalendarDTO {
   public EventCalendarDTO() {}
 
   public EventCalendarDTO(
-      String id, String title, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
+      String id, String title, int kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
     this.id = id;
     this.title = title;
     this.start = start;
@@ -64,11 +64,11 @@ public class EventCalendarDTO {
     this.kosten = kosten;
   }
 
-  public long getTripId() {
+  public Long getTripId() {
     return this.tripId;
   }
 
-  public void setTripId(long tripId) {
+  public void setTripId(Long tripId) {
     this.tripId = tripId;
   }
 }

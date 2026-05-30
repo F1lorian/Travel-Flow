@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 class EventControllerTest {
 
@@ -51,7 +53,7 @@ class EventControllerTest {
                 20,
                 LocalDateTime.of(2026, 5, 7, 14, 30),
                 LocalDateTime.of(2026, 5, 8, 14, 30),
-                1));
+                1L));
 
     when(eventService.GetAllEventsFromDb()).thenReturn(events);
 
@@ -60,5 +62,16 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isEqualTo(events);
     verify(eventService).GetAllEventsFromDb();
+  }
+
+  @Test
+  void uploadEmailErlaubtImportOhneTripId() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod("uploadEmail", MultipartFile.class, Long.class);
+
+    RequestParam tripIdParam = method.getParameters()[1].getAnnotation(RequestParam.class);
+
+    assertThat(tripIdParam.value()).isEqualTo("tripId");
+    assertThat(tripIdParam.required()).isFalse();
   }
 }

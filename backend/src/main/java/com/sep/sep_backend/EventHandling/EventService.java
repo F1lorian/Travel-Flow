@@ -53,14 +53,7 @@ public class EventService {
 
   // Einfaches Speichern von Events
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
-    Trip matchingTrip =
-        tripRepository
-            .findById(dto.getTripId())
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
-    // Behandlung wenn Startdate == null heutiger Tag wenn endDate == null dann startdate +1
+    Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
@@ -113,13 +106,7 @@ public class EventService {
 
   // Gleiche Speicher Logik wie Oben nur für Response DTOs
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
-    Trip matchingTrip =
-        tripRepository
-            .findById(tripId)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+    Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
@@ -374,7 +361,19 @@ public class EventService {
     return end != null ? end : start.plusDays(1);
   }
 
-  // Durchläuft die Multipart Email und sucht nach dem Json LD
+  private Trip findTripByIdIfPresent(Long tripId) {
+    if (tripId == null) {
+      return null;
+    }
+
+    return tripRepository
+        .findById(tripId)
+        .orElseThrow(
+            () ->
+                new RuntimeException(
+                    "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+  }
+
   private List<JsonNode> extractJsonLd(Part part) throws Exception {
     List<JsonNode> result = new ArrayList<>();
 

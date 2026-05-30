@@ -58,6 +58,27 @@ class EventServiceTest {
   }
 
   @Test
+  void saveEventToDBSpeichertEventOhneTripId() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 1, 21, 0);
+    EventRequestDTO request = new EventRequestDTO("Museum", 25, null, start, end);
+
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    EventResponseDTO result = eventService.SaveEventToDB(request);
+
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(eventRepository).save(eventCaptor.capture());
+
+    Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getTrip()).isNull();
+    assertThat(savedEvent.getTripId()).isNull();
+    assertThat(result.getTripId()).isNull();
+    verify(tripRepository, never()).findById(any());
+  }
+
+  @Test
   void saveEventToDBWirftExceptionWennTripNichtExistiert() {
     EventRequestDTO request = new EventRequestDTO("Museum", 25, 99L);
     when(tripRepository.findById(99L)).thenReturn(Optional.empty());
@@ -97,6 +118,28 @@ class EventServiceTest {
   }
 
   @Test
+  void saveEventResponseToDBSpeichertEventOhneTripId() {
+    LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 1, 21, 0);
+    EventResponseDTO responseDTO = new EventResponseDTO("Konzert", 49, start, end);
+
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(eventRepository).save(eventCaptor.capture());
+
+    Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getName()).isEqualTo("Konzert");
+    assertThat(savedEvent.getTrip()).isNull();
+    assertThat(savedEvent.getTripId()).isNull();
+    assertThat(result.getTripId()).isNull();
+    verify(tripRepository, never()).findById(any());
+  }
+
+  @Test
   void getAllEventsFromDbWandeltEventsInCalendarDTOsUm() {
     Trip trip = new Trip("London");
     LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
@@ -112,6 +155,22 @@ class EventServiceTest {
     assertThat(result.getFirst().getId()).isEqualTo("42");
     assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
     assertThat(result.getFirst().getStart()).isEqualTo(start);
+    verify(eventRepository).findAll();
+  }
+
+  @Test
+  void getAllEventsFromDbGibtNullTripIdFuerEventsOhneTripZurueck() {
+    LocalDateTime start = LocalDateTime.of(2026, 5, 7, 14, 30);
+    LocalDateTime end = LocalDateTime.of(2026, 5, 8, 14, 30);
+    Event event = new Event("Museum", start, end, 25, null);
+    event.setId(42L);
+
+    when(eventRepository.findAll()).thenReturn(List.of(event));
+
+    List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
+
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst().getTripId()).isNull();
     verify(eventRepository).findAll();
   }
 

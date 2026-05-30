@@ -92,7 +92,7 @@ public class Event {
     this.categorie = categorie;
   }
 
-  public long getTripId() {
-    return this.trip.getId();
+  public Long getTripId() {
+    return this.trip == null ? null : this.trip.getId();
   }
 }
