@@ -1,89 +1,96 @@
-<a routerLink="/overview">Zurück zur Übersicht</a>
+<div class="page-shell">
+  <a class="back-link" routerLink="/overview">Zurück zur Übersicht</a>
 
-<h2>Cashbook</h2>
+  <section class="dialog-card">
+    <h2>Ausgabe hinzufügen</h2>
 
-<div>
-  <label for="betrag">Betrag (€):</label>
-  <input
-    id="betrag"
-    type="number"
-    [ngModel]="amount()"
-    (ngModelChange)="amount.set($event)"
-    placeholder="Betrag eingeben"
-  />
-</div>
+    <label class="field" for="betrag">
+      <span>Betrag (€)</span>
+      <input
+        id="betrag"
+        type="number"
+        [ngModel]="amount()"
+        (ngModelChange)="amount.set($event)"
+        placeholder="Betrag eingeben"
+      />
+    </label>
 
-<div>
-  <label for="trip">Trip:</label>
+    <label class="field" for="trip">
+      <span>Trip</span>
+      <select
+        id="trip"
+        [ngModel]="tripName()"
+        (ngModelChange)="tripName.set($event)"
+        [disabled]="loadingTrips() || trips().length === 0"
+      >
+        <option value="">Trip wählen</option>
 
-  <select
-    id="trip"
-    [ngModel]="tripName()"
-    (ngModelChange)="tripName.set($event)"
-    [disabled]="loadingTrips() || trips().length === 0"
-  >
-    <option value="">Trip wählen</option>
+        @for (trip of trips(); track trip.id) {
+          <option [value]="trip.name">
+            {{ trip.name }}
+          </option>
+        }
+      </select>
+    </label>
 
-    @for (trip of trips(); track trip.id) {
-      <option [value]="trip.name">
-        {{ trip.name }}
-      </option>
+    @if (loadingTrips()) {
+      <p class="message muted">Trips werden geladen...</p>
     }
-  </select>
-</div>
 
-@if (loadingTrips()) {
-  <p>Trips werden geladen...</p>
-}
-
-@if (!loadingTrips() && trips().length === 0) {
-  <p>Es sind noch keine Trips vorhanden.</p>
-}
-
-<div>
-  <label for="datum">Datum:</label>
-  <input
-    id="datum"
-    type="date"
-    [ngModel]="date()"
-    (ngModelChange)="date.set($event)"
-  />
-</div>
-
-<div>
-  <label for="kategorie">Kategorie:</label>
-  <select
-    id="kategorie"
-    [ngModel]="category()"
-    (ngModelChange)="category.set($event)"
-  >
-    <option value="">Kategorie wählen</option>
-
-    @for (cat of categories; track cat) {
-      <option [value]="cat">
-        {{ cat }}
-      </option>
+    @if (!loadingTrips() && trips().length === 0) {
+      <p class="message muted">Es sind noch keine Trips vorhanden.</p>
     }
-  </select>
+
+    <label class="field" for="datum">
+      <span>Datum</span>
+      <input
+        id="datum"
+        type="date"
+        [ngModel]="date()"
+        (ngModelChange)="date.set($event)"
+      />
+    </label>
+
+    <label class="field" for="kategorie">
+      <span>Kategorie</span>
+      <select
+        id="kategorie"
+        [ngModel]="category()"
+        (ngModelChange)="category.set($event)"
+      >
+        <option value="">Kategorie wählen</option>
+
+        @for (cat of categories; track cat) {
+          <option [value]="cat">
+            {{ cat }}
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (successMessage()) {
+      <p class="message success">{{ successMessage() }}</p>
+    }
+
+    @if (warningMessage()) {
+      <p class="message warning">{{ warningMessage() }}</p>
+    }
+
+    @if (errorMessage()) {
+      <p class="message error">{{ errorMessage() }}</p>
+    }
+
+    <div class="dialog-actions">
+      <a class="secondary-button" routerLink="/overview">Abbrechen</a>
+
+      <button
+        class="primary-button"
+        type="button"
+        (click)="addExpense()"
+        [disabled]="loadingTrips() || trips().length === 0"
+      >
+        Hinzufügen
+      </button>
+    </div>
+  </section>
 </div>
-
-<div>
-  <button
-    (click)="addExpense()"
-    [disabled]="loadingTrips() || trips().length === 0"
-  >
-    Hinzufuegen
-  </button>
-</div>
-
-@if (successMessage()) {
-  <p style="color: green;">{{ successMessage() }}</p>
-}
-
-@if (warningMessage()) {
-  <p style="color: orange;">{{ warningMessage() }}</p>
-}
-
-@if (errorMessage()) {
-  <p style="color: red;">{{ errorMessage() }}</p>
-}

@@ -1,124 +1,63 @@
-<h1>{{ tripname }} - spending overview</h1>
+<div class="container">
+  <div class="page-header">
+    <h1>{{ tripname }} - Spending Overview</h1>
+    <div class="header-actions">
+      <label class="compact-field">
+        <span>Trip</span>
+        <select id="overview-auswaehlen" [value]="trip?.id" (change)="openOverview($event)">
+          <option *ngFor="let trip of trips" [value]="trip.id">
+            {{ trip.name }}
+          </option>
+          <option value="interval">Selbstgewählter Intervall</option>
+        </select>
+      </label>
+      <a class="primary-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+    </div>
+  </div>
 
-<div *ngIf="errorMessage">
-  {{ errorMessage }}
-</div>
+  <div *ngIf="errorMessage" class="error">
+    {{ errorMessage }}
+  </div>
 
-<div>
-
-  <div class="budget-summary">
-
+  <section class="budget-summary">
     <button
-      class="budget budget-box-budget"
+      class="budget-card budget-action"
       type="button"
       (click)="openBudgetDialog()"
     >
       <span>Budget</span>
       <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </button>
-    <div class="ausgegeben">
+
+    <div class="budget-card">
       <span>Ausgegeben</span>
       <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </div>
 
-    <div class="verfuegbar">
+    <div class="budget-card">
       <span>Verfügbar</span>
       <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
     </div>
+  </section>
 
-  </div>
-
-  <div class="budget-dialog-backdrop" *ngIf="showBudgetDialog">
-    <div class="budget-dialog">
-      <h3>Budget bearbeiten</h3>
-
-      <p>
-        Trip:
-        <strong>{{ tripname }}</strong>
-      </p>
-
-      <p>
-        Aktuelles Budget:
-        <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
-      </p>
-
-      <p>
-        Bereits ausgegeben:
-        <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
-      </p>
-
-      <p>
-        Aktuell verfügbar:
-        <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
-      </p>
-
-      <p>
-        Aktueller Warnbereich:
-        <strong>{{ warningRange | currency:'EUR':'symbol':'1.2-2' }}</strong>
-      </p>
-
-      <div>
-        <label for="budget-input">Neues Budget (€):</label>
-        <input
-          id="budget-input"
-          type="number"
-          min="0"
-          [(ngModel)]="budgetInput"
-        />
-      </div>
-
-      <div>
-        <label for="warning-range-input">Warnbereich (€):</label>
-        <input
-          id="warning-range-input"
-          type="number"
-          min="0"
-          [(ngModel)]="warningRangeInput"
-        />
-      </div>
-
-      <p *ngIf="budgetErrorMessage" class="budget-error">
-        {{ budgetErrorMessage }}
-      </p>
-
-      <div class="budget-dialog-actions">
-        <button type="button" (click)="saveBudget()">
-          Speichern
-        </button>
-
-        <button type="button" (click)="closeBudgetDialog()">
-          Abbrechen
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <p *ngIf="budgetSuccessMessage" class="budget-success">
+  <p *ngIf="budgetSuccessMessage" class="success">
     {{ budgetSuccessMessage }}
   </p>
 
-  <a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Ausgaben nach Kategorie</h2>
 
-  <hr />
 
-  <h2>Ausgaben nach Kategorie</h2>
+    </div>
 
-  <select id="overview-auswaehlen" (change)="openOverview($event)">
-    <option value="">Anderer Trip</option>
-    <option *ngFor="let trip of trips" [value]="trip.id">
-      {{ trip.name }}
-    </option>
-    <option value="interval">Selbstgewählter Intervall</option>
-  </select>
+    <apx-chart
+      [labels]="chartlabels"
+      [series]="chartseries"
+      [chart]="chartDetails">
+    </apx-chart>
 
-  <apx-chart
-    [labels] = "chartlabels"
-    [series] = "chartseries"
-    [chart] = "chartDetails">
-  </apx-chart>
-
-  <div class="table-scroll">
-    <table class="category-table">
+    <table class="data-table">
       <thead>
       <tr>
         <th>Kategorie</th>
@@ -130,33 +69,33 @@
         <td>{{ item.category }}</td>
         <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
       </tr>
-
       </tbody>
     </table>
-  </div>
+  </section>
 
-  <hr />
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Letzte Ausgaben</h2>
 
-  <h2>Letzte Ausgaben</h2>
+      <label class="compact-field">
+        <span>Kategorie</span>
+        <select
+          id="category-filter"
+          [(ngModel)]="selectedCategory"
+        >
+          <option value="ALL">Alle Kategorien</option>
+          <option *ngFor="let category of categories" [value]="category">
+            {{ category }}
+          </option>
+        </select>
+      </label>
+    </div>
 
-  <label for="category-filter">Kategorie:</label>
+    <p *ngIf="expenses.length === 0" class="empty">
+      Keine Ausgaben gefunden.
+    </p>
 
-  <select
-    id="category-filter"
-    [(ngModel)]="selectedCategory"
-  >
-    <option value="ALL">Alle Kategorien</option>
-    <option *ngFor="let category of categories" [value]="category">
-      {{ category }}
-    </option>
-  </select>
-
-  <div *ngIf="expenses.length === 0">
-    Keine Ausgaben gefunden.
-  </div>
-
-  <div class="table-scroll" *ngIf="expenses.length > 0">
-    <table class="expenses-table">
+    <table *ngIf="expenses.length > 0" class="data-table">
       <thead>
       <tr>
         <th>Kosten</th>
@@ -174,24 +113,86 @@
       </tr>
       </tbody>
     </table>
+
+    <button
+      *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = true"
+    >
+      Mehr anzeigen
+    </button>
+
+    <button
+      *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = false"
+    >
+      Weniger anzeigen
+    </button>
+  </section>
+
+  <div class="modal-overlay" *ngIf="showBudgetDialog">
+    <div class="modal">
+      <h2>Budget bearbeiten</h2>
+
+      <div class="budget-details">
+        <p>
+          <span>Trip</span>
+          <strong>{{ tripname }}</strong>
+        </p>
+        <p>
+          <span>Aktuelles Budget</span>
+          <strong>{{ budget | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </p>
+        <p>
+          <span>Bereits ausgegeben</span>
+          <strong>{{ summedExpenses | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </p>
+        <p>
+          <span>Aktuell verfügbar</span>
+          <strong>{{ available | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </p>
+        <p>
+          <span>Aktueller Warnbereich</span>
+          <strong>{{ warningRange | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </p>
+      </div>
+
+      <label class="field">
+        <span>Neues Budget (€)</span>
+        <input
+          id="budget-input"
+          type="number"
+          min="0"
+          [(ngModel)]="budgetInput"
+        />
+      </label>
+
+      <label class="field">
+        <span>Warnbereich (€)</span>
+        <input
+          id="warning-range-input"
+          type="number"
+          min="0"
+          [(ngModel)]="warningRangeInput"
+        />
+      </label>
+
+      <p *ngIf="budgetErrorMessage" class="error">
+        {{ budgetErrorMessage }}
+      </p>
+
+      <div class="modal-actions">
+        <button class="secondary-muted-button" type="button" (click)="closeBudgetDialog()">
+          Abbrechen
+        </button>
+
+        <button class="primary-button" type="button" (click)="saveBudget()">
+          Speichern
+        </button>
+      </div>
+    </div>
   </div>
-
-  <button
-    *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
-    class="button"
-    type="button"
-    (click)="showAllExpenses = true"
-  >
-    Mehr anzeigen
-  </button>
-
-  <button
-    *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
-    class="button"
-    type="button"
-    (click)="showAllExpenses = false"
-  >
-    Weniger anzeigen
-  </button>
-
 </div>
