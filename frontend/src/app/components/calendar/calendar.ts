@@ -1,5 +1,5 @@
 import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
-import { CalendarOptions } from '@fullcalendar/core';
+import {CalendarOptions, EventInput} from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -17,6 +17,8 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
 import {EventImpl} from '@fullcalendar/core/internal';
 import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialog';
+import {TripService} from '../../TripManagement/services/trip.service';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -31,6 +33,9 @@ export class CalendarComponent implements OnInit {
   @Input() selectedDate = '';
   selectedDateStr = '';
   eventService = inject(EventService);
+  tripService = inject(TripService);
+  calendarEvents: EventInput[] = [];
+  router = inject(Router);
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
@@ -78,12 +83,27 @@ export class CalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEvents();
+    this.loadTrips();
   }
 
 
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
-    console.log(selectedEvent);
+    const type = clickInfo.event.extendedProps['type'];
+
+    if (type === 'trip') {
+
+      const tripId =
+        selectedEvent.extendedProps['tripId'];
+
+      this.router.navigate([
+        '/trips',
+        tripId
+      ]);
+
+      return;
+    }
+
     const dialogRef = this.dialog.open(EventDialog, {
       data: {
         mode: 'show',
@@ -255,17 +275,73 @@ export class CalendarComponent implements OnInit {
     })
   }
 
-  loadEvents(){
+  loadEvents() {
+
     this.eventService.getEvents().subscribe({
       next: events => {
-        console.log('Geladene Events', events)
-        this.calendarOptions.events = events;
-      },
-      error: err => {
-        console.error('Events konnten nicht geladen werden:', err);
-        console.error('Backend Antwort:', err.error);
+
+        const mappedEvents = events.map(event => ({
+          id: event.id,
+          title: event.title,
+          start: event.start,
+          end: event.end,
+
+          classNames: ['calendar-event'],
+
+          extendedProps: {
+            type: 'event',
+            kosten: event.kosten,
+            tripId: event.tripId
+          }
+        }));
+
+        this.calendarEvents = [
+          ...this.calendarEvents,
+          ...mappedEvents
+        ];
+
+        this.calendarOptions.events = this.calendarEvents;
+
       }
-    })
+    });
+
+  }
+
+  loadTrips() {
+
+    this.tripService.getAllTrips().subscribe({
+      next: trips => {
+
+        const mappedTrips = trips.map(trip => ({
+          id: `trip-${trip.id}`,
+
+          title: trip.name,
+
+          start: trip.startDate,
+          end: trip.endDate,
+
+          editable: false,
+          startEditable: false,
+          durationEditable: false,
+
+          classNames: ['trip-event'],
+
+          extendedProps: {
+            type: 'trip',
+            tripId: trip.id
+          }
+        }));
+
+        this.calendarEvents = [
+          ...this.calendarEvents,
+          ...mappedTrips
+        ];
+
+        this.calendarOptions.events = this.calendarEvents;
+
+      }
+    });
+
   }
 
 }
