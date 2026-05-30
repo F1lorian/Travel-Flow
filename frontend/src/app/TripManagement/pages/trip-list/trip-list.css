@@ -114,3 +114,29 @@
   border-radius: 12px;
   font-weight: 500;
 }
+
+/* Phones / narrow screens: stack the create form instead of cramming
+   the name input, both dates and the button into one squished row. */
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+
+  .create-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Make the Start/End labels full-width stacked fields */
+  .create-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .create-form label input {
+    width: 100%;
+  }
+}

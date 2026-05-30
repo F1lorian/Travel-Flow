@@ -81,10 +81,22 @@
         }
       </div>
 
-      <aside class="right-sidebar">
-        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
-      </aside>
     </div>
+
+    <!-- AI recommendation: floating glowing orb launcher (bottom-right) + slide-in drawer.
+         Hover the orb (desktop) or tap it (touch) to open the panel. -->
+    <input type="checkbox" id="reco-toggle" class="reco-toggle" hidden />
+    <label for="reco-toggle" class="reco-orb" title="AI event suggestions">
+      <span class="reco-orb-icon">🧑‍🚀</span>
+    </label>
+    <!-- Tapping this backdrop unchecks the toggle, so the panel closes
+         when you tap/click outside it (fixes the "stuck open" on touch). -->
+    <label for="reco-toggle" class="reco-backdrop" aria-hidden="true"></label>
+    <aside class="reco-drawer">
+      <div class="reco-panel">
+        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
+      </div>
+    </aside>
   } @else if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   } @else {
