@@ -26,6 +26,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for creating, importing, listing, editing, and deleting events.
+ */
 @Service
 public class EventService {
 
@@ -40,6 +43,14 @@ public class EventService {
   @Value("${gemini.model}")
   private String geminiModel;
 
+  /**
+   * Creates an event service with repository access and helper services.
+   *
+   * @param eventRepository repository used to store and load events
+   * @param triprepository repository used to load trips for events
+   * @param ausgabeService service for expense-related event handling
+   * @param objectMapper JSON mapper used for event import payloads
+   */
   @Autowired
   public EventService(
       EventRepository eventRepository,
@@ -53,6 +64,12 @@ public class EventService {
   }
 
   // Einfaches Speichern von Events
+  /**
+   * Saves a manually created event for the trip referenced by the request.
+   *
+   * @param dto request data containing event values and the trip identifier
+   * @return response data of the saved event
+   */
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
     Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
@@ -67,6 +84,11 @@ public class EventService {
   }
 
   // Löschen eines Events aus der Db
+  /**
+   * Deletes the event with the given identifier.
+   *
+   * @param EventID identifier of the event to delete
+   */
   public void DeleteEventFromDB(Long EventID) {
     if (!eventRepository.existsById(EventID)) {
       throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
@@ -76,6 +98,13 @@ public class EventService {
   }
 
   // Event bearbeiten auf Basis der mitgegebenen Daten im DTO
+  /**
+   * Updates an existing event with the values provided in the request.
+   *
+   * @param eventId identifier of the event to update
+   * @param dto request data containing the new event values
+   * @return response data of the updated event
+   */
   public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
     Event event =
         eventRepository
@@ -109,6 +138,13 @@ public class EventService {
   }
 
   // Gleiche Speicher Logik wie Oben nur für Response DTOs
+  /**
+   * Saves an imported event for the given trip.
+   *
+   * @param dto imported event values
+   * @param tripId identifier of the trip the event belongs to
+   * @return response data of the saved event
+   */
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
     Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
@@ -126,6 +162,11 @@ public class EventService {
 
   // Holt alle Events aus de DB um den Kalender zu Füllen (Alle Trips werden im Trip Management
   // geholt)
+  /**
+   * Returns all stored events in the format used by the calendar view.
+   *
+   * @return list of calendar event DTOs
+   */
   public List<EventCalendarDTO> GetAllEventsFromDb() {
     return eventRepository.findAll().stream()
         .map(
@@ -141,6 +182,13 @@ public class EventService {
   }
 
   // Zweistufiges Email Parsing um Events zu erzeugen
+  /**
+   * Parses an uploaded email stream and extracts event data from it.
+   *
+   * @param inputStream email file content
+   * @return response data containing the extracted event values
+   * @throws Exception if the email content cannot be read or parsed
+   */
   public EventResponseDTO ParseMailFile(InputStream inputStream) throws Exception {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
