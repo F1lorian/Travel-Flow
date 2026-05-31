@@ -1,5 +1,5 @@
 import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
-import { CalendarOptions } from '@fullcalendar/core';
+import {CalendarOptions, EventInput} from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -17,6 +17,9 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
 import {EventImpl} from '@fullcalendar/core/internal';
 import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialog';
+import {TripService} from '../../TripManagement/services/trip.service';
+import { Router } from '@angular/router';
+import {MessageDialog} from '../message-dialog/message-dialog';
 
 
 @Component({
@@ -31,6 +34,9 @@ export class CalendarComponent implements OnInit {
   @Input() selectedDate = '';
   selectedDateStr = '';
   eventService = inject(EventService);
+  tripService = inject(TripService);
+  calendarEvents: EventInput[] = [];
+  router = inject(Router);
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
@@ -67,7 +73,7 @@ export class CalendarComponent implements OnInit {
     footerToolbar:{
       left: 'eventAddenButton eventImportButton eventExportButton'
     },
-    events: [{title: "test", start:"2026-05-27T12:00:00", end:"2026-05-27T14:00:00"}],
+    events: [],
 
     eventClick: this.handleEventClick.bind(this),
     dateClick: this.handleDateClick.bind(this)
@@ -78,12 +84,33 @@ export class CalendarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEvents();
+    this.loadTrips();
   }
 
-
+  /**
+   * Decides what happens if an event is clicked.
+   * If the Event is a trip, it redirects the User to the trip site
+   * If it is an Event, the Event opens as a dialog for the user
+   *
+   * @param clickInfo gives the event that is clicked by the user
+   */
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
-    console.log(selectedEvent);
+    const type = clickInfo.event.extendedProps['type'];
+
+    if (type === 'trip') {
+
+      const tripId =
+        selectedEvent.extendedProps['tripId'];
+
+      this.router.navigate([
+        '/trips',
+        tripId
+      ]);
+
+      return;
+    }
+
     const dialogRef = this.dialog.open(EventDialog, {
       data: {
         mode: 'show',
@@ -103,11 +130,19 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
+  /**
+   * Handles what happens when a date is clicked in the calendar
+   * @param clickInfo is the clicked Date
+   */
   handleDateClick(clickInfo: any) {
     this.createEvent(clickInfo.dateStr);
   }
 
-  addCreatedEvent(event: AddEventResponse, tripId?: number) {
+  /**
+   * Adds the created event to the View without reloading everything from the Database
+   * @param event is the created Event
+   */
+  addCreatedEvent(event: AddEventResponse) {
     const currentEvents = Array.isArray(this.calendarOptions.events)
       ? this.calendarOptions.events
       : [];
@@ -120,6 +155,7 @@ export class CalendarComponent implements OnInit {
           title: event.name,
           start: event.start,
           end: event.end,
+          classNames: ['calendar-event'],
           extendedProps: {
             kosten: event.kosten,
             tripId: event.tripId,
@@ -129,12 +165,17 @@ export class CalendarComponent implements OnInit {
     };
   }
 
+  /**
+   * Updates the created event in the View without reloading everything from the Database
+   * @param id is the id from the updates event
+   * @param event is the event with the new information
+   */
   updateEditedEvent(id: string, event: EditEventResponse) {
     const calendarApi = this.calendarComponent.getApi();
     const calendarEvent = calendarApi.getEventById(id);
 
     if (!calendarEvent) {
-      console.error('Event im Kalender nicht gefunden:', id);
+      this.showMessage('Event im Kalender nicht gefunden');
       return;
     }
 
@@ -145,6 +186,10 @@ export class CalendarComponent implements OnInit {
     calendarEvent.setExtendedProp('tripId', event.tripId);
   }
 
+  /**
+   * Removes the deleted event from the View without reloading eerything from the database
+   * @param id is the id from the deleted event
+   */
   removeDeletedEvent(id: string) {
     const calendarApi = this.calendarComponent.getApi();
     const calendarEvent = calendarApi.getEventById(id);
@@ -154,6 +199,11 @@ export class CalendarComponent implements OnInit {
     }
   }
 
+  /**
+   * opens a new dialog for creating an event
+   * after creation, it gets added to the database via the eventService
+   * @param selectedDateStr is the optional date which is used when the user creates an event by clicking on the date
+   */
   createEvent(selectedDateStr?: string) {
     const dialogRef = this.dialog.open(EventDialog, {
       data:{mode: 'create',
@@ -165,7 +215,7 @@ export class CalendarComponent implements OnInit {
         let newEvent: AddEventRequest = {
           name: result.title,
           kosten: result.kosten,
-          tripId: result.tripId,
+          tripId: result.tripId ?? undefined,
           start: result.start,
           end: result.end,
         }
@@ -174,10 +224,13 @@ export class CalendarComponent implements OnInit {
           .subscribe({
             next: (response) => {
               console.log("Event Response:", response);
-              this.addCreatedEvent(response, newEvent.tripId);
+              this.addCreatedEvent(response);
             },
-            error: () => {
-              console.error("Event konnte nicht erstellt werden!");
+            error: (err) => {
+              console.error(err);
+              this.showMessage(
+                err.error || "Event konnte nicht erstellt werden!"
+              );
             }
           });
       }
@@ -185,6 +238,11 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
+  /**
+   * opens a new dialog for editing or deleting events
+   * sends the updated information to the service, so that the information gets updated in the database, or the event gets deleted
+   * @param selectedEvent
+   */
   editEvent(selectedEvent: EventImpl){
     let id = selectedEvent.id;
     const dialogRef = this.dialog.open(EventDialog, {
@@ -217,7 +275,7 @@ export class CalendarComponent implements OnInit {
               this.updateEditedEvent(id, response);
             },
             error: () => {
-              console.error("Event konnte nicht geändert werden!");
+              this.showMessage("Event konnte nicht geändert werden!");
             }
           })
         }
@@ -228,7 +286,7 @@ export class CalendarComponent implements OnInit {
               this.removeDeletedEvent(id)
             },
             error: () => {
-              console.error("Event konnte nicht gelöscht werden!");
+              this.showMessage("Event konnte nicht gelöscht werden!");
             }
           })
         }
@@ -237,6 +295,10 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
+  /**
+   * opens the dialog for importing events via .eml files
+   * after creation it gets added to the calendar view
+   */
   importEvent(){
     const dialogRef = this.dialog.open(EventTransferDialog, {
       data: {mode: 'import',}
@@ -244,28 +306,101 @@ export class CalendarComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        this.loadEvents();
+        this.addCreatedEvent(result);
       }
     })
   }
 
+  /**
+   * opens the dialog for downloading the events as an .ics file
+   */
   exportEvents(){
     this.dialog.open(EventTransferDialog, {
-      data: {mode: 'export',}
+      data: {mode: 'export'}
     })
   }
 
-  loadEvents(){
+  /**
+   * loads the events from the database
+   */
+  loadEvents() {
+
     this.eventService.getEvents().subscribe({
       next: events => {
-        console.log('Geladene Events', events)
-        this.calendarOptions.events = events;
-      },
-      error: err => {
-        console.error('Events konnten nicht geladen werden:', err);
-        console.error('Backend Antwort:', err.error);
+
+        const mappedEvents = events.map(event => ({
+          id: event.id,
+          title: event.title,
+          start: event.start,
+          end: event.end,
+
+          classNames: ['calendar-event'],
+
+          extendedProps: {
+            type: 'event',
+            kosten: event.kosten,
+            tripId: event.tripId
+          }
+        }));
+
+        this.calendarEvents = [
+          ...this.calendarEvents,
+          ...mappedEvents
+        ];
+
+        this.calendarOptions.events = this.calendarEvents;
+
       }
-    })
+    });
+
+  }
+
+  /**
+   * loads the trips from the database
+   */
+  loadTrips() {
+
+    this.tripService.getAllTrips().subscribe({
+      next: trips => {
+
+        const mappedTrips = trips.map(trip => ({
+          id: `trip-${trip.id}`,
+
+          title: trip.name,
+
+          start: trip.startDate,
+          end: trip.endDate,
+
+          editable: false,
+          startEditable: false,
+          durationEditable: false,
+
+          classNames: ['trip-event'],
+
+          extendedProps: {
+            type: 'trip',
+            tripId: trip.id
+          }
+        }));
+
+        this.calendarEvents = [
+          ...this.calendarEvents,
+          ...mappedTrips
+        ];
+
+        this.calendarOptions.events = this.calendarEvents;
+
+      }
+    });
+
+  }
+
+  /**
+   * shows a message for the user on the screen
+   * @param message is the message that gets shown
+   */
+  showMessage(message: string){
+    this.dialog.open(MessageDialog, {data: {message: message}})
   }
 
 }

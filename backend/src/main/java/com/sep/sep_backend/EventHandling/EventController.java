@@ -32,7 +32,8 @@ public class EventController {
   // Nimmt ein eml File entgegen (Multipart email)
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/import")
   public EventResponseDTO uploadEmail(
-      @RequestParam("MailFile") MultipartFile file, @RequestParam("tripId") Long tripId)
+      @RequestParam("MailFile") MultipartFile file,
+      @RequestParam(value = "tripId", required = false) Long tripId)
       throws Exception {
     // Inputstream Notwendig für jakarta
     var eventDTO = eventService.ParseMailFile(file.getInputStream());

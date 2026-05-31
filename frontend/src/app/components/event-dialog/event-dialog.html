@@ -44,6 +44,10 @@
         Bitte Trip auswählen
       </option>
 
+      <option [ngValue]="undefined">
+        Das Event gehört zu keinem Trip
+      </option>
+
       @for (trip of trips; track trip.id) {
 
         <option [ngValue]="trip.id">

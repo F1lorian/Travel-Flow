@@ -8,6 +8,7 @@ import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import jakarta.mail.Multipart;
@@ -53,16 +54,12 @@ public class EventService {
 
   // Einfaches Speichern von Events
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
-    Trip matchingTrip =
-        tripRepository
-            .findById(dto.getTripId())
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
-    // Behandlung wenn Startdate == null heutiger Tag wenn endDate == null dann startdate +1
+    Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
+      throw new EventOutsideTripException("Event liegt außerhalb des Trips");
+    }
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
 
@@ -113,17 +110,14 @@ public class EventService {
 
   // Gleiche Speicher Logik wie Oben nur für Response DTOs
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
-    Trip matchingTrip =
-        tripRepository
-            .findById(tripId)
-            .orElseThrow(
-                () ->
-                    new RuntimeException(
-                        "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+    Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
+    if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
+      throw new EventOutsideTripException("Event liegt außerhalb des Trips");
+    }
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
 
@@ -374,7 +368,29 @@ public class EventService {
     return end != null ? end : start.plusDays(1);
   }
 
-  // Durchläuft die Multipart Email und sucht nach dem Json LD
+  private boolean isEventOutsideTrip(LocalDateTime eventStart, LocalDateTime eventEnd, Trip trip) {
+    if (trip.getStartDate() == null || trip.getEndDate() == null) {
+      return false;
+    }
+
+    boolean startsBeforeTrip = eventStart.isBefore(trip.getStartDate().atStartOfDay());
+    boolean endsAfterTrip = eventEnd.isAfter(trip.getEndDate().plusDays(1).atStartOfDay());
+    return startsBeforeTrip || endsAfterTrip;
+  }
+
+  private Trip findTripByIdIfPresent(Long tripId) {
+    if (tripId == null) {
+      return null;
+    }
+
+    return tripRepository
+        .findById(tripId)
+        .orElseThrow(
+            () ->
+                new RuntimeException(
+                    "Zu dieser trip Id findet sich kein eintrag in der Datenbank"));
+  }
+
   private List<JsonNode> extractJsonLd(Part part) throws Exception {
     List<JsonNode> result = new ArrayList<>();
 

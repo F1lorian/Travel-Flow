@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 class EventControllerTest {
 
@@ -51,7 +55,7 @@ class EventControllerTest {
                 20,
                 LocalDateTime.of(2026, 5, 7, 14, 30),
                 LocalDateTime.of(2026, 5, 8, 14, 30),
-                1));
+                1L));
 
     when(eventService.GetAllEventsFromDb()).thenReturn(events);
 
@@ -60,5 +64,36 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isEqualTo(events);
     verify(eventService).GetAllEventsFromDb();
+  }
+
+  @Test
+  void uploadEmailErlaubtImportOhneTripId() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod("uploadEmail", MultipartFile.class, Long.class);
+
+    RequestParam tripIdParam = method.getParameters()[1].getAnnotation(RequestParam.class);
+
+    assertThat(tripIdParam.value()).isEqualTo("tripId");
+    assertThat(tripIdParam.required()).isFalse();
+  }
+
+  @Test
+  void uploadEmailSpeichertImportOhneTripId() throws Exception {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+    MultipartFile file = mock(MultipartFile.class);
+    InputStream inputStream = new ByteArrayInputStream("mail".getBytes());
+    EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
+    EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, null);
+
+    when(file.getInputStream()).thenReturn(inputStream);
+    when(eventService.ParseMailFile(inputStream)).thenReturn(parsedEvent);
+    when(eventService.SaveEventResponseToDB(parsedEvent, null)).thenReturn(savedEvent);
+
+    EventResponseDTO response = eventController.uploadEmail(file, null);
+
+    assertThat(response).isSameAs(savedEvent);
+    verify(eventService).ParseMailFile(inputStream);
+    verify(eventService).SaveEventResponseToDB(parsedEvent, null);
   }
 }

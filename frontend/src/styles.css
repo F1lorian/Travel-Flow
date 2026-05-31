@@ -40,3 +40,27 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .fc-event {
   @apply rounded-md border-0 px-2 py-1 font-semibold shadow-sm;
 }
+
+.fc-event.trip-event {
+  background: #334155 !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.trip-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.fc-event.calendar-event {
+  background: #2563eb !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.calendar-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}

@@ -1,7 +1,7 @@
 export type AddEventRequest = {
   name: string;
   kosten: number;
-  tripId: number;
+  tripId?: number | undefined;
   start: string;
   end: string;
 };

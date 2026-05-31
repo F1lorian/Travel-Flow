@@ -6,18 +6,18 @@ public class EventResponseDTO {
   private String id;
   private String name;
   private int kosten;
-  private long tripId;
+  private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
 
   public EventResponseDTO() {}
 
   public EventResponseDTO(String name, int kosten, LocalDateTime start, LocalDateTime end) {
-    this(null, name, kosten, start, end, 0);
+    this(null, name, kosten, start, end, null);
   }
 
   public EventResponseDTO(
-      String id, String name, int kosten, LocalDateTime start, LocalDateTime end, long tripId) {
+      String id, String name, int kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
     this.id = id;
     this.name = name;
     this.kosten = kosten;
@@ -50,11 +50,11 @@ public class EventResponseDTO {
     this.kosten = kosten;
   }
 
-  public long getTripId() {
+  public Long getTripId() {
     return tripId;
   }
 
-  public void setTripId(long tripId) {
+  public void setTripId(Long tripId) {
     this.tripId = tripId;
   }
 
