@@ -16,8 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/trips")
-@CrossOrigin(
-        origins = "*")
+@CrossOrigin(origins = "*")
 public class TripController {
 
   // Shape of the JSON body sent by the frontend when creating a trip

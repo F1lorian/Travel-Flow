@@ -31,10 +31,10 @@ public class TripEventService {
   /**
    * Adds a new event to an existing trip.
    *
-   * <p>Only the name is required (the Event entity marks it nullable=false); times,
-   * cost and category are optional. If a category name is given, it's resolved
-   * through {@link CategoryService#getOrCreate} so typing a new label creates it
-   * and reusing an existing one links to it.
+   * <p>Only the name is required (the Event entity marks it nullable=false); times, cost and
+   * category are optional. If a category name is given, it's resolved through {@link
+   * CategoryService#getOrCreate} so typing a new label creates it and reusing an existing one links
+   * to it.
    */
   public Event addEventToTrip(
       Long tripId,
@@ -78,9 +78,9 @@ public class TripEventService {
   }
 
   /**
-   * Re-links an event to a different trip (the "move to another trip" feature).
-   * Both the event and the destination trip must exist, and moving an event to the
-   * trip it already belongs to is rejected as a no-op.
+   * Re-links an event to a different trip (the "move to another trip" feature). Both the event and
+   * the destination trip must exist, and moving an event to the trip it already belongs to is
+   * rejected as a no-op.
    */
   public Event moveEventToTrip(Long eventId, Long newTripId) {
     Event event =

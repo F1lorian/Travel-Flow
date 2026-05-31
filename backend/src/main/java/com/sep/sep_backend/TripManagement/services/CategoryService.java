@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
- * Business logic for event categories. Sits between the controller and the
- * database ({@link CategoriesRepository}) so the controller stays HTTP-only.
+ * Business logic for event categories. Sits between the controller and the database ({@link
+ * CategoriesRepository}) so the controller stays HTTP-only.
  */
 @Service
 public class CategoryService {
@@ -19,8 +19,8 @@ public class CategoryService {
   }
 
   /**
-   * The 10 newest categories, newest first. Highest id = most recently created,
-   * so ordering by id descending gives "recent" without a timestamp column.
+   * The 10 newest categories, newest first. Highest id = most recently created, so ordering by id
+   * descending gives "recent" without a timestamp column.
    */
   public List<Categories> getRecent() {
     return categoriesRepository.findTop10ByOrderByIdDesc();
@@ -29,9 +29,9 @@ public class CategoryService {
   /**
    * Finds the category with this name, or creates it if it doesn't exist yet.
    *
-   * <p>Called when a user adds an event and types a category name. The lookup is
-   * case-insensitive and trimmed so "Food", "food " and "FOOD" all resolve to the
-   * same row instead of creating duplicates. Blank names are rejected.
+   * <p>Called when a user adds an event and types a category name. The lookup is case-insensitive
+   * and trimmed so "Food", "food " and "FOOD" all resolve to the same row instead of creating
+   * duplicates. Blank names are rejected.
    */
   public Categories getOrCreate(String name) {
     if (name == null || name.isBlank()) {

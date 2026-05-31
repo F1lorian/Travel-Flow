@@ -18,14 +18,16 @@ import org.springframework.web.client.RestClient;
  * Finds real upcoming public events for a location using Google's Gemini API.
  *
  * <p>The search runs as two separate Gemini calls so each step has one job:
+ *
  * <ol>
- *   <li><b>Search</b> — Gemini with the {@code google_search} tool grounds the
- *       answer in real web results and returns free-text notes about events.</li>
- *   <li><b>Format</b> — a second call turns those notes into a strict JSON array
- *       that maps cleanly onto {@link EventRecommendationDTO}.</li>
+ *   <li><b>Search</b> — Gemini with the {@code google_search} tool grounds the answer in real web
+ *       results and returns free-text notes about events.
+ *   <li><b>Format</b> — a second call turns those notes into a strict JSON array that maps cleanly
+ *       onto {@link EventRecommendationDTO}.
  * </ol>
- * Splitting the steps keeps the JSON reliable: the model only formats text it
- * already has, instead of searching and formatting in one go.
+ *
+ * Splitting the steps keeps the JSON reliable: the model only formats text it already has, instead
+ * of searching and formatting in one go.
  */
 @Service
 public class GeminiEventSearchService {
@@ -48,9 +50,9 @@ public class GeminiEventSearchService {
   }
 
   /**
-   * Returns 1–5 recommended events for the given location, or an empty list if
-   * the location is blank or the model finds nothing. Any API/parse failure is
-   * rethrown as an {@link IllegalStateException}.
+   * Returns 1–5 recommended events for the given location, or an empty list if the location is
+   * blank or the model finds nothing. Any API/parse failure is rethrown as an {@link
+   * IllegalStateException}.
    */
   public List<EventRecommendationDTO> searchEvents(String location) {
     // Nothing to search for — skip the API call entirely.

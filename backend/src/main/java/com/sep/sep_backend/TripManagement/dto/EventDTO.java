@@ -16,9 +16,9 @@ public class EventDTO {
   private String categoryName;
 
   /**
-   * Builds an EventDTO from an Event entity. The trip and category relations are
-   * flattened to a plain {@code tripId} and {@code categoryName} so the client
-   * gets simple values instead of nested entities.
+   * Builds an EventDTO from an Event entity. The trip and category relations are flattened to a
+   * plain {@code tripId} and {@code categoryName} so the client gets simple values instead of
+   * nested entities.
    */
   public static EventDTO from(Event event) {
     EventDTO dto = new EventDTO();

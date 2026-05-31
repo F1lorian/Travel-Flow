@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST endpoint for AI event recommendations. Delegates the actual work to
- * {@link GeminiEventSearchService} and just maps the result to an HTTP response.
+ * REST endpoint for AI event recommendations. Delegates the actual work to {@link
+ * GeminiEventSearchService} and just maps the result to an HTTP response.
  */
 @RestController
 @RequestMapping("/api/trips")

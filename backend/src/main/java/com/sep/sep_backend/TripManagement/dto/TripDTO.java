@@ -16,8 +16,8 @@ public class TripDTO {
   private List<EventDTO> events;
 
   /**
-   * Builds a TripDTO from a Trip entity, also converting its events to {@link EventDTO}s
-   * so the whole trip (with its events) serializes in one response.
+   * Builds a TripDTO from a Trip entity, also converting its events to {@link EventDTO}s so the
+   * whole trip (with its events) serializes in one response.
    */
   public static TripDTO from(Trip trip) {
     TripDTO dto = new TripDTO();

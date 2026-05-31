@@ -1,8 +1,8 @@
 package com.sep.sep_backend.EventRecommendation.dto;
 
 /**
- * One recommended event returned to the frontend. Matches the JSON shape the
- * formatting prompt asks Gemini to produce.
+ * One recommended event returned to the frontend. Matches the JSON shape the formatting prompt asks
+ * Gemini to produce.
  *
  * @param dateTime ISO local date-time, e.g. {@code 2026-06-01T18:30:00}
  * @param price EUR amount; {@code 0} = free, {@code null} = unknown

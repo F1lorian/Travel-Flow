@@ -3,14 +3,15 @@ package com.sep.sep_backend.TripManagement.dto;
 import com.sep.sep_backend.Enitys.Categories;
 
 /**
- * API response shape for a category — only the {@code id} and {@code name} the
- * frontend actually needs.
+ * API response shape for a category — only the {@code id} and {@code name} the frontend actually
+ * needs.
  *
  * <p>Why a DTO instead of returning the {@link Categories} entity directly:
+ *
  * <ul>
- *   <li>keeps the JSON stable even if the entity gains internal fields/relations;</li>
- *   <li>avoids accidentally serializing lazy JPA relationships (and the errors
- *       that come with them).</li>
+ *   <li>keeps the JSON stable even if the entity gains internal fields/relations;
+ *   <li>avoids accidentally serializing lazy JPA relationships (and the errors that come with
+ *       them).
  * </ul>
  */
 public class CategoryDTO {

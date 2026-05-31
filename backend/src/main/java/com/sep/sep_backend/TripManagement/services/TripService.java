@@ -44,9 +44,9 @@ public class TripService {
   }
 
   /**
-   * Deletes a trip and all of its events. @Transactional makes the event deletion
-   * and the trip deletion succeed or fail together, so a trip is never left with
-   * orphaned events. Throws if the trip doesn't exist.
+   * Deletes a trip and all of its events. @Transactional makes the event deletion and the trip
+   * deletion succeed or fail together, so a trip is never left with orphaned events. Throws if the
+   * trip doesn't exist.
    */
   @Transactional
   public void deleteTrip(Long id) {
