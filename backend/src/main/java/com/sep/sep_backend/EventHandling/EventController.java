@@ -36,8 +36,6 @@ public class EventController {
     var responsedto = eventService.SaveEventToDB(dto);
     return ResponseEntity.ok().body(responsedto);
   }
-
-  // Zum Befüllen des Kalenders
   /**
    * Returns all stored events in the format required by the calendar view.
    *
@@ -48,7 +46,6 @@ public class EventController {
     return ResponseEntity.ok(eventService.GetAllEventsFromDb());
   }
 
-  // Nimmt ein eml File entgegen (Multipart email)
   /**
    * Imports an event from an uploaded email file and assigns it to a trip.
    *

@@ -245,7 +245,6 @@ public class EventService {
     }
   }
 
-  // Prompt für Gemini
   private String buildGeminiPrompt(String subject, String mailText) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
@@ -275,7 +274,6 @@ public class EventService {
         .formatted(subject, mailText);
   }
 
-  // Überprüfung ob ein Part der Email nach Schema.org aufgebaut ist
   private boolean isSchemaOrg(JsonNode node) {
     JsonNode context = node.get("@context");
 
@@ -323,8 +321,6 @@ public class EventService {
     return false;
   }
 
-  // Überprüfung ob es sich um ein Schem event handelt (Aufbau nach
-  // Schema.org sollte vorher überprüft werden)
   private boolean isEventType(JsonNode type) {
     if (type == null || type.isNull()) {
       return false;
@@ -339,7 +335,7 @@ public class EventService {
           || typeValue.equals("http://schema.org/Event");
     }
 
-    // Umgang mit verschachtelung durch Rekursion
+    // Umgang mit verschachtelung
     if (type.isArray()) {
       for (JsonNode child : type) {
         if (isEventType(child)) {
