@@ -6,12 +6,13 @@ Eine webbasierte Reise- und Kalenderverwaltungsplattform mit Angular und Spring 
 
 # Features
 
-* Kalenderansicht
-* Eventverwaltung
+* Kalenderverwaltung
 * Tripverwaltung
-* `.eml` Import
-* `.ics` Export
-* Docker Deployment
+* Eventverwaltung
+* Import & Export von Events
+* Finanzverwaltung für Kosten & Ausgaben
+* Empfehlungen & Suche von Events
+
 
 ---
 
@@ -88,6 +89,9 @@ npx playwright test
 
 ## Backend
 
+```bash
+./gradlew test
+```
 
 ---
 # Voraussetzungen
@@ -96,16 +100,6 @@ npx playwright test
 * npm
 * Java 21
 * Docker (optional)
-
----
-
-# Projektstruktur
-
-```txt
-frontend/
-backend/
-docs/
-```
 
 ---
 
@@ -120,8 +114,8 @@ Weitere technische Dokumentation befindet sich im GitLab Wiki.
 | Name                      | Rolle     |
 |---------------------------|-----------|
 | Bucic, Noah               | Fullstack |
-| Krüßmann, Krüßman         | Fullstack   |
-| Bozhkov, Nikolay          | Fullstack   |
-| Dibengue, Auguste Cedrick | Fullstack   |
-| Hashem, Samy              | Fullstack   |
-| Salama, Mohamed           | Fullstack   |
+| Krüßmann, Krüßman         | Fullstack |
+| Bozhkov, Nikolay          | Fullstack |
+| Dibengue, Auguste Cedrick | Fullstack |
+| Hashem, Samy              | Fullstack |
+| Salama, Mohamed           | Fullstack |
