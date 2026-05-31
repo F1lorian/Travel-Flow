@@ -3,69 +3,75 @@
 /* Count padding & border inside an element's width so 100%-wide fields
    never overflow their container (key for the responsive layouts). */
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {
+	height: 100%;
+}
+body {
+	margin: 0;
+	font-family: Roboto, "Helvetica Neue", sans-serif;
+}
 
 .dialog-style .mat-mdc-dialog-surface {
-  border-radius: 0;
+	border-radius: 0;
 }
 
 .fc {
-  @apply rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200;
+	@apply rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200;
 }
 
 .fc .fc-toolbar-title {
-  @apply text-3xl font-bold tracking-tight text-slate-900;
+	@apply text-3xl font-bold tracking-tight text-slate-900;
 }
 
 .fc .fc-button {
-  @apply rounded-lg border border-slate-300 bg-white px-4 py-2
+	@apply rounded-lg border border-slate-300 bg-white px-4 py-2
   font-semibold text-slate-700 shadow-sm transition;
 }
 
 .fc .fc-button:hover {
-  @apply bg-slate-100;
+	@apply bg-slate-100;
 }
 
 .fc .fc-button-active {
-  @apply border-blue-600 bg-blue-600 text-white;
+	@apply border-blue-600 bg-blue-600 text-white;
 }
 
 .fc .fc-daygrid-day {
-  @apply bg-white transition hover:bg-slate-50;
+	@apply bg-white transition hover:bg-slate-50;
 }
 
 .fc .fc-day-today {
-  @apply bg-blue-50;
+	@apply bg-blue-50;
 }
 
 .fc-event {
-  @apply rounded-md border-0 px-2 py-1 font-semibold shadow-sm;
+	@apply rounded-md border-0 px-2 py-1 font-semibold shadow-sm;
 }
 
 .fc-event.trip-event {
-  background: #334155 !important;
-  border: none !important;
-  color: white !important;
-  cursor: pointer;
+	background: #334155 !important;
+	border: none !important;
+	color: white !important;
+	cursor: pointer;
 }
 
 .fc-event.trip-event:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+	opacity: 0.9;
+	transform: translateY(-1px);
 }
 
 .fc-event.calendar-event {
-  background: #2563eb !important;
-  border: none !important;
-  color: white !important;
-  cursor: pointer;
+	background: #2563eb !important;
+	border: none !important;
+	color: white !important;
+	cursor: pointer;
 }
 
 .fc-event.calendar-event:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+	opacity: 0.9;
+	transform: translateY(-1px);
 }

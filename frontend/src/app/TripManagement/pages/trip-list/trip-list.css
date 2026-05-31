@@ -1,154 +1,156 @@
 .container {
-  width: min(100%, 1200px);
-  margin: 0 auto;
-  padding: 24px;
-  color: #172033;
+	width: min(100%, 1200px);
+	margin: 0 auto;
+	padding: 24px;
+	color: #172033;
 }
 
 .container h1 {
-  margin: 0 0 24px;
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: 0;
+	margin: 0 0 24px;
+	font-size: 1.75rem;
+	font-weight: 600;
+	letter-spacing: 0;
 }
 
 .create-form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  background: #ffffff;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+	display: flex;
+	gap: 12px;
+	margin-bottom: 24px;
+	background: #ffffff;
+	padding: 16px;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
 }
 
 .create-form input {
-  flex: 1;
-  min-height: 40px;
-  /* Native date inputs have a fixed intrinsic width and a default
+	flex: 1;
+	min-height: 40px;
+	/* Native date inputs have a fixed intrinsic width and a default
      min-width: auto as flex items; min-width: 0 lets them shrink so
      the create form never overflows on narrow screens. */
-  min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid #c7d0df;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font: inherit;
+	min-width: 0;
+	box-sizing: border-box;
+	border: 1px solid #c7d0df;
+	border-radius: 6px;
+	padding: 8px 12px;
+	font: inherit;
 }
 
 .create-form input:focus {
-  border-color: #2f6fed;
-  outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+	border-color: #2f6fed;
+	outline: none;
+	box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
 }
 
 .create-form button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 18px;
-  background: #2f6fed;
-  color: #ffffff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
+	min-height: 40px;
+	border: 0;
+	border-radius: 6px;
+	padding: 0 18px;
+	background: #2f6fed;
+	color: #ffffff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s ease;
 }
 
 .create-form button:hover {
-  background: #1f5fd5;
+	background: #1f5fd5;
 }
 
 .error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
+	background: #fef2f2;
+	color: #b91c1c;
+	border: 1px solid #fecaca;
+	border-radius: 6px;
+	padding: 10px 12px;
+	margin-bottom: 16px;
+	font-size: 0.9rem;
 }
 
 .empty {
-  color: #6b7280;
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
+	color: #6b7280;
+	font-style: italic;
+	text-align: center;
+	padding: 24px;
 }
 
 .trip-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  /* Reflow by width: many cards per row on a wide screen, one on a phone */
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	/* Reflow by width: many cards per row on a wide screen, one on a phone */
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 16px;
 }
 
 .trip-list li {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+	background: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
 .trip-list li:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
 }
 
 .trip-list li {
-  display: flex;
+	display: flex;
 }
 
 .trip-list li a {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 18px 20px;
-  text-decoration: none;
-  color: #172033;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 18px 20px;
+	text-decoration: none;
+	color: #172033;
 }
 
 .trip-list li a strong {
-  font-size: 1.05rem;
-  font-weight: 600;
+	font-size: 1.05rem;
+	font-weight: 600;
 }
 
 .event-count {
-  font-size: 0.875rem;
-  color: #1e40af;
-  background: #eff6ff;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 500;
+	font-size: 0.875rem;
+	color: #1e40af;
+	background: #eff6ff;
+	padding: 4px 10px;
+	border-radius: 12px;
+	font-weight: 500;
 }
 
 /* Phones / narrow screens: stack the create form instead of cramming
    the name input, both dates and the button into one squished row. */
 @media (max-width: 640px) {
-  .container {
-    padding: 16px;
-  }
+	.container {
+		padding: 16px;
+	}
 
-  .create-form {
-    flex-direction: column;
-    align-items: stretch;
-  }
+	.create-form {
+		flex-direction: column;
+		align-items: stretch;
+	}
 
-  /* Make the Start/End labels full-width stacked fields */
-  .create-form label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem;
-    color: #6b7280;
-  }
+	/* Make the Start/End labels full-width stacked fields */
+	.create-form label {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		font-size: 0.85rem;
+		color: #6b7280;
+	}
 
-  .create-form label input {
-    width: 100%;
-  }
+	.create-form label input {
+		width: 100%;
+	}
 }

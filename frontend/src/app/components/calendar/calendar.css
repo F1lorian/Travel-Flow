@@ -1,31 +1,31 @@
 :host {
-  display: block;
+	display: block;
 }
 
 /* FullCalendar's top toolbar (prev/next, title, view buttons) sits in one
    flex row. On a phone that row is too wide, so let it wrap onto two lines. */
 ::ng-deep .fc .fc-toolbar.fc-header-toolbar {
-  flex-wrap: wrap;
-  gap: 8px;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 
 /* Phones: trim the big page padding so the calendar grid gets more width,
    and shrink the month title so it stops pushing the buttons off-screen. */
 @media (max-width: 640px) {
-  .p-8 {
-    padding: 12px;
-  }
+	.p-8 {
+		padding: 12px;
+	}
 
-  .p-6 {
-    padding: 12px;
-  }
+	.p-6 {
+		padding: 12px;
+	}
 
-  ::ng-deep .fc .fc-toolbar-title {
-    font-size: 1.1rem;
-  }
+	::ng-deep .fc .fc-toolbar-title {
+		font-size: 1.1rem;
+	}
 
-  ::ng-deep .fc .fc-button {
-    padding: 4px 8px;
-    font-size: 0.85rem;
-  }
+	::ng-deep .fc .fc-button {
+		padding: 4px 8px;
+		font-size: 0.85rem;
+	}
 }
