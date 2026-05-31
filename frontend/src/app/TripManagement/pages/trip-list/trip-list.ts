@@ -15,12 +15,14 @@ import { TripService, Trip } from '../../services/trip.service';
 export class TripList implements OnInit {
   private tripService = inject(TripService);
 
+  // Signal holding the loaded trips; the template re-renders when it changes.
   trips = signal<Trip[]>([]);
   newTripName = '';
   newTripStartDate = '';
   newTripEndDate = '';
   errorMessage = '';
 
+  // Load all trips once when the page opens.
   ngOnInit() {
     this.tripService.getAllTrips().subscribe({
       next: (data) => this.trips.set(data),
@@ -29,6 +31,7 @@ export class TripList implements OnInit {
   }
 
   createTrip() {
+    // Name is required; dates are optional (sent as undefined when blank).
     if (!this.newTripName.trim()) {
       this.errorMessage = 'Please enter a trip name';
       return;
@@ -39,6 +42,7 @@ export class TripList implements OnInit {
       this.newTripEndDate || undefined
     ).subscribe({
       next: (trip) => {
+        // Append the new trip and clear the form on success.
         this.trips.update(list => [...list, trip]);
         this.newTripName = '';
         this.newTripStartDate = '';

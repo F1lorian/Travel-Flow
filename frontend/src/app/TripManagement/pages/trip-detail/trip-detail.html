@@ -103,6 +103,7 @@
     <p>Loading...</p>
   }
 
+  <!-- Delete-trip confirmation modal: lists the events that will be deleted too. -->
   @if (showDeleteConfirm()) {
     <div class="modal-overlay" (click)="cancelDelete()">
       <div class="modal" (click)="$event.stopPropagation()">
@@ -130,6 +131,8 @@
     </div>
   }
 
+  <!-- Delete/move-event modal. Same overlay, three swappable steps driven by
+       deleteStep(): 'choice' -> 'pick-trip' -> 'confirm-move'. -->
   @if (eventToDelete(); as evt) {
     <div class="modal-overlay" (click)="closeEventModal()">
       <div class="modal" (click)="$event.stopPropagation()">

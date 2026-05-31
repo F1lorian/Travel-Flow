@@ -19,7 +19,7 @@ export interface Event {
   name: string;
   startTime?: string;
   endTime?: string;
-  kosten: number;
+  kosten: number; // cost in EUR (German "Kosten"); 0 means free/no price
   categoryName?: string;
 }
 
@@ -42,6 +42,9 @@ export class TripService {
   private http = inject(HttpClient);
   private apiUrl = '/api/trips';
   private categoriesUrl = '/api/categories';
+
+  // Each method below is a thin wrapper over one backend REST call.
+  // Components subscribe to the returned Observable to get the result.
 
   getAllTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(this.apiUrl);
