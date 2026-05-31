@@ -2,9 +2,7 @@ package com.sep.sep_backend.EventHandling;
 
 import java.time.LocalDateTime;
 
-/**
- * Data transfer object for events displayed in the frontend calendar.
- */
+/** Data transfer object for events displayed in the frontend calendar. */
 public class EventCalendarDTO {
   private String id;
   private String title;
@@ -13,9 +11,7 @@ public class EventCalendarDTO {
   private LocalDateTime start;
   private LocalDateTime end;
 
-  /**
-   * Creates an empty calendar event DTO for serialization and deserialization.
-   */
+  /** Creates an empty calendar event DTO for serialization and deserialization. */
   public EventCalendarDTO() {}
 
   /**

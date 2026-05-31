@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * REST controller for exporting application data in calendar formats.
- */
+/** REST controller for exporting application data in calendar formats. */
 @RestController
 @RequestMapping("/api/data")
 @CrossOrigin(origins = "http://localhost:4200")

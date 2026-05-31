@@ -13,9 +13,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for exporting events and trips as iCalendar data.
- */
+/** Service for exporting events and trips as iCalendar data. */
 @Service
 class DataService {
   private static final DateTimeFormatter EVENT_TIME_FORMATTER =

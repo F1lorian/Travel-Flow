@@ -26,9 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for creating, importing, listing, editing, and deleting events.
- */
+/** Service for creating, importing, listing, editing, and deleting events. */
 @Service
 public class EventService {
 
@@ -186,7 +184,8 @@ public class EventService {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
     var jsonLdBlocks = extractJsonLd(message);
-    //1. Stufe: Strukturierte JSON-LD-Daten sind zuverlässiger als KI-Extraktion und werden bevorzugt.
+    // 1. Stufe: Strukturierte JSON-LD-Daten sind zuverlässiger als KI-Extraktion und werden
+    // bevorzugt.
     if (!jsonLdBlocks.isEmpty()) {
       var jsonEvent =
           jsonLdBlocks.stream()
@@ -199,7 +198,7 @@ public class EventService {
         return mapJsonLdToDTO(jsonEvent);
       }
     }
-    //2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
+    // 2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
     var body = extractText(message);
     return parseTextWithGemini(message.getSubject(), body);
   }

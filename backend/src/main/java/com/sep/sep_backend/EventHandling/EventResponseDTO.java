@@ -2,9 +2,7 @@ package com.sep.sep_backend.EventHandling;
 
 import java.time.LocalDateTime;
 
-/**
- * Response data transfer object containing event values returned to clients.
- */
+/** Response data transfer object containing event values returned to clients. */
 public class EventResponseDTO {
   private String id;
   private String name;
@@ -13,9 +11,7 @@ public class EventResponseDTO {
   private LocalDateTime start;
   private LocalDateTime end;
 
-  /**
-   * Creates an empty event response DTO for serialization and deserialization.
-   */
+  /** Creates an empty event response DTO for serialization and deserialization. */
   public EventResponseDTO() {}
 
   /**

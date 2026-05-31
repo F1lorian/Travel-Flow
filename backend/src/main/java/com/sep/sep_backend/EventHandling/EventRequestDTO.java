@@ -2,9 +2,7 @@ package com.sep.sep_backend.EventHandling;
 
 import java.time.LocalDateTime;
 
-/**
- * Request data transfer object for manually creating or editing an event.
- */
+/** Request data transfer object for manually creating or editing an event. */
 public class EventRequestDTO {
   private String name;
   private int kosten;
@@ -12,9 +10,7 @@ public class EventRequestDTO {
   private LocalDateTime start;
   private LocalDateTime end;
 
-  /**
-   * Creates an empty event request DTO for serialization and deserialization.
-   */
+  /** Creates an empty event request DTO for serialization and deserialization. */
   public EventRequestDTO() {}
 
   /**
