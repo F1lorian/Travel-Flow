@@ -25,6 +25,10 @@
 .create-form input {
   flex: 1;
   min-height: 40px;
+  /* Native date inputs have a fixed intrinsic width and a default
+     min-width: auto as flex items; min-width: 0 lets them shrink so
+     the create form never overflows on narrow screens. */
+  min-width: 0;
   box-sizing: border-box;
   border: 1px solid #c7d0df;
   border-radius: 6px;

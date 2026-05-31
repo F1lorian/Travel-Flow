@@ -72,12 +72,17 @@
 
 @media (max-width: 600px) {
   .form-grid {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) lets the track shrink below the date inputs'
+       fixed intrinsic width, so the form never overflows the screen. */
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .form-grid input {
   min-height: 40px;
+  /* Native date/time inputs won't shrink below their built-in width
+     unless we allow it; min-width: 0 lets them fit the column. */
+  min-width: 0;
   box-sizing: border-box;
   border: 1px solid #c7d0df;
   border-radius: 6px;
