@@ -6,9 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * REST controller for creating, importing, listing, editing, and deleting events.
- */
+/** REST controller for creating, importing, listing, editing, and deleting events. */
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api")
@@ -36,6 +34,7 @@ public class EventController {
     var responsedto = eventService.SaveEventToDB(dto);
     return ResponseEntity.ok().body(responsedto);
   }
+
   /**
    * Returns all stored events in the format required by the calendar view.
    *
