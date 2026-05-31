@@ -11,14 +11,12 @@ import {FormsModule} from '@angular/forms';
 export class MessageDialog {
   message: string = '';
 
-  //creates pop up window for error messages
   constructor(private dialogRef: MatDialogRef<MessageDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
     if (data) {
       this.message = data.message;
     }
   }
 
-  //closes
   close(){
     this.dialogRef.close();
   }

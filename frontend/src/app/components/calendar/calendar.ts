@@ -82,14 +82,18 @@ export class CalendarComponent implements OnInit {
   constructor(private dialog: MatDialog, private ngZone: NgZone) {
   }
 
-  //loads all the events and trips on init
   ngOnInit(): void {
     this.loadEvents();
     this.loadTrips();
   }
 
-  //handles what happens when a calendar event is clickes
-  //if it is a trip, the user gets directed to the trip page, if it is an event, the event opens as a dialog for the user
+  /**
+   * Decides what happens if an event is clicked.
+   * If the Event is a trip, it redirects the User to the trip site
+   * If it is an Event, the Event opens as a dialog for the user
+   *
+   * @param clickInfo gives the event that is clicked by the user
+   */
   handleEventClick(clickInfo: EventClickArg) {
     let selectedEvent = clickInfo.event;
     const type = clickInfo.event.extendedProps['type'];
@@ -126,13 +130,19 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
-  //handles what happens when a calendar date is clicked, meaning a new event gets created
+  /**
+   * Handles what happens when a date is clicked in the calendar
+   * @param clickInfo is the clicked Date
+   */
   handleDateClick(clickInfo: any) {
     this.createEvent(clickInfo.dateStr);
   }
 
-  //adds the created event from the backend to the calendar view without reloading the entire database
-  addCreatedEvent(event: AddEventResponse, tripId?: number) {
+  /**
+   * Adds the created event to the View without reloading everything from the Database
+   * @param event is the created Event
+   */
+  addCreatedEvent(event: AddEventResponse) {
     const currentEvents = Array.isArray(this.calendarOptions.events)
       ? this.calendarOptions.events
       : [];
@@ -155,7 +165,11 @@ export class CalendarComponent implements OnInit {
     };
   }
 
-  //updates the edited event in the view with the new information without reloading the entire database
+  /**
+   * Updates the created event in the View without reloading everything from the Database
+   * @param id is the id from the updates event
+   * @param event is the event with the new information
+   */
   updateEditedEvent(id: string, event: EditEventResponse) {
     const calendarApi = this.calendarComponent.getApi();
     const calendarEvent = calendarApi.getEventById(id);
@@ -172,7 +186,10 @@ export class CalendarComponent implements OnInit {
     calendarEvent.setExtendedProp('tripId', event.tripId);
   }
 
-  //removes the event from the view after it got deleted
+  /**
+   * Removes the deleted event from the View without reloading eerything from the database
+   * @param id is the id from the deleted event
+   */
   removeDeletedEvent(id: string) {
     const calendarApi = this.calendarComponent.getApi();
     const calendarEvent = calendarApi.getEventById(id);
@@ -182,7 +199,11 @@ export class CalendarComponent implements OnInit {
     }
   }
 
-  //opens a new dialog for creating events and sends the created event to the service, so that it gets saved in the database
+  /**
+   * opens a new dialog for creating an event
+   * after creation, it gets added to the database via the eventService
+   * @param selectedDateStr is the optional date which is used when the user creates an event by clicking on the date
+   */
   createEvent(selectedDateStr?: string) {
     const dialogRef = this.dialog.open(EventDialog, {
       data:{mode: 'create',
@@ -203,7 +224,7 @@ export class CalendarComponent implements OnInit {
           .subscribe({
             next: (response) => {
               console.log("Event Response:", response);
-              this.addCreatedEvent(response, newEvent.tripId);
+              this.addCreatedEvent(response);
             },
             error: (err) => {
               console.error(err);
@@ -217,7 +238,11 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
-  //opens a new dialog for editing or deleting events and sends the updated information to the service, so that the information gets updated in the database, or the event gets deleted
+  /**
+   * opens a new dialog for editing or deleting events
+   * sends the updated information to the service, so that the information gets updated in the database, or the event gets deleted
+   * @param selectedEvent
+   */
   editEvent(selectedEvent: EventImpl){
     let id = selectedEvent.id;
     const dialogRef = this.dialog.open(EventDialog, {
@@ -270,8 +295,10 @@ export class CalendarComponent implements OnInit {
     return;
   }
 
-  //opens the dialog for importing events via .eml files
-  //after creation it gets added to the calendar view
+  /**
+   * opens the dialog for importing events via .eml files
+   * after creation it gets added to the calendar view
+   */
   importEvent(){
     const dialogRef = this.dialog.open(EventTransferDialog, {
       data: {mode: 'import',}
@@ -284,14 +311,18 @@ export class CalendarComponent implements OnInit {
     })
   }
 
-  //opens the dialog for downloading the events as an .ics file
+  /**
+   * opens the dialog for downloading the events as an .ics file
+   */
   exportEvents(){
     this.dialog.open(EventTransferDialog, {
       data: {mode: 'export'}
     })
   }
 
-  //loads all events from the database
+  /**
+   * loads the events from the database
+   */
   loadEvents() {
 
     this.eventService.getEvents().subscribe({
@@ -324,7 +355,9 @@ export class CalendarComponent implements OnInit {
 
   }
 
-  //loads all trips from the database
+  /**
+   * loads the trips from the database
+   */
   loadTrips() {
 
     this.tripService.getAllTrips().subscribe({
@@ -362,7 +395,10 @@ export class CalendarComponent implements OnInit {
 
   }
 
-  //shows a message for the User on the screen
+  /**
+   * shows a message for the user on the screen
+   * @param message is the message that gets shown
+   */
   showMessage(message: string){
     this.dialog.open(MessageDialog, {data: {message: message}})
   }

@@ -16,7 +16,7 @@ export class EventTransferDialog {
   file?: File;
   fileName = '';
   eventService = inject(EventService);
-  tripId: number | undefined;
+  tripId?: number;
   tripService = inject(TripService);
   trips: Trip[] = [];
   dialog = inject(MatDialog);
@@ -28,12 +28,14 @@ export class EventTransferDialog {
     }
   }
 
-  //loads all trips on init
   ngOnInit() {
     this.loadTrips();
   }
 
-  //saves the file that is selected from the file explorer
+  /**
+   * saves the file that is selected from the file explorer
+   * @param event is the selected file
+   */
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
 
@@ -54,7 +56,10 @@ export class EventTransferDialog {
     this.fileName = file.name;
   }
 
-  //saves the file that is selected per drag and drop
+  /**
+   * saves the file that is selected per drag and drop
+   * @param event is the selected event
+   */
   onFileDrop(event: DragEvent) {
     event.preventDefault();
 
@@ -77,12 +82,17 @@ export class EventTransferDialog {
     this.fileName = file.name;
   }
 
-  //prevents the browsers default action, when a file is dragged over the browser
+  /**
+   * prevents the browsers default action, when a file is dragged over the browser
+   * @param event is the selected event
+   */
   onDragOver(event: DragEvent) {
     event.preventDefault();
   }
 
-  //uploads the file to the backend and returns the created event back to the calendar
+  /**
+   * uploads the file to the backend and returns the created event back to the calendar
+   */
   uploadFile() {
     if (!this.file) {
       this.showMessage('Keine .eml-Datei ausgewählt');
@@ -92,9 +102,7 @@ export class EventTransferDialog {
     const formData = new FormData();
     formData.append('MailFile', this.file);
 
-    if(!this.tripId){
-      return;
-    }
+
     this.eventService.importEvents(formData, this.tripId).subscribe({
       next: (event) => {
         this.dialogRef.close(event);
@@ -107,7 +115,9 @@ export class EventTransferDialog {
     });
   }
 
-  //lets the user download the .ics file with all of the events
+  /**
+   * lets the user download the .ics file with all of the events
+   */
   downloadEvents() {
     this.eventService.exportEvents().subscribe(blob => {
 
@@ -125,12 +135,13 @@ export class EventTransferDialog {
     });
   }
 
-  //checks if the file is .eml
   private isEmlFile(file: File): boolean {
     return file.name.toLowerCase().endsWith('.eml');
   }
 
-  //loads all trips from the backend
+  /**
+   * loads all trips from the backend
+   */
   loadTrips() {
     this.tripService.getAllTrips().subscribe({
       next: trips => {
@@ -142,12 +153,17 @@ export class EventTransferDialog {
     });
   }
 
-  //shows the user possible error messages from the backend
+  /**
+   * shows the user messages, potential errors from the backend
+   * @param message is the message
+   */
   showMessage(message: string){
     this.dialog.open(MessageDialog, {data: {message: message}})
   }
 
-  //closes the dialog
+  /**
+   * closes the dialog
+   */
   close(){
     this.dialogRef.close();
   }

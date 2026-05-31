@@ -38,34 +38,43 @@ export class EventDialog {
     console.log(data);
   }
 
-  //loads all the trips on init
   ngOnInit() {
     this.loadTrips();
   }
 
-  //closes the dialog and gives the calendar the action 'save' as well as all the attributes for the event
+  /**
+   * closes the dialog and gives the calendar the action 'save' as well as all the attributes for the event
+   */
   save() {
     console.log("start end");
     console.log(this.start, this.end);
     this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start, end: this.end});
   }
 
-  //closes the dialog without any actions
+  /**
+   * closes the dialog without any actions
+   */
   close() {
     this.dialogRef.close();
   }
 
-  //closes the dialog eith the action 'delete'
+  /**
+   * closes the dialog eith the action 'delete'
+   */
   delete() {
     this.dialogRef.close({ action: 'delete' });
   }
 
-  //closes the dialog with the action 'edit'
+  /**
+   * closes the dialog with the action 'edit'
+   */
   edit(){
     this.dialogRef.close({ action: 'edit' });
   }
 
-  //loads all the trips from the database
+  /**
+   * loads all the trips from the database
+   */
   loadTrips() {
     this.tripService.getAllTrips().subscribe({
       next: trips => {
