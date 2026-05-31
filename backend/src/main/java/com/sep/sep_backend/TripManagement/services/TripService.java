@@ -13,6 +13,11 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Business logic for trips: listing, fetching, creating, and deleting a trip together with its
+ * events. Sits between {@link com.sep.sep_backend.TripManagement.controllers.TripController} and
+ * the JPA repositories.
+ */
 @Service
 public class TripService {
 

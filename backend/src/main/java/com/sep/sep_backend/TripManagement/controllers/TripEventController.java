@@ -12,6 +12,10 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST endpoints for the events that belong to a trip: list, add, delete, and move an event to
+ * another trip. Delegates to {@link TripEventService} and returns {@link EventDTO}s.
+ */
 @RestController
 @RequestMapping("/api/trips/{tripId}/events")
 @CrossOrigin(origins = "*")

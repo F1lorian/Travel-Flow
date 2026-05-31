@@ -14,6 +14,11 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST endpoints for trips: list, fetch, create, and delete. Maps HTTP requests to {@link
+ * TripService} and converts entities to {@link TripDTO}s so JPA entities aren't serialized directly
+ * to the client.
+ */
 @RestController
 @RequestMapping("/api/trips")
 @CrossOrigin(origins = "*")

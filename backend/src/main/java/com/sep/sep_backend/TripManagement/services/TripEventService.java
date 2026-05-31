@@ -12,6 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
+/**
+ * Business logic for the events within trips: adding an event (resolving its category), listing a
+ * trip's events, deleting an event, and moving an event to another trip. Sits between {@link
+ * com.sep.sep_backend.TripManagement.controllers.TripEventController} and the JPA repositories.
+ */
 @Service
 public class TripEventService {
 
