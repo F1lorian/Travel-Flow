@@ -14,6 +14,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Finds real upcoming public events for a location using Google's Gemini API.
+ *
+ * <p>The search runs as two separate Gemini calls so each step has one job:
+ * <ol>
+ *   <li><b>Search</b> — Gemini with the {@code google_search} tool grounds the
+ *       answer in real web results and returns free-text notes about events.</li>
+ *   <li><b>Format</b> — a second call turns those notes into a strict JSON array
+ *       that maps cleanly onto {@link EventRecommendationDTO}.</li>
+ * </ol>
+ * Splitting the steps keeps the JSON reliable: the model only formats text it
+ * already has, instead of searching and formatting in one go.
+ */
 @Service
 public class GeminiEventSearchService {
 
@@ -34,7 +47,13 @@ public class GeminiEventSearchService {
     this.model = model;
   }
 
+  /**
+   * Returns 1–5 recommended events for the given location, or an empty list if
+   * the location is blank or the model finds nothing. Any API/parse failure is
+   * rethrown as an {@link IllegalStateException}.
+   */
   public List<EventRecommendationDTO> searchEvents(String location) {
+    // Nothing to search for — skip the API call entirely.
     if (location == null || location.isBlank()) {
       return List.of();
     }
@@ -44,6 +63,8 @@ public class GeminiEventSearchService {
     }
 
     try {
+      // Step 1 — web-grounded search. The google_search tool lets Gemini look up
+      // real events; low temperature (0.2) keeps it factual rather than creative.
       String searchText =
           extractText(
               callGemini(
@@ -52,10 +73,13 @@ public class GeminiEventSearchService {
                       "tools", List.of(Map.of("google_search", Map.of())),
                       "generationConfig", Map.of("temperature", 0.2, "maxOutputTokens", 4096))));
 
+      // Model found no events to describe — return empty instead of formatting "".
       if (searchText.isBlank()) {
         return List.of();
       }
 
+      // Step 2 — formatting only. responseMimeType=application/json + temperature 0
+      // force a deterministic, pure-JSON answer we can deserialize directly.
       String jsonText =
           extractText(
               callGemini(
@@ -69,6 +93,7 @@ public class GeminiEventSearchService {
 
       return parseRecommendations(jsonText);
     } catch (HttpStatusCodeException exception) {
+      // Gemini answered with an error status — surface its body for debugging.
       throw new IllegalStateException(
           "Gemini request failed: " + exception.getResponseBodyAsString(), exception);
     } catch (RuntimeException exception) {
@@ -76,6 +101,7 @@ public class GeminiEventSearchService {
     }
   }
 
+  // Sends one generateContent request and returns the raw response as a Map.
   private Map<String, Object> callGemini(Map<String, Object> requestBody) {
     return restClient
         .post()
@@ -91,8 +117,7 @@ public class GeminiEventSearchService {
     return List.of(Map.of("role", "user", "parts", List.of(Map.of("text", prompt))));
   }
 
-  // here can i change the numer of Result.n 103
-
+  // The number of events (1 to 5) is set in this prompt text — change it here.
   private String buildSearchPrompt(String location) {
     return """
             Search the web for public events in or near "%s" happening in the next 7 days.
@@ -107,8 +132,7 @@ public class GeminiEventSearchService {
         .formatted(location, LocalDate.now());
   }
 
-  // here can i change the numer of Result. n 123
-
+  // The result count (1 to 5) and the exact JSON shape are defined in this prompt.
   private String buildFormattingPrompt(String location, String searchText) {
     return """
                 Convert the event search notes below into JSON for "%s".
@@ -136,6 +160,8 @@ public class GeminiEventSearchService {
         .formatted(location, searchText);
   }
 
+  // Deserializes the JSON array into DTOs. ALLOW_UNQUOTED_CONTROL_CHARS tolerates
+  // stray newlines the model sometimes leaves inside string values.
   private List<EventRecommendationDTO> parseRecommendations(String text) {
     String json = stripJsonFences(text);
     try {
@@ -148,6 +174,8 @@ public class GeminiEventSearchService {
     }
   }
 
+  // Pulls the plain text out of Gemini's nested response shape
+  // (candidates[0].content.parts[*].text), joining all text parts.
   private String extractText(Map<String, Object> response) {
     List<Map<String, Object>> candidates = listOfMaps(response.get("candidates"));
     if (candidates.isEmpty()) {
@@ -168,6 +196,8 @@ public class GeminiEventSearchService {
     return text.toString().trim();
   }
 
+  // Extracts the JSON array from the model's reply. Preferred path: slice from the
+  // first '[' to the last ']'. Fallback: strip ```json / ``` code fences if present.
   private String stripJsonFences(String text) {
     String trimmed = text == null ? "" : text.trim();
 
@@ -191,6 +221,8 @@ public class GeminiEventSearchService {
     return trimmed.trim();
   }
 
+  // The next two helpers safely narrow the loosely-typed JSON (Object) values
+  // into the Map/List shapes we expect, returning empty rather than throwing.
   @SuppressWarnings("unchecked")
   private Map<String, Object> map(Object value) {
     if (value instanceof Map<?, ?> rawMap) {

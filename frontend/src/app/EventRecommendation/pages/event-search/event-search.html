@@ -1,6 +1,9 @@
+<!-- AI event search panel: search box on top, then either an error message
+     or the list of result cards. Lives inside the trip page's reco drawer. -->
 <section class="event-search-panel">
   <h2>Find Events</h2>
 
+  <!-- Search by Enter key or the button; button is disabled while loading or empty. -->
   <div class="search-controls">
     <input
       type="text"
@@ -17,6 +20,7 @@
     <div class="search-message">{{ errorMessage }}</div>
   }
 
+  <!-- One card per recommended event; tracked by name+dateTime to keep DOM stable. -->
   <div class="result-list">
     @for (event of results(); track event.name + event.dateTime) {
       <article class="event-card">
@@ -32,6 +36,7 @@
 
         <p>{{ event.description }}</p>
 
+        <!-- "Info" opens the source page; "Add" emits the event up to the trip page. -->
         <div class="event-card-actions">
           @if (event.sourceUrl) {
             <a [href]="event.sourceUrl" target="_blank" rel="noopener noreferrer">Info</a>
