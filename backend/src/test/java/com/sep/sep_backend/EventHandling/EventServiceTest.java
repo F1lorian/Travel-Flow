@@ -386,7 +386,8 @@ class EventServiceTest {
     EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
     LocalDateTime beforeParse = LocalDateTime.now();
 
-    EventResponseDTO result = serviceWithObjectMapper.ParseMailFile(textMail("Einladung zum Konzert"));
+    EventResponseDTO result =
+        serviceWithObjectMapper.ParseMailFile(textMail("Einladung zum Konzert"));
 
     assertThat(result.getName().trim()).isEqualTo("Einladung zum Konzert");
     assertThat(result.getKosten()).isZero();

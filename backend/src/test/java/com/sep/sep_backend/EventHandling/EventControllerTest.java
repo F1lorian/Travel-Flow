@@ -154,7 +154,8 @@ class EventControllerTest {
     ResponseEntity<DeleteEventResponseDTO> response = eventController.DeleteEventFromDB(42L);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-    assertThat(response.getBody()).isEqualTo(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
+    assertThat(response.getBody())
+        .isEqualTo(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
     verify(eventService).DeleteEventFromDB(42L);
   }
 
