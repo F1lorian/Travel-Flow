@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:4201"})
+@RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:4200")
 public class AusgabeController {
 
   private final AusgabeRepository ausgabeRepo;
@@ -26,7 +27,7 @@ public class AusgabeController {
     this.tripRepository = tripRepository;
   }
 
-  @PostMapping({"/ausgabe", "/api/ausgabe"})
+  @PostMapping("/ausgabe")
   public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO dto) {
     if (dto.getTrip() == null
         || dto.getTrip().getName() == null
@@ -41,19 +42,19 @@ public class AusgabeController {
     ausgabeService.ausgabeHinzufuegen(dto);
   }
 
-  @GetMapping({"/ausgabenliste", "/api/ausgabenliste"})
+  @GetMapping("/ausgabenliste")
   public List<AusgabeResponseDTO> ausgabenliste(
       @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenliste(start, end);
   }
 
-  @GetMapping({"/proKategorie", "/api/proKategorie"})
+  @GetMapping("/proKategorie")
   public List<KategorieSummeDTO> ausgabenProKategorie(
       @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenProKategorie(start, end);
   }
 
-  @GetMapping({"/ausgabenlisteTrip", "/api/ausgabenlisteTrip"})
+  @GetMapping("/ausgabenlisteTrip")
   public List<AusgabeResponseDTO> ausgabenListeTrip(@RequestParam String tripname) {
     List<AusgabeResponseDTO> result = ausgabeService.ausgabenlisteTrip(tripname);
     if (result == null) {
@@ -62,7 +63,7 @@ public class AusgabeController {
     return result;
   }
 
-  @GetMapping({"/proKategorieTrip", "/api/proKategorieTrip"})
+  @GetMapping("/proKategorieTrip")
   public List<KategorieSummeDTO> ausgabenProKategorieTrip(@RequestParam String tripname) {
     List<KategorieSummeDTO> result = ausgabeService.ausgabenProKategorieTrip(tripname);
     if (result == null) {
@@ -71,7 +72,7 @@ public class AusgabeController {
     return result;
   }
 
-  @GetMapping({"/budget", "/api/budget"})
+  @GetMapping("/budget")
   public double budget(@RequestParam String tripname) {
     Trip trip = tripRepository.findByName(tripname);
     if (trip == null) {
@@ -80,7 +81,7 @@ public class AusgabeController {
     return trip.getBudget();
   }
 
-  @PutMapping({"/budget", "/api/budget"})
+  @PutMapping("/budget")
   public double budgetAktualisieren(@RequestParam String tripname, @RequestParam double budget) {
     if (budget < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget must not be negative");
@@ -98,7 +99,7 @@ public class AusgabeController {
     return trip.getBudget();
   }
 
-  @GetMapping({"/warningRange", "/api/warningRange"})
+  @GetMapping("/warningRange")
   public double warningRange(@RequestParam String tripname) {
     Trip trip = tripRepository.findByName(tripname);
 
@@ -109,7 +110,7 @@ public class AusgabeController {
     return trip.getWarningRange();
   }
 
-  @PutMapping({"/warningRange", "/api/warningRange"})
+  @PutMapping("/warningRange")
   public double warningRangeAktualisieren(
       @RequestParam String tripname, @RequestParam double warningRange) {
     if (warningRange < 0) {
@@ -129,7 +130,7 @@ public class AusgabeController {
     return trip.getWarningRange();
   }
 
-  @GetMapping({"/gesamtausgabenTrip", "/api/gesamtausgabenTrip"})
+  @GetMapping("/gesamtausgabenTrip")
   public double gesamtausgabenTrip(@RequestParam String tripname) {
     double result = ausgabeService.gesamtausgabenTrip(tripname);
     if (result < 0) {
@@ -138,7 +139,7 @@ public class AusgabeController {
     return result;
   }
 
-  @GetMapping({"/verfuegbar", "/api/verfuegbar"})
+  @GetMapping("/verfuegbar")
   public double verfuegbar(@RequestParam String tripname) {
     double result = ausgabeService.verfuegbarTrip(tripname);
     if (result == -1) {

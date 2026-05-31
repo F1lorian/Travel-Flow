@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -250,43 +251,43 @@ public class AusgabenControllerTest {
   @Test
   void controllerEndpointsSindKorrektGemappt() throws NoSuchMethodException {
     // prufen ob die Endpunkte von Get und Post Mapping korrekt sind
+    RequestMapping controllerMapping = AusgabeController.class.getAnnotation(RequestMapping.class);
+    assertThat(controllerMapping.value()).containsExactly("/api");
+
     Method postMethod =
         AusgabeController.class.getDeclaredMethod("ausgabeHinzufuegen", AusgabeRequestDTO.class);
 
     PostMapping postMapping = postMethod.getAnnotation(PostMapping.class);
-    assertThat(postMapping.value()).containsExactly("/ausgabe", "/api/ausgabe");
+    assertThat(postMapping.value()).containsExactly("/ausgabe");
 
     Method listMethod =
         AusgabeController.class.getDeclaredMethod(
             "ausgabenliste", LocalDate.class, LocalDate.class);
 
     GetMapping getMapping = listMethod.getAnnotation(GetMapping.class);
-    assertThat(getMapping.value()).containsExactly("/ausgabenliste", "/api/ausgabenliste");
+    assertThat(getMapping.value()).containsExactly("/ausgabenliste");
 
     Method tripListMethod =
         AusgabeController.class.getDeclaredMethod("ausgabenListeTrip", String.class);
     GetMapping tripListMapping = tripListMethod.getAnnotation(GetMapping.class);
-    assertThat(tripListMapping.value())
-        .containsExactly("/ausgabenlisteTrip", "/api/ausgabenlisteTrip");
+    assertThat(tripListMapping.value()).containsExactly("/ausgabenlisteTrip");
 
     Method proKategorieTripMethod =
         AusgabeController.class.getDeclaredMethod("ausgabenProKategorieTrip", String.class);
     GetMapping proKategorieTripMapping = proKategorieTripMethod.getAnnotation(GetMapping.class);
-    assertThat(proKategorieTripMapping.value())
-        .containsExactly("/proKategorieTrip", "/api/proKategorieTrip");
+    assertThat(proKategorieTripMapping.value()).containsExactly("/proKategorieTrip");
 
     Method budgetMethod = AusgabeController.class.getDeclaredMethod("budget", String.class);
     GetMapping budgetMapping = budgetMethod.getAnnotation(GetMapping.class);
-    assertThat(budgetMapping.value()).containsExactly("/budget", "/api/budget");
+    assertThat(budgetMapping.value()).containsExactly("/budget");
 
     Method gesamtausgabenMethod =
         AusgabeController.class.getDeclaredMethod("gesamtausgabenTrip", String.class);
     GetMapping gesamtausgabenMapping = gesamtausgabenMethod.getAnnotation(GetMapping.class);
-    assertThat(gesamtausgabenMapping.value())
-        .containsExactly("/gesamtausgabenTrip", "/api/gesamtausgabenTrip");
+    assertThat(gesamtausgabenMapping.value()).containsExactly("/gesamtausgabenTrip");
 
     Method verfuegbarMethod = AusgabeController.class.getDeclaredMethod("verfuegbar", String.class);
     GetMapping verfuegbarMapping = verfuegbarMethod.getAnnotation(GetMapping.class);
-    assertThat(verfuegbarMapping.value()).containsExactly("/verfuegbar", "/api/verfuegbar");
+    assertThat(verfuegbarMapping.value()).containsExactly("/verfuegbar");
   }
 }
