@@ -7,13 +7,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import jakarta.persistence.EntityNotFoundException;
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +38,8 @@ class EventServiceTest {
   @Mock private TripRepository tripRepository;
 
   @Mock private AusgabeService ausgabeService;
+
+  @Mock private ObjectMapper objectMapper;
 
   @InjectMocks private EventService eventService;
 
@@ -92,6 +100,49 @@ class EventServiceTest {
   }
 
   @Test
+  void saveEventToDBWirftExceptionWennEventVorTripStartLiegt() {
+    Trip trip = new Trip("London");
+    trip.setStartDate(LocalDate.of(2026, 6, 10));
+    trip.setEndDate(LocalDate.of(2026, 6, 20));
+    EventRequestDTO request =
+        new EventRequestDTO(
+            "Museum",
+            25,
+            1L,
+            LocalDateTime.of(2026, 6, 9, 23, 0),
+            LocalDateTime.of(2026, 6, 10, 1, 0));
+
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+
+    assertThatThrownBy(() -> eventService.SaveEventToDB(request))
+        .isInstanceOf(EventOutsideTripException.class)
+        .hasMessage("Event liegt außerhalb des Trips");
+
+    verify(eventRepository, never()).save(any(Event.class));
+  }
+
+  @Test
+  void saveEventResponseToDBWirftExceptionWennEventNachTripEndeLiegt() {
+    Trip trip = new Trip("London");
+    trip.setStartDate(LocalDate.of(2026, 6, 10));
+    trip.setEndDate(LocalDate.of(2026, 6, 20));
+    EventResponseDTO responseDTO =
+        new EventResponseDTO(
+            "Konzert",
+            49,
+            LocalDateTime.of(2026, 6, 20, 20, 0),
+            LocalDateTime.of(2026, 6, 21, 1, 0));
+
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+
+    assertThatThrownBy(() -> eventService.SaveEventResponseToDB(responseDTO, 1L))
+        .isInstanceOf(EventOutsideTripException.class)
+        .hasMessage("Event liegt außerhalb des Trips");
+
+    verify(eventRepository, never()).save(any(Event.class));
+  }
+
+  @Test
   void saveEventResponseToDBSpeichertEventFuerVorhandeneTripId() {
     Trip trip = new Trip("London");
     LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
@@ -115,6 +166,23 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isSameAs(trip);
     assertThat(result.getName()).isEqualTo("Konzert");
     assertThat(result.getKosten()).isEqualTo(49);
+  }
+
+  @Test
+  void saveEventResponseToDBNutztFallbackNameFuerLeerenImportNamen() {
+    EventResponseDTO responseDTO =
+        new EventResponseDTO("", 49, LocalDateTime.of(2026, 6, 1, 20, 0), null);
+
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+
+    ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+    verify(eventRepository).save(eventCaptor.capture());
+
+    assertThat(eventCaptor.getValue().getName()).isEqualTo("Unbekanntes Event");
+    assertThat(result.getName()).isEqualTo("Unbekanntes Event");
   }
 
   @Test
@@ -174,9 +242,186 @@ class EventServiceTest {
     verify(eventRepository).findAll();
   }
 
+  @Test
+  void deleteEventFromDBLoeschtVorhandenesEvent() {
+    when(eventRepository.existsById(42L)).thenReturn(true);
+
+    eventService.DeleteEventFromDB(42L);
+
+    verify(eventRepository).deleteById(42L);
+  }
+
+  @Test
+  void deleteEventFromDBWirftExceptionWennEventNichtExistiert() {
+    when(eventRepository.existsById(42L)).thenReturn(false);
+
+    assertThatThrownBy(() -> eventService.DeleteEventFromDB(42L))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage("Event mit ID 42 wurde nicht gefunden");
+
+    verify(eventRepository, never()).deleteById(any());
+  }
+
+  @Test
+  void editEventAktualisiertGesetzteWerteUndTrip() {
+    Trip oldTrip = new Trip("London");
+    Trip newTrip = new Trip("Paris");
+    newTrip.setId(7L);
+    Event event =
+        new Event(
+            "Museum",
+            LocalDateTime.of(2026, 6, 1, 14, 0),
+            LocalDateTime.of(2026, 6, 1, 16, 0),
+            25,
+            oldTrip);
+    event.setId(42L);
+    EventRequestDTO request =
+        new EventRequestDTO(
+            "Theater",
+            70,
+            7L,
+            LocalDateTime.of(2026, 6, 2, 19, 0),
+            LocalDateTime.of(2026, 6, 2, 22, 0));
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(tripRepository.findById(7L)).thenReturn(Optional.of(newTrip));
+    when(eventRepository.save(event)).thenReturn(event);
+
+    EventResponseDTO result = eventService.EditEvent(42L, request);
+
+    assertThat(event.getName()).isEqualTo("Theater");
+    assertThat(event.getKosten()).isEqualTo(70);
+    assertThat(event.getStartTime()).isEqualTo(LocalDateTime.of(2026, 6, 2, 19, 0));
+    assertThat(event.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 2, 22, 0));
+    assertThat(event.getTrip()).isSameAs(newTrip);
+    assertThat(result.getTripId()).isEqualTo(7L);
+    verify(eventRepository).save(event);
+  }
+
+  @Test
+  void editEventLaesstKostenUnveraendertWennMinusEinsGesendetWird() {
+    Event event =
+        new Event(
+            "Museum",
+            LocalDateTime.of(2026, 6, 1, 14, 0),
+            LocalDateTime.of(2026, 6, 1, 16, 0),
+            25,
+            null);
+    EventRequestDTO request = new EventRequestDTO(null, -1, null, null, null);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(eventRepository.save(event)).thenReturn(event);
+
+    EventResponseDTO result = eventService.EditEvent(42L, request);
+
+    assertThat(event.getKosten()).isEqualTo(25);
+    assertThat(result.getKosten()).isEqualTo(25);
+    verify(tripRepository, never()).findById(any());
+    verify(eventRepository).save(event);
+  }
+
+  @Test
+  void editEventWirftExceptionWennEventNichtExistiert() {
+    when(eventRepository.findById(42L)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> eventService.EditEvent(42L, new EventRequestDTO()))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage("Event mit ID 42 wurde nicht gefunden");
+
+    verify(eventRepository, never()).save(any(Event.class));
+  }
+
+  @Test
+  void parseMailFileLiestDirekteJsonLdEventDaten() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "Konzert",
+          "startDate": "2026-06-01T20:00:00",
+          "endDate": "2026-06-01T22:00:00",
+          "offers": { "price": 49 }
+        }
+        """;
+
+    EventResponseDTO result = serviceWithObjectMapper.ParseMailFile(jsonLdMail(json));
+
+    assertThat(result.getName()).isEqualTo("Konzert");
+    assertThat(result.getKosten()).isEqualTo(49);
+    assertThat(result.getStart()).isEqualTo(LocalDateTime.of(2026, 6, 1, 20, 0));
+    assertThat(result.getEnd()).isEqualTo(LocalDateTime.of(2026, 6, 1, 22, 0));
+  }
+
+  @Test
+  void parseMailFileLiestJsonLdEventAusGraph() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Event",
+              "name": "Graph Konzert",
+              "startDate": "2026-07-01T20:00:00",
+              "endDate": "2026-07-01T22:00:00",
+              "offers": { "price": 33 }
+            }
+          ]
+        }
+        """;
+
+    EventResponseDTO result = serviceWithObjectMapper.ParseMailFile(jsonLdMail(json));
+
+    assertThat(result.getName()).isEqualTo("Graph Konzert");
+    assertThat(result.getKosten()).isEqualTo(33);
+    assertThat(result.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 1, 20, 0));
+    assertThat(result.getEnd()).isEqualTo(LocalDateTime.of(2026, 7, 1, 22, 0));
+  }
+
+  @Test
+  void parseMailFileNutztTextFallbackOhneGeminiApiKey() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    LocalDateTime beforeParse = LocalDateTime.now();
+
+    EventResponseDTO result =
+        serviceWithObjectMapper.ParseMailFile(textMail("Einladung zum Konzert"));
+
+    assertThat(result.getName().trim()).isEqualTo("Einladung zum Konzert");
+    assertThat(result.getKosten()).isZero();
+    assertThat(result.getStart()).isAfterOrEqualTo(beforeParse);
+    assertThat(result.getEnd()).isEqualTo(result.getStart().plusDays(1));
+  }
+
   private void saveEventToDB(EventRequestDTO request)
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Method method = EventService.class.getDeclaredMethod("SaveEventToDB", EventRequestDTO.class);
     method.invoke(eventService, request);
+  }
+
+  private EventService serviceWithRealObjectMapper() {
+    return new EventService(eventRepository, tripRepository, ausgabeService, new ObjectMapper());
+  }
+
+  private ByteArrayInputStream jsonLdMail(String json) {
+    return mail("application/ld+json; charset=UTF-8", json);
+  }
+
+  private ByteArrayInputStream textMail(String text) {
+    return mail("text/plain; charset=UTF-8", text);
+  }
+
+  private ByteArrayInputStream mail(String contentType, String body) {
+    String rawMail =
+        """
+        Subject: Test Mail
+        Content-Type: %s
+
+        %s
+        """
+            .formatted(contentType, body);
+    return new ByteArrayInputStream(rawMail.getBytes(StandardCharsets.UTF_8));
   }
 }

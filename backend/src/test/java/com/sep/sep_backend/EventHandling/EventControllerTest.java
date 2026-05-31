@@ -67,6 +67,35 @@ class EventControllerTest {
   }
 
   @Test
+  void eventsManuellErstellenGibtServiceResponseZurueck() {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+    EventRequestDTO request =
+        new EventRequestDTO(
+            "Museum",
+            25,
+            1L,
+            LocalDateTime.of(2026, 6, 1, 14, 0),
+            LocalDateTime.of(2026, 6, 1, 16, 0));
+    EventResponseDTO created =
+        new EventResponseDTO(
+            "42",
+            "Museum",
+            25,
+            LocalDateTime.of(2026, 6, 1, 14, 0),
+            LocalDateTime.of(2026, 6, 1, 16, 0),
+            1L);
+
+    when(eventService.SaveEventToDB(request)).thenReturn(created);
+
+    ResponseEntity<EventResponseDTO> response = eventController.EventsManuellErstellen(request);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(response.getBody()).isSameAs(created);
+    verify(eventService).SaveEventToDB(request);
+  }
+
+  @Test
   void uploadEmailErlaubtImportOhneTripId() throws NoSuchMethodException {
     Method method =
         EventController.class.getDeclaredMethod("uploadEmail", MultipartFile.class, Long.class);
@@ -95,5 +124,67 @@ class EventControllerTest {
     assertThat(response).isSameAs(savedEvent);
     verify(eventService).ParseMailFile(inputStream);
     verify(eventService).SaveEventResponseToDB(parsedEvent, null);
+  }
+
+  @Test
+  void uploadEmailSpeichertImportMitTripId() throws Exception {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+    MultipartFile file = mock(MultipartFile.class);
+    InputStream inputStream = new ByteArrayInputStream("mail".getBytes());
+    EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
+    EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, 7L);
+
+    when(file.getInputStream()).thenReturn(inputStream);
+    when(eventService.ParseMailFile(inputStream)).thenReturn(parsedEvent);
+    when(eventService.SaveEventResponseToDB(parsedEvent, 7L)).thenReturn(savedEvent);
+
+    EventResponseDTO response = eventController.uploadEmail(file, 7L);
+
+    assertThat(response).isSameAs(savedEvent);
+    verify(eventService).ParseMailFile(inputStream);
+    verify(eventService).SaveEventResponseToDB(parsedEvent, 7L);
+  }
+
+  @Test
+  void deleteEventFromDBGibtBestaetigungZurueck() {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+
+    ResponseEntity<DeleteEventResponseDTO> response = eventController.DeleteEventFromDB(42L);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(response.getBody())
+        .isEqualTo(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
+    verify(eventService).DeleteEventFromDB(42L);
+  }
+
+  @Test
+  void editEventGibtServiceResponseZurueck() {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+    EventRequestDTO request =
+        new EventRequestDTO(
+            "Theater",
+            70,
+            3L,
+            LocalDateTime.of(2026, 7, 1, 19, 0),
+            LocalDateTime.of(2026, 7, 1, 22, 0));
+    EventResponseDTO edited =
+        new EventResponseDTO(
+            "42",
+            "Theater",
+            70,
+            LocalDateTime.of(2026, 7, 1, 19, 0),
+            LocalDateTime.of(2026, 7, 1, 22, 0),
+            3L);
+
+    when(eventService.EditEvent(42L, request)).thenReturn(edited);
+
+    ResponseEntity<EventResponseDTO> response = eventController.EditEvent(42L, request);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(response.getBody()).isSameAs(edited);
+    verify(eventService).EditEvent(42L, request);
   }
 }
