@@ -6,6 +6,11 @@ Fields match the Event interface in trip.service.ts */
 import com.sep.sep_backend.Enitys.Event;
 import java.time.LocalDateTime;
 
+/**
+ * API response shape for a single event. The trip and category relations are flattened to a plain
+ * {@code tripId} and {@code categoryName} so the client gets simple values instead of nested
+ * entities. Fields mirror the {@code Event} interface in {@code trip.service.ts}.
+ */
 public class EventDTO {
   private long id;
   private String name;

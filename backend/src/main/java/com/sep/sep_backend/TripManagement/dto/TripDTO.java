@@ -8,6 +8,11 @@ import com.sep.sep_backend.Enitys.Trip;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * API response shape for a trip, including its events as {@link EventDTO}s, so the frontend
+ * receives a trip and all its events in a single JSON object. Fields mirror the {@code Trip}
+ * interface in {@code trip.service.ts}.
+ */
 public class TripDTO {
   private long id;
   private String name;
