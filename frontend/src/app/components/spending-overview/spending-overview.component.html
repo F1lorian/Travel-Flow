@@ -1,125 +1,122 @@
-<h1>Spending Overview</h1>
+<div class="container">
+  <div class="page-header">
+    <h1>Spending Overview</h1>
 
-<div class="date-filter">
-  <div class="date-field">
-    <label for="start">From:</label>
-    <input
-      id="start"
-      type="date"
-      [(ngModel)]="startDate"
-      (change)="loadExpenses()"
-    />
+    <div class="header-actions">
+      <label class="field">
+        <span>Filtern</span>
+        <select id="trip-auswaehlen" (change)="openTripOverview($event)">
+          <option value="">Nach Trip</option>
+          <option *ngFor="let trip of trips" [value]="trip.id">
+            {{ trip.name }}
+          </option>
+        </select>
+      </label>
+
+      <a class="primary-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+    </div>
   </div>
 
-  <div class="date-field">
-    <label for="end">Bis:</label>
-    <input
-      id="end"
-      type="date"
-      [(ngModel)]="endDate"
-      (change)="loadExpenses()"
-    />
-  </div>
+  <section class="filter-panel">
+    <label class="field">
+      <span>From</span>
+      <input
+        type="date"
+        [(ngModel)]="startDate"
+        (change)="loadExpenses()"
+      />
+    </label>
+
+    <label class="field">
+      <span>Bis</span>
+      <input
+        type="date"
+        [(ngModel)]="endDate"
+        (change)="loadExpenses()"
+      />
+    </label>
+
+  </section>
+
+  <section class="content-section">
+    <h2>Übersicht</h2>
+
+    <apx-chart
+      [series]="chartseries"
+      [labels]="chartlabels"
+      [chart]="chartDetails">
+    </apx-chart>
+
+    <table class="data-table">
+      <thead>
+      <tr>
+        <th>Kategorie</th>
+        <th>Ausgaben</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let item of categorySummary">
+        <td>{{ item.category }}</td>
+        <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Letzte Ausgaben</h2>
+
+      <label class="compact-field">
+        <span>Kategorie</span>
+        <select [(ngModel)]="selectedCategory">
+          <option value="ALL">Alle Kategorien</option>
+          <option *ngFor="let category of categories" [value]="category">
+            {{ category }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <p *ngIf="expenses.length === 0" class="empty">
+      Keine Ausgaben gefunden.
+    </p>
+
+    <table *ngIf="expenses.length > 0" class="data-table">
+      <thead>
+      <tr>
+        <th>Kosten</th>
+        <th>Trip</th>
+        <th>Datum</th>
+        <th>Kategorie</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let expense of displayedExpenses">
+        <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ expense.trip }}</td>
+        <td>{{ expense.date }}</td>
+        <td>{{ expense.kategorie }}</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <button
+      *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = true"
+    >
+      Mehr anzeigen
+    </button>
+
+    <button
+      *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = false"
+    >
+      Weniger anzeigen
+    </button>
+  </section>
 </div>
-
-<a class="add-expense-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
-
-<hr />
-
-<h2>Übersicht</h2>
-
-<label for="trip-auswaehlen">Filtern:</label>
-
-<select
-  id="trip-auswaehlen"
-  (change)="openTripOverview($event)"
->
-  <option value="">Nach Trip</option>
-  <option *ngFor="let trip of trips" [value]="trip.id">
-    {{ trip.name }}
-  </option>
-</select>
-
-
-<apx-chart
-  [series] = "chartseries"
-  [labels] = "chartlabels"
-  [chart] = "chartDetails">
-</apx-chart>
-
-<div class="table-scroll">
-  <table class="category-table">
-    <thead>
-    <tr>
-      <th>Kategorie</th>
-      <th>Ausgaben</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let item of categorySummary">
-      <td>{{ item.category }}</td>
-      <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
-    </tr>
-
-    </tbody>
-  </table>
-</div>
-
-<hr />
-
-<h2>Letzte ausgaben</h2>
-
-<label for="category-filter">Kategorie:</label>
-
-<select
-  id="category-filter"
-  [(ngModel)]="selectedCategory"
->
-  <option value="ALL">Alle Kategorien</option>
-  <option *ngFor="let category of categories" [value]="category">
-    {{ category }}
-  </option>
-</select>
-
-<div *ngIf="expenses.length === 0">
-  Keine Ausgaben gefunden.
-</div>
-
-<div class="table-scroll" *ngIf="expenses.length > 0">
-  <table class="expenses-table">
-    <thead>
-    <tr>
-      <th>Kosten</th>
-      <th>Trip</th>
-      <th>Datum</th>
-      <th>Kategorie</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let expense of displayedExpenses">
-      <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
-      <td>{{ expense.trip }}</td>
-      <td>{{ expense.date }}</td>
-      <td>{{ expense.kategorie }}</td>
-    </tr>
-    </tbody>
-  </table>
-</div>
-
-<button
-  *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
-  class="button"
-  type="button"
-  (click)="showAllExpenses = true"
->
-  Mehr anzeigen
-</button>
-
-<button
-  *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
-  class="button"
-  type="button"
-  (click)="showAllExpenses = false"
->
-  Weniger anzeigen
-</button>
