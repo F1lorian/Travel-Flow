@@ -26,7 +26,10 @@ export class TripDetail implements OnInit {
   showDeleteConfirm = signal(false);
   errorMessage = '';
 
-  // Delete-event modal state
+  // Delete-event modal state. The modal is a small 3-step flow driven by deleteStep:
+  //   'choice'       -> delete the event, or move it to another trip?
+  //   'pick-trip'    -> search and pick the destination trip
+  //   'confirm-move' -> confirm moving the event to the chosen trip
   eventToDelete = signal<Event | null>(null);
   deleteStep = signal<'choice' | 'pick-trip' | 'confirm-move'>('choice');
   otherTrips = signal<Trip[]>([]);
@@ -40,6 +43,8 @@ export class TripDetail implements OnInit {
   newEventCategory = '';
 
   ngOnInit() {
+    // Trip id comes from the route (/trips/:id). The trip response already
+    // includes its events, so we seed both signals from one request.
     const tripId = Number(this.route.snapshot.paramMap.get('id'));
     this.tripService.getTrip(tripId).subscribe({
       next: (trip) => {
@@ -88,6 +93,9 @@ export class TripDetail implements OnInit {
     });
   }
 
+  // Called when the user clicks "Add" on an AI recommendation. Turns the
+  // recommendation into a real event (normalizing its date and defaulting an
+  // unknown price to 0) and saves it to the current trip.
   addRecommendedEvent(recommendation: EventRecommendation) {
     const tripId = this.trip()?.id;
     if (!tripId) return;
@@ -154,6 +162,8 @@ export class TripDetail implements OnInit {
     });
   }
 
+  // Move-flow step 1: load every other trip (excluding the current one) as
+  // possible destinations, then advance the modal to the trip picker.
   startMoveFlow() {
     const currentTripId = this.trip()?.id;
     if (!currentTripId) return;
@@ -166,6 +176,7 @@ export class TripDetail implements OnInit {
     });
   }
 
+  // Live filter for the trip picker's search box.
   filteredOtherTrips(): Trip[] {
     const q = this.tripSearch.trim().toLowerCase();
     if (!q) return this.otherTrips();
@@ -191,11 +202,14 @@ export class TripDetail implements OnInit {
     });
   }
 
+  // Coerces a recommendation's date string into the backend's expected
+  // "YYYY-MM-DDTHH:MM:SS" form. Missing or unparseable dates fall back to now.
   private normalizeRecommendationDate(dateTime: string): string {
     if (!dateTime) {
       return new Date().toISOString().slice(0, 19);
     }
 
+    // A 16-char value ("YYYY-MM-DDTHH:MM") has no seconds — append ":00".
     const normalized = dateTime.length === 16 ? `${dateTime}:00` : dateTime;
     const parsedDate = new Date(normalized);
     if (Number.isNaN(parsedDate.getTime())) {

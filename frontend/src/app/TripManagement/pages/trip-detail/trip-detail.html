@@ -73,7 +73,7 @@
                     <span class="event-category">{{ event.categoryName }}</span>
                   }
                 </div>
-                <div class="event-cost">{{ event.kosten }} €</div>
+                <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
                 <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
               </li>
             }
@@ -81,16 +81,29 @@
         }
       </div>
 
-      <aside class="right-sidebar">
-        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
-      </aside>
     </div>
+
+    <!-- AI recommendation: floating glowing orb launcher (bottom-right) + slide-in drawer.
+         Hover the orb (desktop) or tap it (touch) to open the panel. -->
+    <input type="checkbox" id="reco-toggle" class="reco-toggle" hidden />
+    <label for="reco-toggle" class="reco-orb" title="AI event suggestions">
+      <span class="reco-orb-icon">🧑‍🚀</span>
+    </label>
+    <!-- Tapping this backdrop unchecks the toggle, so the panel closes
+         when you tap/click outside it (fixes the "stuck open" on touch). -->
+    <label for="reco-toggle" class="reco-backdrop" aria-hidden="true"></label>
+    <aside class="reco-drawer">
+      <div class="reco-panel">
+        <app-event-search (addRecommendation)="addRecommendedEvent($event)"></app-event-search>
+      </div>
+    </aside>
   } @else if (errorMessage) {
     <div class="error">{{ errorMessage }}</div>
   } @else {
     <p>Loading...</p>
   }
 
+  <!-- Delete-trip confirmation modal: lists the events that will be deleted too. -->
   @if (showDeleteConfirm()) {
     <div class="modal-overlay" (click)="cancelDelete()">
       <div class="modal" (click)="$event.stopPropagation()">
@@ -118,6 +131,8 @@
     </div>
   }
 
+  <!-- Delete/move-event modal. Same overlay, three swappable steps driven by
+       deleteStep(): 'choice' -> 'pick-trip' -> 'confirm-move'. -->
   @if (eventToDelete(); as evt) {
     <div class="modal-overlay" (click)="closeEventModal()">
       <div class="modal" (click)="$event.stopPropagation()">

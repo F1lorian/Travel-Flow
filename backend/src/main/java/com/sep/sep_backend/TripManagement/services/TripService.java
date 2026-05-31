@@ -32,6 +32,7 @@ public class TripService {
     return tripRepository.findById(id);
   }
 
+  // Creates a trip. Name is required; dates are optional. Throws if the name is blank.
   public Trip createTrip(String name, LocalDate startDate, LocalDate endDate) {
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Trip name cannot be empty");
@@ -42,6 +43,11 @@ public class TripService {
     return tripRepository.save(trip);
   }
 
+  /**
+   * Deletes a trip and all of its events. @Transactional makes the event deletion and the trip
+   * deletion succeed or fail together, so a trip is never left with orphaned events. Throws if the
+   * trip doesn't exist.
+   */
   @Transactional
   public void deleteTrip(Long id) {
     if (!tripRepository.existsById(id)) {

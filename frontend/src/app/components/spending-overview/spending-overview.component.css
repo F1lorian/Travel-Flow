@@ -86,3 +86,28 @@
 .button:hover {
   background-color: #125aa0;
 }
+
+/* Wraps each wide table so it can scroll sideways inside its box instead of
+   stretching the whole page (and the body) on a narrow phone. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Phones: the From/Bis date pickers sit in one row that is too wide, so
+   stack them vertically and let the inputs use the full width. */
+@media (max-width: 640px) {
+  .date-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .date-field {
+    justify-content: space-between;
+  }
+
+  .date-field input {
+    flex: 1;
+  }
+}

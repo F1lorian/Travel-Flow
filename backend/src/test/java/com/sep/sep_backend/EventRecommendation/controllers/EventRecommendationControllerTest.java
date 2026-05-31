@@ -14,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+// @WebMvcTest loads only the web layer for this controller; the Gemini service is
+// mocked, so the test checks request/response wiring without calling the real API.
 @WebMvcTest(EventRecommendationController.class)
 class EventRecommendationControllerTest {
 
@@ -23,6 +25,7 @@ class EventRecommendationControllerTest {
 
   @Test
   void searchEvents_returnsRecommendations() throws Exception {
+    // Arrange: stub the service to return one known recommendation for "Dortmund".
     when(geminiEventSearchService.searchEvents("Dortmund"))
         .thenReturn(
             List.of(
@@ -34,6 +37,7 @@ class EventRecommendationControllerTest {
                     "Dortmund",
                     "https://example.com")));
 
+    // Act + Assert: POST the location and verify the JSON response maps the DTO correctly.
     mockMvc
         .perform(
             post("/api/trips/event-search")
