@@ -1,4 +1,6 @@
+<!-- Spending overview for a single trip -->
 <div class="container">
+  <!-- Page title and trip selector -->
   <div class="page-header">
     <h1>{{ tripname }} - Spending Overview</h1>
     <div class="header-actions">
@@ -19,6 +21,7 @@
     {{ errorMessage }}
   </div>
 
+  <!-- Budget summary cards -->
   <section class="budget-summary">
     <button
       class="budget-card budget-action"
@@ -44,6 +47,7 @@
     {{ budgetSuccessMessage }}
   </p>
 
+  <!-- Category chart and summary table -->
   <section class="content-section">
     <div class="section-header">
       <h2>Ausgaben nach Kategorie</h2>
@@ -73,6 +77,7 @@
     </table>
   </section>
 
+  <!-- Recent expenses list -->
   <section class="content-section">
     <div class="section-header">
       <h2>Letzte Ausgaben</h2>
@@ -133,6 +138,7 @@
     </button>
   </section>
 
+  <!-- Budget edit dialog -->
   <div class="modal-overlay" *ngIf="showBudgetDialog">
     <div class="modal">
       <h2>Budget bearbeiten</h2>
