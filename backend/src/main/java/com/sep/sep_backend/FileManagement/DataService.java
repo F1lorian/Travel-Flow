@@ -13,6 +13,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for exporting events and trips as iCalendar data.
+ */
 @Service
 class DataService {
   private static final DateTimeFormatter EVENT_TIME_FORMATTER =
@@ -24,12 +27,23 @@ class DataService {
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
 
+  /**
+   * Creates a data service with access to event and trip data.
+   *
+   * @param eventRepository repository used to load events for export
+   * @param tripRepository repository used to load trips for export
+   */
   @Autowired
   public DataService(EventRepository eventRepository, TripRepository tripRepository) {
     this.eventRepository = eventRepository;
     this.tripRepository = tripRepository;
   }
 
+  /**
+   * Exports all stored events and trips as an iCalendar string.
+   *
+   * @return complete iCalendar content containing event and trip entries
+   */
   public String exportAllEventsAsIcal() {
     List<IcalRecord> events =
         eventRepository.findAll().stream()
@@ -44,8 +58,6 @@ class DataService {
     return buildCalendar(events, trips);
   }
 
-  // Events und trips werden zu einem Record gemacht (Expliziete darrstellung von Trips ist bei
-  // Ical nicht vorgesehen daher gleiche behandlung)
   private IcalRecord toIcalRecord(Event event) {
     String description = event.getTrip() == null ? "" : "Trip: " + event.getTrip().getName();
     LocalDateTime endDateTime =
@@ -70,14 +82,11 @@ class DataService {
         "Reise: " + trip.getName(),
         "Reise",
         trip.getStartDate(),
+        // DTEND ist bei iCalendar-Ganztagsterminen exklusiv.
         endDateInclusive.plusDays(1));
   }
 
-  // Setzt dass Gesamte file als String zusammen (Umwandlung in ics im frontend informationen werden
-  // im
-  // header mirgegeben)
   private String buildCalendar(List<IcalRecord> events, List<IcalRecord> trips) {
-    // Anfang von ics files
     StringBuilder calendar =
         new StringBuilder(
             """
@@ -96,11 +105,10 @@ class DataService {
     }
 
     calendar.append("END:VCALENDAR\n");
+    // iCalendar hat andere Zeilenenden.
     return calendar.toString().replace("\n", "\r\n");
   }
 
-  // Baut aus den Records die formatierten strings für das ics file(Evnts können auch Trips sein ->
-  // gleich Behandlung)
   private String buildEvent(IcalRecord event, String dtStamp) {
     String dates =
         event.isAllDay()
@@ -124,7 +132,6 @@ class DataService {
             event.uid(), dtStamp, dates, escapeIcs(event.title()), escapeIcs(event.description()));
   }
 
-  // Bringt Datumsfelder ins richtige Format für ics files
   private String buildTimedDates(IcalRecord event) {
     String start = "DTSTART:" + EVENT_TIME_FORMATTER.format(event.startDateTime()) + "\n";
     if (event.endDateTime() == null) {
@@ -133,7 +140,6 @@ class DataService {
     return start + "DTEND:" + EVENT_TIME_FORMATTER.format(event.endDateTime()) + "\n";
   }
 
-  // Innerhalb con ics files haben bestimmte Zeichen eine bedeutung daher werden diese heir ersetzt
   private String escapeIcs(String value) {
     if (value == null) {
       return "";
