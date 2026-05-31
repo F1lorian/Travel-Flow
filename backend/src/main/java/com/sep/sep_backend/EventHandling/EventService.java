@@ -63,7 +63,6 @@ public class EventService {
     this.objectMapper = objectMapper;
   }
 
-  // Einfaches Speichern von Events
   /**
    * Saves a manually created event for the trip referenced by the request.
    *
@@ -83,7 +82,6 @@ public class EventService {
     return mapToResponseDTO(savedEvent);
   }
 
-  // Löschen eines Events aus der Db
   /**
    * Deletes the event with the given identifier.
    *
@@ -97,7 +95,6 @@ public class EventService {
     eventRepository.deleteById(EventID);
   }
 
-  // Event bearbeiten auf Basis der mitgegebenen Daten im DTO
   /**
    * Updates an existing event with the values provided in the request.
    *
@@ -117,7 +114,7 @@ public class EventService {
     if (dto.getName() != null) {
       event.setName(dto.getName());
     }
-    // -1 bei Kosten als Error State
+    // -1 bedeutet bei Edit-Requests: Kosten nicht ändern.
     if (dto.getKosten() != -1) {
       event.setKosten(dto.getKosten());
     }
@@ -137,7 +134,6 @@ public class EventService {
     return mapToResponseDTO(event);
   }
 
-  // Gleiche Speicher Logik wie Oben nur für Response DTOs
   /**
    * Saves an imported event for the given trip.
    *
@@ -160,8 +156,6 @@ public class EventService {
     return mapToResponseDTO(savedEvent);
   }
 
-  // Holt alle Events aus de DB um den Kalender zu Füllen (Alle Trips werden im Trip Management
-  // geholt)
   /**
    * Returns all stored events in the format used by the calendar view.
    *
@@ -181,7 +175,6 @@ public class EventService {
         .toList();
   }
 
-  // Zweistufiges Email Parsing um Events zu erzeugen
   /**
    * Parses an uploaded email stream and extracts event data from it.
    *
@@ -193,7 +186,7 @@ public class EventService {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
     var jsonLdBlocks = extractJsonLd(message);
-    // 1.Stufe überprüfen ob Json LD File vorliegt
+    //1. Stufe: Strukturierte JSON-LD-Daten sind zuverlässiger als KI-Extraktion und werden bevorzugt.
     if (!jsonLdBlocks.isEmpty()) {
       var jsonEvent =
           jsonLdBlocks.stream()
@@ -206,8 +199,7 @@ public class EventService {
         return mapJsonLdToDTO(jsonEvent);
       }
     }
-    // 2. Stufe wenn kein Json LD gefunden wurde wird der Text und der Betreff mit Gemini
-    // Interpretiert
+    //2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
     var body = extractText(message);
     return parseTextWithGemini(message.getSubject(), body);
   }
@@ -220,10 +212,10 @@ public class EventService {
     try {
       Client client = Client.builder().apiKey(geminiApiKey).build();
 
-      // Ausgabe typ Festkegen. temperature == Grad der Hallozination
       GenerateContentConfig config =
           GenerateContentConfig.builder()
               .responseMimeType("application/json")
+              // Niedrige temperature == weniger hallozination.
               .temperature(0.1f)
               .build();
 
@@ -232,8 +224,6 @@ public class EventService {
 
       JsonNode node = objectMapper.readTree(response.text());
 
-      // Ergebnis wurde als Json erzeugt daher wird dass als Json node durchlaufen um dass DTO zu
-      // bauen
       String name = node.path("name").asText(subject);
       int kosten = node.path("kosten").asInt(0);
       LocalDateTime start = parseDatetime(node.path("startDate").asText());
@@ -241,6 +231,7 @@ public class EventService {
 
       return new EventResponseDTO(name, kosten, start, end);
     } catch (Exception exception) {
+      // Bei ungültiger KI-Antwort wird trozdem versucht ein Evnt zu erstellen.
       return mapTextToDTO(mailText);
     }
   }
@@ -285,7 +276,7 @@ public class EventService {
       return true;
     }
 
-    // Json kann verschachtekt sein daher hier die Extra Prüfung über Json Nodes
+    // Schema.org-Kontexte können als Liste statt als einzelner Textwert geliefert werden.
     if (context.isArray()) {
       for (JsonNode child : context) {
         if (child.isTextual() && child.asText().contains("schema.org")) {
@@ -294,7 +285,7 @@ public class EventService {
       }
     }
 
-    // Falls kein text vorliegt
+    // Manche Mails liefern den Kontext als Objekt mit Namespace-Zuordnungen.
     if (context.isObject() && context.toString().contains("schema.org")) {
       return true;
     }
@@ -309,7 +300,7 @@ public class EventService {
       return true;
     }
 
-    // Umgang mit verschachtelungen
+    // Event-Typen können in @graph-Elementen statt direkt am Wurzelknoten stehen.
     if (node.get("@graph") != null && node.get("@graph").isArray()) {
       var graph = node.get("@graph");
       for (JsonNode child : graph) {
@@ -326,7 +317,7 @@ public class EventService {
       return false;
     }
 
-    // Behandlung von unterschiedlichen Schreibweisen
+    // Schema.org-Events kommen je nach Anbieter mit unterschiedlichen Typ-Schreibweisen.
     if (type.isTextual()) {
       String typeValue = type.asText();
       return typeValue.equals("Event")
@@ -335,7 +326,7 @@ public class EventService {
           || typeValue.equals("http://schema.org/Event");
     }
 
-    // Umgang mit verschachtelung
+    // @type kann auch als Array geliefert werden.
     if (type.isArray()) {
       for (JsonNode child : type) {
         if (isEventType(child)) {
@@ -347,7 +338,6 @@ public class EventService {
     return false;
   }
 
-  // Wird nur genutz falls gemini keine Gültige antwort findet (vermeidet Absturz)
   private EventResponseDTO mapTextToDTO(String text) {
     var name = text == null || text.isBlank() ? "Unbekanntes Event" : text;
     LocalDateTime start = LocalDateTime.now();
@@ -357,8 +347,7 @@ public class EventService {
   private EventResponseDTO mapJsonLdToDTO(JsonNode jsonLdBlocks) {
     var eventNode = jsonLdBlocks;
 
-    // Falls dass Event selber in einem Graph verschachtelt ist wird solange durchgegangen
-    // bis man den passenden Teil findet
+    // JSON-LD kann das eigentliche Event in einem @graph-Knoten kapseln.
     if (!isEventType(eventNode.get("@type")) && eventNode.path("@graph").isArray()) {
       for (JsonNode child : eventNode.path("@graph")) {
         if (isEventType(child.get("@type"))) {

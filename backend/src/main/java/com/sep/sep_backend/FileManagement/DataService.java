@@ -82,11 +82,11 @@ class DataService {
         "Reise: " + trip.getName(),
         "Reise",
         trip.getStartDate(),
+        // DTEND ist bei iCalendar-Ganztagsterminen exklusiv.
         endDateInclusive.plusDays(1));
   }
 
   private String buildCalendar(List<IcalRecord> events, List<IcalRecord> trips) {
-    // Anfang von ics files
     StringBuilder calendar =
         new StringBuilder(
             """
@@ -105,6 +105,7 @@ class DataService {
     }
 
     calendar.append("END:VCALENDAR\n");
+    // iCalendar hat andere Zeilenenden.
     return calendar.toString().replace("\n", "\r\n");
   }
 
