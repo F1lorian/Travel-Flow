@@ -11,10 +11,15 @@ public class EventDTO {
   private String name;
   private LocalDateTime startTime;
   private LocalDateTime endTime;
-  private int kosten;
+  private int kosten; // cost in EUR (German "Kosten"); 0 = free
   private long tripId;
   private String categoryName;
 
+  /**
+   * Builds an EventDTO from an Event entity. The trip and category relations are
+   * flattened to a plain {@code tripId} and {@code categoryName} so the client
+   * gets simple values instead of nested entities.
+   */
   public static EventDTO from(Event event) {
     EventDTO dto = new EventDTO();
     dto.id = event.getId();
@@ -22,6 +27,7 @@ public class EventDTO {
     dto.startTime = event.getStartTime();
     dto.endTime = event.getEndTime();
     dto.kosten = event.getKosten();
+    // Defensive null-checks: an event may have no trip/category set.
     dto.tripId = event.getTrip() != null ? event.getTrip().getId() : 0L;
     dto.categoryName = event.getCategorie() != null ? event.getCategorie().getName() : null;
     return dto;

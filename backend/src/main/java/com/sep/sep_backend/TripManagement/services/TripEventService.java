@@ -28,6 +28,14 @@ public class TripEventService {
     this.categoryService = categoryService;
   }
 
+  /**
+   * Adds a new event to an existing trip.
+   *
+   * <p>Only the name is required (the Event entity marks it nullable=false); times,
+   * cost and category are optional. If a category name is given, it's resolved
+   * through {@link CategoryService#getOrCreate} so typing a new label creates it
+   * and reusing an existing one links to it.
+   */
   public Event addEventToTrip(
       Long tripId,
       String name,
@@ -35,11 +43,11 @@ public class TripEventService {
       LocalDateTime endTime,
       int kosten,
       String categoryName) {
-    // Only the name is required (matches the Event entity's nullable=false)
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Event name cannot be empty");
     }
 
+    // The event must belong to a real trip — fail clearly if the id is unknown.
     Trip trip =
         tripRepository
             .findById(tripId)
@@ -47,6 +55,7 @@ public class TripEventService {
 
     Event newEvent = new Event(name, startTime, endTime, kosten, trip);
 
+    // Category is optional; only attach one when a non-blank name was provided.
     if (categoryName != null && !categoryName.isBlank()) {
       Categories category = categoryService.getOrCreate(categoryName);
       newEvent.setCategorie(category);
@@ -59,6 +68,7 @@ public class TripEventService {
     return eventRepository.findByTrip_Id(tripId);
   }
 
+  // Deletes an event by id, or throws if it doesn't exist.
   public void deleteEvent(Long eventId) {
     Event event =
         eventRepository
@@ -67,6 +77,11 @@ public class TripEventService {
     eventRepository.delete(event);
   }
 
+  /**
+   * Re-links an event to a different trip (the "move to another trip" feature).
+   * Both the event and the destination trip must exist, and moving an event to the
+   * trip it already belongs to is rejected as a no-op.
+   */
   public Event moveEventToTrip(Long eventId, Long newTripId) {
     Event event =
         eventRepository
@@ -81,6 +96,7 @@ public class TripEventService {
       throw new IllegalArgumentException("Event already belongs to this trip");
     }
 
+    // Changing the trip reference and saving moves the event (updates its foreign key).
     event.setTrip(newTrip);
     return eventRepository.save(event);
   }

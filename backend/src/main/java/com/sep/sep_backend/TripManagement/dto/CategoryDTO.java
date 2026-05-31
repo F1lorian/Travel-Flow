@@ -2,12 +2,22 @@ package com.sep.sep_backend.TripManagement.dto;
 
 import com.sep.sep_backend.Enitys.Categories;
 
-/** Lightweight view of a {@link Categories} entity sent to the frontend (id + name only). */
+/**
+ * API response shape for a category — only the {@code id} and {@code name} the
+ * frontend actually needs.
+ *
+ * <p>Why a DTO instead of returning the {@link Categories} entity directly:
+ * <ul>
+ *   <li>keeps the JSON stable even if the entity gains internal fields/relations;</li>
+ *   <li>avoids accidentally serializing lazy JPA relationships (and the errors
+ *       that come with them).</li>
+ * </ul>
+ */
 public class CategoryDTO {
   private long id;
   private String name;
 
-  // Factory: copy the fields we expose from the entity into a DTO.
+  /** Builds a DTO from an entity, copying only the fields we expose. */
   public static CategoryDTO from(Categories c) {
     CategoryDTO dto = new CategoryDTO();
     dto.id = c.getId();
@@ -15,6 +25,7 @@ public class CategoryDTO {
     return dto;
   }
 
+  // Getters only: the DTO is read-only output, built via from() above.
   public long getId() {
     return id;
   }

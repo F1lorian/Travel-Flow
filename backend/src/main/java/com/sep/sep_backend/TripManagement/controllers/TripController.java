@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/trips")
-@CrossOrigin(origins = "*")
+@CrossOrigin(
+        origins = "*")
 public class TripController {
 
   // Shape of the JSON body sent by the frontend when creating a trip
@@ -28,11 +29,13 @@ public class TripController {
     this.tripService = tripService;
   }
 
+  // GET /api/trips — all trips, each mapped to a DTO so entities aren't serialized directly.
   @GetMapping
   public List<TripDTO> getAllTrips() {
     return tripService.getAllTrips().stream().map(TripDTO::from).toList();
   }
 
+  // GET /api/trips/{id} — one trip, or 404 if the id doesn't exist.
   @GetMapping("/{id}")
   public ResponseEntity<TripDTO> getTrip(@PathVariable Long id) {
     Optional<Trip> trip = tripService.getTrip(id);
@@ -42,6 +45,8 @@ public class TripController {
     return ResponseEntity.ok(TripDTO.from(trip.get()));
   }
 
+  // POST /api/trips — create a trip. The service throws IllegalArgumentException
+  // on invalid input (e.g. blank name), which we translate to HTTP 400.
   @PostMapping
   public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request) {
     try {
@@ -52,6 +57,7 @@ public class TripController {
     }
   }
 
+  // DELETE /api/trips/{id} — 204 No Content on success, 404 if the trip is missing.
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteTrip(@PathVariable Long id) {
     try {

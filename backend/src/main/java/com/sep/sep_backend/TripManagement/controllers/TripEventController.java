@@ -31,11 +31,14 @@ public class TripEventController {
     this.eventService = eventService;
   }
 
+  // GET /api/trips/{tripId}/events — all events belonging to one trip, as DTOs.
   @GetMapping
   public List<EventDTO> getEvents(@PathVariable Long tripId) {
     return eventService.getEventsForTrip(tripId).stream().map(EventDTO::from).toList();
   }
 
+  // POST /api/trips/{tripId}/events — add an event to the trip. Invalid input
+  // (e.g. blank name or unknown trip) becomes HTTP 400.
   @PostMapping
   public ResponseEntity<EventDTO> addEvent(
       @PathVariable Long tripId, @RequestBody CreateEventRequest request) {
@@ -54,6 +57,8 @@ public class TripEventController {
     }
   }
 
+  // DELETE /api/trips/{tripId}/events/{eventId} — 204 on success, 404 if not found.
+  // tripId is part of the URL for REST nesting but the event is deleted by its own id.
   @DeleteMapping("/{eventId}")
   public ResponseEntity<Void> deleteEvent(@PathVariable Long tripId, @PathVariable Long eventId) {
     try {
@@ -64,6 +69,8 @@ public class TripEventController {
     }
   }
 
+  // PUT /api/trips/{tripId}/events/{eventId}/move/{newTripId} — reassign an event to
+  // another trip (used by the "move to another trip" flow on the trip-detail page).
   @PutMapping("/{eventId}/move/{newTripId}")
   public ResponseEntity<EventDTO> moveEvent(
       @PathVariable Long tripId, @PathVariable Long eventId, @PathVariable Long newTripId) {

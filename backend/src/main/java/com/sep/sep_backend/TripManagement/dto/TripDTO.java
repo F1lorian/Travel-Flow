@@ -15,6 +15,10 @@ public class TripDTO {
   private LocalDate endDate;
   private List<EventDTO> events;
 
+  /**
+   * Builds a TripDTO from a Trip entity, also converting its events to {@link EventDTO}s
+   * so the whole trip (with its events) serializes in one response.
+   */
   public static TripDTO from(Trip trip) {
     TripDTO dto = new TripDTO();
     dto.id = trip.getId();
@@ -22,6 +26,7 @@ public class TripDTO {
     dto.startDate = trip.getStartDate();
     dto.endDate = trip.getEndDate();
 
+    // Guard against a null events list so the JSON is always an array, never null.
     List<Event> tripEvents = trip.getEvents();
     if (tripEvents == null) {
       dto.events = List.of();
