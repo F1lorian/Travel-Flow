@@ -57,13 +57,8 @@ public class EventService {
     Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
-    if (matchingTrip != null) {
-      boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
-      boolean endsAfterTrip =
-          eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
-      if (startsBeforeTrip || endsAfterTrip) {
-        throw new EventOutsideTripException("Event liegt außerhalb des Trips");
-      }
+    if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
+      throw new EventOutsideTripException("Event liegt außerhalb des Trips");
     }
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
@@ -120,13 +115,8 @@ public class EventService {
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
-    if (matchingTrip != null) {
-      boolean startsBeforeTrip = eventStart.isBefore(matchingTrip.getStartDate().atStartOfDay());
-      boolean endsAfterTrip =
-          eventEnd.isAfter(matchingTrip.getEndDate().plusDays(1).atStartOfDay());
-      if (startsBeforeTrip || endsAfterTrip) {
-        throw new EventOutsideTripException("Event liegt außerhalb des Trips");
-      }
+    if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
+      throw new EventOutsideTripException("Event liegt außerhalb des Trips");
     }
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
@@ -376,6 +366,16 @@ public class EventService {
 
   private LocalDateTime resolveEndTime(LocalDateTime end, LocalDateTime start) {
     return end != null ? end : start.plusDays(1);
+  }
+
+  private boolean isEventOutsideTrip(LocalDateTime eventStart, LocalDateTime eventEnd, Trip trip) {
+    if (trip.getStartDate() == null || trip.getEndDate() == null) {
+      return false;
+    }
+
+    boolean startsBeforeTrip = eventStart.isBefore(trip.getStartDate().atStartOfDay());
+    boolean endsAfterTrip = eventEnd.isAfter(trip.getEndDate().plusDays(1).atStartOfDay());
+    return startsBeforeTrip || endsAfterTrip;
   }
 
   private Trip findTripByIdIfPresent(Long tripId) {
