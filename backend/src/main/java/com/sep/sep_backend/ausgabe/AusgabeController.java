@@ -13,14 +13,10 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * REST controller for all expense-related operations.
  *
- * This controller is used by the Angular frontend for:
- * - adding expenses
- * - loading expenses by date interval
- * - loading expenses by trip
- * - loading category summaries for charts
- * - reading/updating trip budgets
- * - reading/updating custom warning ranges
- * - calculating available budget
+ * <p>This controller is used by the Angular frontend for: - adding expenses - loading expenses by
+ * date interval - loading expenses by trip - loading category summaries for charts -
+ * reading/updating trip budgets - reading/updating custom warning ranges - calculating available
+ * budget
  */
 @RestController
 @RequestMapping("/api")
@@ -33,7 +29,7 @@ public class AusgabeController {
 
   @Autowired
   public AusgabeController(
-          AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
+      AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
     this.ausgabeRepo = ausgabeRepo;
     this.ausgabeService = ausgabeService;
     this.tripRepository = tripRepository;
@@ -42,18 +38,16 @@ public class AusgabeController {
   /**
    * Adds a new expense to an existing trip.
    *
-   * The frontend sends the trip as an object containing the trip name.
-   * Before saving the expense, the controller verifies that the trip exists.
+   * <p>The frontend sends the trip as an object containing the trip name. Before saving the
+   * expense, the controller verifies that the trip exists.
    *
-   * Returns:
-   * - 400 if no trip name was provided
-   * - 404 if the trip does not exist
+   * <p>Returns: - 400 if no trip name was provided - 404 if the trip does not exist
    */
   @PostMapping("/ausgabe")
   public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO dto) {
     if (dto.getTrip() == null
-            || dto.getTrip().getName() == null
-            || dto.getTrip().getName().isBlank()) {
+        || dto.getTrip().getName() == null
+        || dto.getTrip().getName().isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip name is required");
     }
 
@@ -70,29 +64,25 @@ public class AusgabeController {
   }
 
   /**
-   * Returns all expenses within a selected date interval.
-   * Used by the general spending overview.
+   * Returns all expenses within a selected date interval. Used by the general spending overview.
    */
   @GetMapping("/ausgabenliste")
   public List<AusgabeResponseDTO> ausgabenliste(
-          @RequestParam LocalDate start, @RequestParam LocalDate end) {
+      @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenliste(start, end);
   }
 
   /**
-   * Returns the summarized expenses per category for a selected date interval.
-   * Used for the category table and chart in the general spending overview.
+   * Returns the summarized expenses per category for a selected date interval. Used for the
+   * category table and chart in the general spending overview.
    */
   @GetMapping("/proKategorie")
   public List<KategorieSummeDTO> ausgabenProKategorie(
-          @RequestParam LocalDate start, @RequestParam LocalDate end) {
+      @RequestParam LocalDate start, @RequestParam LocalDate end) {
     return ausgabeService.ausgabenProKategorie(start, end);
   }
 
-  /**
-   * Returns all expenses for one specific trip.
-   * Used by the trip-specific spending overview.
-   */
+  /** Returns all expenses for one specific trip. Used by the trip-specific spending overview. */
   @GetMapping("/ausgabenlisteTrip")
   public List<AusgabeResponseDTO> ausgabenListeTrip(@RequestParam String tripname) {
     List<AusgabeResponseDTO> result = ausgabeService.ausgabenlisteTrip(tripname);
@@ -105,8 +95,8 @@ public class AusgabeController {
   }
 
   /**
-   * Returns summarized expenses per category for one specific trip.
-   * Used for the pie chart and category table on the trip spending overview page.
+   * Returns summarized expenses per category for one specific trip. Used for the pie chart and
+   * category table on the trip spending overview page.
    */
   @GetMapping("/proKategorieTrip")
   public List<KategorieSummeDTO> ausgabenProKategorieTrip(@RequestParam String tripname) {
@@ -119,9 +109,7 @@ public class AusgabeController {
     return result;
   }
 
-  /**
-   * Returns the custom budget limit of a trip.
-   */
+  /** Returns the custom budget limit of a trip. */
   @GetMapping("/budget")
   public double budget(@RequestParam String tripname) {
     Trip trip = tripRepository.findByName(tripname);
@@ -136,8 +124,7 @@ public class AusgabeController {
   /**
    * Updates the custom budget limit of a trip.
    *
-   * The budget must not be negative.
-   * Returns the updated budget value.
+   * <p>The budget must not be negative. Returns the updated budget value.
    */
   @PutMapping("/budget")
   public double budgetAktualisieren(@RequestParam String tripname, @RequestParam double budget) {
@@ -160,8 +147,8 @@ public class AusgabeController {
   /**
    * Returns the custom warning range of a trip.
    *
-   * The warning range is interpreted as a remaining-budget threshold.
-   * Example: warningRange = 100 means the user is warned if 100 € or less remain.
+   * <p>The warning range is interpreted as a remaining-budget threshold. Example: warningRange =
+   * 100 means the user is warned if 100 € or less remain.
    */
   @GetMapping("/warningRange")
   public double warningRange(@RequestParam String tripname) {
@@ -177,15 +164,14 @@ public class AusgabeController {
   /**
    * Updates the custom warning range of a trip.
    *
-   * The warning range must not be negative.
-   * Returns the updated warning range.
+   * <p>The warning range must not be negative. Returns the updated warning range.
    */
   @PutMapping("/warningRange")
   public double warningRangeAktualisieren(
-          @RequestParam String tripname, @RequestParam double warningRange) {
+      @RequestParam String tripname, @RequestParam double warningRange) {
     if (warningRange < 0) {
       throw new ResponseStatusException(
-              HttpStatus.BAD_REQUEST, "Warning range must not be negative");
+          HttpStatus.BAD_REQUEST, "Warning range must not be negative");
     }
 
     Trip trip = tripRepository.findByName(tripname);
@@ -203,7 +189,7 @@ public class AusgabeController {
   /**
    * Returns the sum of all expenses for a specific trip.
    *
-   * The service returns a negative value if the trip was not found.
+   * <p>The service returns a negative value if the trip was not found.
    */
   @GetMapping("/gesamtausgabenTrip")
   public double gesamtausgabenTrip(@RequestParam String tripname) {
@@ -219,9 +205,8 @@ public class AusgabeController {
   /**
    * Returns the remaining available budget for a trip.
    *
-   * Service return values:
-   * - -1 means the trip was not found
-   * - -2 means no available budget could be calculated; the frontend receives 0 instead
+   * <p>Service return values: - -1 means the trip was not found - -2 means no available budget
+   * could be calculated; the frontend receives 0 instead
    */
   @GetMapping("/verfuegbar")
   public double verfuegbar(@RequestParam String tripname) {
