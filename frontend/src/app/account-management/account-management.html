@@ -1,0 +1,130 @@
+<section class="account-page">
+  @if (mode() === 'login') {
+    <form class="login-panel" (ngSubmit)="login()">
+      <h1>Log in to SEP</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input name="loginUsername" placeholder="User name" [(ngModel)]="username" required />
+      <input name="loginPassword" placeholder="Password" type="password" [(ngModel)]="password" required />
+
+      <button class="primary-action" type="submit">Log in</button>
+      <button class="text-action" type="button" (click)="setMode('forgot')">Forgotten password?</button>
+      <button class="outline-action" type="button" (click)="setMode('register')">Create new account</button>
+    </form>
+  }
+
+  @if (mode() === 'register') {
+    <form class="create-panel" (ngSubmit)="register()">
+      <h1>Create an account</h1>
+      <p>Create an account to use SEP calendar, trips and overview. No email is needed.</p>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <h2>Name</h2>
+      <div class="two-column">
+        <input name="firstName" placeholder="First name" [(ngModel)]="firstName" required />
+        <input name="surname" placeholder="Surname" [(ngModel)]="surname" required />
+      </div>
+
+      <h2>User name</h2>
+      <input name="registerUsername" placeholder="User name" [(ngModel)]="username" required />
+      <p class="field-help">
+        User name must start with a letter and be at least 3 characters. Use only letters, numbers,
+        and underscores.
+      </p>
+
+      <h2>Security question</h2>
+      <label class="security-question">
+        What is your favorite color?
+        <input name="favoriteColor" placeholder="Favorite color" [(ngModel)]="favoriteColor" required />
+      </label>
+
+      <h2>Create password</h2>
+      <input
+        name="registerPassword"
+        placeholder="Password"
+        type="password"
+        [(ngModel)]="password"
+        required
+      />
+      <input
+        name="repeatPassword"
+        placeholder="Repeat password"
+        type="password"
+        [(ngModel)]="repeatPassword"
+        required
+      />
+      <p class="field-help">
+        Password must be at least 9 characters and include a capital letter, a number, and a symbol.
+      </p>
+
+      <button class="primary-action" type="submit">Create account</button>
+      <button class="text-action" type="button" (click)="setMode('login')">Already have an account?</button>
+    </form>
+  }
+
+  @if (mode() === 'forgot') {
+    <form class="login-panel" (ngSubmit)="forgotPassword()">
+      <h1>Forgotten password?</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input name="forgotUsername" placeholder="User name" [(ngModel)]="username" required />
+      <label class="security-question">
+        What is your favorite color?
+        <input name="forgotFavoriteColor" placeholder="Favorite color" [(ngModel)]="favoriteColor" required />
+      </label>
+      <button class="primary-action" type="submit">Continue</button>
+      <button class="text-action" type="button" (click)="setMode('login')">Back to login</button>
+    </form>
+  }
+
+  @if (mode() === 'reset') {
+    <form class="login-panel" (ngSubmit)="resetPassword()">
+      <h1>Reset password</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input name="resetUsername" placeholder="User name" [(ngModel)]="username" required />
+      <input
+        name="newPassword"
+        placeholder="New password"
+        type="password"
+        [(ngModel)]="newPassword"
+        required
+      />
+      <input
+        name="repeatNewPassword"
+        placeholder="Repeat new password"
+        type="password"
+        [(ngModel)]="repeatNewPassword"
+        required
+      />
+      <p class="field-help">
+        Password must be at least 9 characters and include a capital letter, a number, and a symbol.
+      </p>
+      <button class="primary-action" type="submit">Change password</button>
+    </form>
+  }
+</section>

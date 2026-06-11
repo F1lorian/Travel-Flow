@@ -1,11 +1,11 @@
-<header class="app-bar">
-  <a class="nav-toggle" routerLink="/">Calendar</a>
-  <a class="nav-toggle" routerLink="/trips">Trips</a>
-  <a class="nav-toggle" routerLink="/overview">Overview</a>
-</header>
-<div class="content">
-  @if (isCalendar) {
-    <app-calendar></app-calendar>
-  }
+@if (showNavigation) {
+  <header class="app-bar">
+    <a class="nav-toggle" routerLink="/calendar">Calendar</a>
+    <a class="nav-toggle" routerLink="/trips">Trips</a>
+    <a class="nav-toggle" routerLink="/overview">Overview</a>
+    <button class="nav-toggle logout-button" type="button" (click)="logout()">Log out</button>
+  </header>
+}
+<div class="content" [class.no-nav]="!showNavigation">
   <router-outlet />
 </div>
