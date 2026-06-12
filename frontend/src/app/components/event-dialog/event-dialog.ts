@@ -2,6 +2,7 @@ import {Component, inject, Inject} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
+import {EventService} from '../../../event-adding-manual/service/event.service';
 
 @Component({
   selector: 'app-event-dialog',
@@ -20,7 +21,9 @@ export class EventDialog {
   start: string = "";
   end: string = "";
   tripService = inject(TripService);
+  eventService = inject(EventService);
   trips: Trip[] = [];
+  errorMessage: string = "";
 
 
   mode: 'create' | 'edit' | 'show'= 'create';
@@ -46,10 +49,34 @@ export class EventDialog {
    * closes the dialog and gives the calendar the action 'save' as well as all the attributes for the event
    */
   save() {
-    console.log("start end");
-    console.log(this.start, this.end);
-    this.dialogRef.close({action: 'save',title: this.title, kosten: this.kosten, tripId: this.tripId, start:this.start, end: this.end});
+    if (this.mode === 'create') {
+      this.eventService.createManualEvent({
+        name: this.title,
+        kosten: this.kosten ?? 0,
+        tripId: this.tripId,
+        start: this.start,
+        end: this.end,
+      }).subscribe({
+        next: (response) => this.dialogRef.close({ action: 'created', event: response }),
+        error: (err) => this.showError(err)
+      });
+    }
+
+    if (this.mode === 'edit') {
+      this.eventService.editEvent({
+        id: this.data.id,
+        name: this.title,
+        kosten: this.kosten ?? 0,
+        tripId: this.tripId,
+        start: this.start,
+        end: this.end,
+      }).subscribe({
+        next: (response) => this.dialogRef.close({ action: 'saved', event: response }),
+        error: () => this.showError()
+      });
+    }
   }
+
 
   /**
    * closes the dialog without any actions
@@ -62,8 +89,12 @@ export class EventDialog {
    * closes the dialog eith the action 'delete'
    */
   delete() {
-    this.dialogRef.close({ action: 'delete' });
+    this.eventService.deleteEvent(this.data.id).subscribe({
+      next: () => this.dialogRef.close({ action: 'deleted', id: this.data.id }),
+      error: () => this.showError()
+    });
   }
+
 
   /**
    * closes the dialog with the action 'edit'
@@ -92,5 +123,10 @@ export class EventDialog {
       }
     });
   }
+
+  showError(err?: any) {
+    this.errorMessage = err?.error || 'Ein Fehler ist aufgetreten.';
+  }
+
 
 }
