@@ -1,4 +1,4 @@
-import {Component, inject, Input, OnInit} from '@angular/core';
+import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
 import {CalendarOptions, EventInput} from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,6 +9,8 @@ import { AddEventResponse } from '../../../event-adding-manual/models/AddEventRe
 import { EventService} from '../../../event-adding-manual/service/event.service';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from "@fullcalendar/list";
+import {AddEventRequest} from '../../../event-adding-manual/models/AddEventRequest';
+import {EditEventRequest} from '../../../event-adding-manual/models/EditEventRequest';
 import { EventClickArg } from '@fullcalendar/core';
 import { DateClickArg } from '@fullcalendar/interaction';
 import {EditEventResponse} from '../../../event-adding-manual/models/EditEventResponse';
@@ -109,6 +111,8 @@ export class CalendarComponent implements OnInit {
     }
 
     const dialogRef = this.dialog.open(EventDialog, {
+      maxHeight: '90vh',
+      height: 'auto',
       data: {
         mode: 'show',
         id: selectedEvent.id,

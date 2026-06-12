@@ -1,104 +1,158 @@
-<div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
+<h2 mat-dialog-title class="mb-1 text-3xl font-bold tracking-tight text-slate-900">
+  {{ mode === 'create' ? 'Neues Event erstellen' : mode === 'edit' ? 'Event bearbeiten' : data.title }}
+</h2>
 
-  <h2 class="mb-1 text-3xl font-bold tracking-tight text-slate-900">
-    {{ mode === 'create' ? 'Neues Event' : mode === 'edit' ? 'Event bearbeiten' : 'Aktuelles Event:'}}
-  </h2>
-
-  @if (mode === 'show'){
-    <p class="text-base font-semibold text-slate-800">Titel: {{ data.title }}</p>
-  } @else {
-    <label class="mb-2 block text-sm font-semibold text-slate-700" for="title">Titel:</label>
-    <input
-      [(ngModel)]="title"
-      placeholder="Titel eingeben"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
-         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-  }
-
-  @if(mode === 'show'){
-    <p class="text-base font-semibold text-slate-800">Kosten: {{data.kosten}} </p>
-  } @else {
-    <label class="mb-2 block text-sm font-semibold text-slate-700" for="kosten">Kosten</label>
-    <input
-      [(ngModel)]="kosten"
-      placeholder="Kosten eingeben"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
-         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-  }
-
+<mat-dialog-content>
   @if (mode === 'show') {
-    <p class="text-base font-semibold text-slate-800">Trip: {{ tripName }}</p>
+    <div class="border-t border-gray-200 px-6 py-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+            <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
+            Beginn
+          </p>
+          <p class="text-base text-slate-800">{{ start | date:'dd.MM.yyyy, HH:mm' }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+            <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
+            Ende
+          </p>
+          <p class="text-base text-slate-800">{{ end | date:'dd.MM.yyyy, HH:mm' }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+            <mat-icon class="text-sm align-middle mr-1">euro</mat-icon>
+            Kosten
+          </p>
+          <p class="text-base text-slate-800">{{ data.kosten }} €</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-3">
+          <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+            <mat-icon class="text-sm align-middle mr-1">map</mat-icon>
+            Trip
+          </p>
+          <p class="text-base text-slate-800">{{ tripName ?? 'Kein Trip' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-gray-200 px-6 py-4">
+      <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+        <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
+        Teilnehmende Freunde · {{friends.length}}
+      </p>
+      @for (friend of friends; track friend) {
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
+            {{ friend | slice:0:1 }}
+          </div>
+          <p class="text-sm font-semibold text-slate-800">{{ friend }}</p>
+        </div>
+      }
+      @if (friends.length === 0) {
+        <p class="text-sm text-gray-400">Keine Freunde eingeladen</p>
+      }
+    </div>
   } @else {
-    <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip wählen</label>
-    <select
-      [(ngModel)]="tripId"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+    <div class="border-t border-gray-200 px-6 py-4">
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="title">Titel:</label>
+      <input
+        [(ngModel)]="title"
+        placeholder="Titel eingeben"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="kosten">Kosten</label>
+      <input
+        [(ngModel)]="kosten"
+        placeholder="Kosten eingeben"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 placeholder:text-slate-400
+         outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip wählen</label>
+      <select
+        [(ngModel)]="tripId"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
          text-slate-900 outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
-      <option [ngValue]="undefined" disabled>
-        Bitte Trip auswählen
-      </option>
-
-      <option [ngValue]="undefined">
-        Das Event gehört zu keinem Trip
-      </option>
-
-      @for (trip of trips; track trip.id) {
-
-        <option [ngValue]="trip.id">
-          {{ trip.name }}
+        <option [ngValue]="undefined" disabled>
+          Bitte Trip auswählen
         </option>
 
-      }
-    </select>
-  }
+        <option [ngValue]="undefined">
+          Das Event gehört zu keinem Trip
+        </option>
 
-  @if (mode === 'show') {
-    <p class="text-base font-semibold text-slate-800">Beginn: {{data.start}}</p>
-  } @else {
-    <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">Startzeit</label>
-    <input
-      [(ngModel)]="start"
-      type="datetime-local"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+        @for (trip of trips; track trip.id) {
+
+          <option [ngValue]="trip.id">
+            {{ trip.name }}
+          </option>
+
+        }
+      </select>
+    </div>
+    <div class="border-t border-gray-200 px-6 py-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">Startzeit</label>
+          <input
+            [(ngModel)]="start"
+            type="datetime-local"
+            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
          text-slate-900 placeholder:text-slate-400
          outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-  }
-
-  @if (mode === 'show') {
-    <p class="text-base font-semibold text-slate-800">Ende: {{data.end}}</p>
-  } @else {
-    <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">Endzeit</label>
-    <input
-      [(ngModel)]="end"
-      type="datetime-local"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">Endzeit</label>
+          <input
+            [(ngModel)]="end"
+            type="datetime-local"
+            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
          text-slate-900 placeholder:text-slate-400
          outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+        </div>
+      </div>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" [(ngModel)]="allDay">
+        Ganztägig
+      </label>
+    </div>
+    <div class="border-t border-gray-200 px-6 py-4">
+      <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
+        <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
+        Freunde einladen
+      </p>
+      <select
+        [(ngModel)]="friends"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+        <option [ngValue]="undefined" disabled>
+          Freunde auswählen
+        </option>
+<!-- hier die freundesliste auslesen und alle freunde zur auswahl zeigen
+        @for (trip of trips; track trip.id) {
+          <option [ngValue]="trip.id">
+            {{ trip.name }}
+          </option>
+        } -->
+      </select>
+    </div>
   }
+</mat-dialog-content>
 
-  <!--@if(mode === 'create' || mode === 'edit'){
-    <label class="flex items-center gap-2">
-
-      <input
-        type="checkbox"
-        [(ngModel)]="allDay">
-
-      Ganztägig
-
-    </label>
-  } -->
-
-  <div class="flex justify-end gap-2">
-
-    @if(mode ==='create' || mode ==='edit'){
+<mat-dialog-actions align="end">
+  <div class="border-t border-gray-200 px-6 py-4">
+    @if (mode === 'create' || mode === 'edit') {
       <button
         (click)="save()"
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
@@ -119,7 +173,7 @@
       </button>
     }
 
-    @if (mode ==='show'){
+    @if (mode === 'show') {
       <button
         (click)="edit()"
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
@@ -139,4 +193,4 @@
     </button>
 
   </div>
-</div>
+</mat-dialog-actions>

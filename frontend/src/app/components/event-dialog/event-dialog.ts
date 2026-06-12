@@ -1,7 +1,15 @@
 import {Component, inject, OnInit} from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {
+ MatDialog, MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions
+} from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
+import {DatePipe, SlicePipe} from '@angular/common';
+import {MatIcon} from '@angular/material/icon';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 
@@ -19,7 +27,13 @@ interface EventDialogData {
   selector: 'app-event-dialog',
   standalone: true,
   imports: [
-    FormsModule
+    FormsModule,
+    DatePipe,
+    MatIcon,
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    SlicePipe
   ],
   templateUrl: './event-dialog.html',
   styleUrl: './event-dialog.css',
@@ -37,6 +51,8 @@ export class EventDialog implements OnInit {
   eventService = inject(EventService);
   dialog = inject(MatDialog);
   trips: Trip[] = [];
+  friends: string[] = [];
+  allDay: boolean = false;
   errorMessage = "";
 
 
@@ -164,7 +180,6 @@ export class EventDialog implements OnInit {
       error: () => this.showError()
     });
   }
-
 
   /**
    * closes the dialog with the action 'edit'
