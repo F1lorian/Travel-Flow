@@ -1,4 +1,4 @@
-export type CalendarEventImport = {
+export interface CalendarEventImport {
   id: string;
   title: string;
   start: string;

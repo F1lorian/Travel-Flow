@@ -1,4 +1,4 @@
-import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
+import {Component, inject, Input, OnInit} from '@angular/core';
 import {CalendarOptions, EventInput} from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,9 +9,8 @@ import { AddEventResponse } from '../../../event-adding-manual/models/AddEventRe
 import { EventService} from '../../../event-adding-manual/service/event.service';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from "@fullcalendar/list";
-import {AddEventRequest} from '../../../event-adding-manual/models/AddEventRequest';
-import {EditEventRequest} from '../../../event-adding-manual/models/EditEventRequest';
 import { EventClickArg } from '@fullcalendar/core';
+import { DateClickArg } from '@fullcalendar/interaction';
 import {EditEventResponse} from '../../../event-adding-manual/models/EditEventResponse';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
@@ -37,6 +36,7 @@ export class CalendarComponent implements OnInit {
   tripService = inject(TripService);
   calendarEvents: EventInput[] = [];
   router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
@@ -79,9 +79,6 @@ export class CalendarComponent implements OnInit {
     dateClick: this.handleDateClick.bind(this)
   }
 
-  constructor(private dialog: MatDialog, private ngZone: NgZone) {
-  }
-
   ngOnInit(): void {
     this.loadEvents();
     this.loadTrips();
@@ -95,7 +92,7 @@ export class CalendarComponent implements OnInit {
    * @param clickInfo gives the event that is clicked by the user
    */
   handleEventClick(clickInfo: EventClickArg) {
-    let selectedEvent = clickInfo.event;
+    const selectedEvent = clickInfo.event;
     const type = clickInfo.event.extendedProps['type'];
 
     if (type === 'trip') {
@@ -134,7 +131,7 @@ export class CalendarComponent implements OnInit {
    * Handles what happens when a date is clicked in the calendar
    * @param clickInfo is the clicked Date
    */
-  handleDateClick(clickInfo: any) {
+  handleDateClick(clickInfo: DateClickArg) {
     this.createEvent(clickInfo.dateStr);
   }
 

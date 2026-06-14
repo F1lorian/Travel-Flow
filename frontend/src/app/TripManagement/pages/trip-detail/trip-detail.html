@@ -105,8 +105,18 @@
 
   <!-- Delete-trip confirmation modal: lists the events that will be deleted too. -->
   @if (showDeleteConfirm()) {
-    <div class="modal-overlay" (click)="cancelDelete()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div
+      class="modal-overlay"
+      tabindex="0"
+      (click)="cancelDelete()"
+      (keydown.enter)="cancelDelete()"
+    >
+      <div
+        class="modal"
+        tabindex="0"
+        (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+      >
         <h2>Are you sure you want to delete this trip?</h2>
         <p>All related events will be deleted too:</p>
 
@@ -134,8 +144,18 @@
   <!-- Delete/move-event modal. Same overlay, three swappable steps driven by
        deleteStep(): 'choice' -> 'pick-trip' -> 'confirm-move'. -->
   @if (eventToDelete(); as evt) {
-    <div class="modal-overlay" (click)="closeEventModal()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div
+      class="modal-overlay"
+      tabindex="0"
+      (click)="closeEventModal()"
+      (keydown.enter)="closeEventModal()"
+    >
+      <div
+        class="modal"
+        tabindex="0"
+        (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+      >
 
         @if (deleteStep() === 'choice') {
           <h2>Delete event "{{ evt.name }}"</h2>
@@ -160,7 +180,12 @@
           } @else {
             <ul class="trip-picker-list">
               @for (t of filteredOtherTrips(); track t.id) {
-                <li class="trip-picker-item" (click)="selectTargetTrip(t)">
+                <li
+                  class="trip-picker-item"
+                  tabindex="0"
+                  (click)="selectTargetTrip(t)"
+                  (keydown.enter)="selectTargetTrip(t)"
+                >
                   {{ t.name }}
                 </li>
               }

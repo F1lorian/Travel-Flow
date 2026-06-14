@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
+import { Component, inject, OnInit } from '@angular/core';
+import { CategorySummaryItem, Expense, ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -7,58 +7,55 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'trip-spending-overview',
+  selector: 'app-trip-spending-overview',
   standalone: true,
   imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule, FormsModule],
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
-export class TripSpendingOverviewComponent {
+export class TripSpendingOverviewComponent implements OnInit {
+  private readonly expenseService = inject(ExpenseService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly tripService = inject(TripService);
+  private readonly router = inject(Router);
 
   // Currently selected trip. It is loaded based on the route parameter.
   trip: Trip | null = null;
-  tripname: string = '';
+  tripname = '';
 
   // Budget-related values displayed at the top of the page.
-  budget: number = 0;
-  summedExpenses: number = 0;
-  available: number = 0;
+  budget = 0;
+  summedExpenses = 0;
+  available = 0;
 
   // Custom warning range.
   // Interpreted as remaining-budget threshold, e.g. warn when <= 100 € remain.
-  warningRange: number = 0;
+  warningRange = 0;
 
   // State for the budget editing dialog.
-  showBudgetDialog: boolean = false;
-  budgetInput: number = 0;
-  warningRangeInput: number = 0;
-  budgetErrorMessage: string = '';
-  budgetSuccessMessage: string = '';
+  showBudgetDialog = false;
+  budgetInput = 0;
+  warningRangeInput = 0;
+  budgetErrorMessage = '';
+  budgetSuccessMessage = '';
 
   // Expense list and display state.
-  expenses: any[] = [];
-  showAllExpenses: boolean = false;
+  expenses: Expense[] = [];
+  showAllExpenses = false;
 
   // Data used for category table and ApexCharts pie chart.
   categorySummary: CategorySummaryItem[] = [];
   chartseries: number[] = [];
   chartlabels: string[] = [];
 
-  errorMessage: string = '';
+  errorMessage = '';
 
   // Available trips for switching between trip-specific overviews.
   trips: Trip[] = [];
 
   // Category filter for the expense table.
   categories: string[] = [];
-  selectedCategory: string = 'ALL';
-
-  constructor(
-    private expenseService: ExpenseService,
-    private route: ActivatedRoute,
-    private tripService: TripService,
-    private router: Router
-  ) {}
+  selectedCategory = 'ALL';
 
   /**
    * Initializes the component.
