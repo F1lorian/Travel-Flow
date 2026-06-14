@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ExpenseService } from '../../services/expense.service';
@@ -13,6 +13,8 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./cashbook.component.css']
 })
 export class CashbookComponent implements OnInit {
+  private readonly expenseService = inject(ExpenseService);
+  private readonly tripService = inject(TripService);
 
   // Available categories for expenses. The values must match the backend enum/category names.
   categories = ['ESSEN', 'TRANSPORT', 'HOTEL', 'FREIZEIT', 'SONSTIGES'];
@@ -33,11 +35,6 @@ export class CashbookComponent implements OnInit {
   errorMessage = signal('');
   successMessage = signal('');
   warningMessage = signal('');
-
-  constructor(
-    private expenseService: ExpenseService,
-    private tripService: TripService
-  ) {}
 
   /**
    * Loads all existing trips when the component is initialized.

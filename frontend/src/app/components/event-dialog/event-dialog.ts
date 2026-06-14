@@ -1,8 +1,18 @@
-import {Component, inject, Inject} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {EventService} from '../../../event-adding-manual/service/event.service';
+
+interface EventDialogData {
+  mode?: 'create' | 'edit' | 'show';
+  id?: string;
+  title?: string;
+  kosten?: number;
+  tripId?: number;
+  start?: string;
+  end?: string;
+}
 
 @Component({
   selector: 'app-event-dialog',
@@ -13,32 +23,34 @@ import {EventService} from '../../../event-adding-manual/service/event.service';
   templateUrl: './event-dialog.html',
   styleUrl: './event-dialog.css',
 })
-export class EventDialog {
-  title: string = "";
+export class EventDialog implements OnInit {
+  private readonly dialogRef = inject(MatDialogRef<EventDialog>);
+  readonly data = inject<EventDialogData>(MAT_DIALOG_DATA);
+  title = "";
   kosten: number | undefined;
   tripId: number | undefined;
   tripName = '';
-  start: string = "";
-  end: string = "";
+  start = "";
+  end = "";
   tripService = inject(TripService);
   eventService = inject(EventService);
   trips: Trip[] = [];
-  errorMessage: string = "";
+  errorMessage = "";
 
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
-  constructor(private dialogRef: MatDialogRef<EventDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
-    if(data) {
-      this.mode = data.mode || 'create';
-      this.title = data.title || '';
-      this.kosten = data.kosten || undefined;
-      this.tripId = data.tripId || undefined;
-      this.start = data.start || "";
-      this.end = data.end || "";
+  constructor() {
+    if(this.data) {
+      this.mode = this.data.mode || 'create';
+      this.title = this.data.title || '';
+      this.kosten = this.data.kosten || undefined;
+      this.tripId = this.data.tripId || undefined;
+      this.start = this.data.start || "";
+      this.end = this.data.end || "";
     }
     console.log("data dialog");
-    console.log(data);
+    console.log(this.data);
   }
 
   ngOnInit() {
@@ -64,7 +76,7 @@ export class EventDialog {
 
     if (this.mode === 'edit') {
       this.eventService.editEvent({
-        id: this.data.id,
+        id: this.data.id!,
         name: this.title,
         kosten: this.kosten ?? 0,
         tripId: this.tripId,
@@ -89,7 +101,7 @@ export class EventDialog {
    * closes the dialog eith the action 'delete'
    */
   delete() {
-    this.eventService.deleteEvent(this.data.id).subscribe({
+    this.eventService.deleteEvent(this.data.id!).subscribe({
       next: () => this.dialogRef.close({ action: 'deleted', id: this.data.id }),
       error: () => this.showError()
     });
@@ -124,7 +136,7 @@ export class EventDialog {
     });
   }
 
-  showError(err?: any) {
+  showError(err?: { error?: string }) {
     this.errorMessage = err?.error || 'Ein Fehler ist aufgetreten.';
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
@@ -26,11 +26,10 @@ export interface CategorySummaryItem {
   providedIn: 'root'
 })
 export class ExpenseService {
+  private readonly http = inject(HttpClient);
   // Base path for all expense- and budget-related backend endpoints.
   // In development, this path is forwarded to the backend via the Angular proxy.
   private apiUrl = '/api';
-
-  constructor(private http: HttpClient) { }
 
   /**
    * Creates a new expense for a selected trip.

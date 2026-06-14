@@ -1,9 +1,13 @@
-import {Component, inject, Inject} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
+
+interface EventTransferDialogData {
+  mode: 'import' | 'export';
+}
 
 @Component({
   selector: 'app-event-transfer-dialog',
@@ -11,7 +15,9 @@ import {MessageDialog} from '../message-dialog/message-dialog';
   templateUrl: './event-transfer-dialog.html',
   styleUrl: './event-transfer-dialog.css',
 })
-export class EventTransferDialog {
+export class EventTransferDialog implements OnInit {
+  private readonly dialogRef = inject(MatDialogRef<EventTransferDialog>);
+  readonly data = inject<EventTransferDialogData>(MAT_DIALOG_DATA);
   mode: 'import' | 'export' = 'import';
   file?: File;
   fileName = '';
@@ -21,9 +27,9 @@ export class EventTransferDialog {
   trips: Trip[] = [];
   dialog = inject(MatDialog);
 
-  constructor(private dialogRef: MatDialogRef<EventTransferDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
-    if (data) {
-      this.mode = data.mode;
+  constructor() {
+    if (this.data) {
+      this.mode = this.data.mode;
 
     }
   }
