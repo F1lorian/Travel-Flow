@@ -13,11 +13,12 @@ export class App {
   protected readonly title = signal('sep');
 
   get showNavigation(): boolean {
-    return this.router.url !== '/account' && Boolean(localStorage.getItem('sepUser'));
+    return this.router.url !== '/account' && Boolean(localStorage.getItem('sepToken'));
   }
 
   logout(): void {
     localStorage.removeItem('sepUser');
+    localStorage.removeItem('sepToken');
     this.router.navigateByUrl('/account');
   }
 }

@@ -1,0 +1,447 @@
+package com.sep.sep_backend.accountmanagement;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@ExtendWith(MockitoExtension.class)
+class AccountManagementServiceTest {
+
+  @Mock private UserAccountRepository userAccountRepository;
+  @Mock private JavaMailSender mailSender;
+  @Mock private JwtService jwtService;
+
+  private AccountManagementService service;
+
+  private static final BCryptPasswordEncoder ENCODER = new BCryptPasswordEncoder();
+
+  @BeforeEach
+  void setUp() {
+    service =
+        new AccountManagementService(
+            userAccountRepository, mailSender, jwtService, "noreply@example.com");
+  }
+
+  private UserAccount verifiedUser(String username, String email, String password, String color) {
+    UserAccount user =
+        new UserAccount(username, email, ENCODER.encode(password), ENCODER.encode(color));
+    user.setEmailVerified(true);
+    return user;
+  }
+
+  // --- register ---
+
+  @Test
+  void registerErstelltBenutzerkontoMitVerifikationscode() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max",
+            "Mustermann",
+            "maxmuster",
+            "max@example.com",
+            "Password1!",
+            "Password1!",
+            "blue");
+    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(false);
+    when(userAccountRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(false);
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+
+    AuthResponseDTO result = service.register(request);
+
+    assertThat(result.username()).isEqualTo("maxmuster");
+    ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+    verify(userAccountRepository).save(captor.capture());
+    assertThat(captor.getValue().getVerificationCode()).isNotNull();
+    assertThat(captor.getValue().isEmailVerified()).isFalse();
+  }
+
+  @Test
+  void registerWirftExceptionBeiLeeremBenutzernamen() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max", "Mustermann", "", "max@example.com", "Password1!", "Password1!", "blue");
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Username is required");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionBeiUngueltigemBenutzernamen() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max", "Mustermann", "1invalid", "max@example.com", "Password1!", "Password1!", "blue");
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Username must start with a letter");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionBeiUngueltigerEmail() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max", "Mustermann", "maxmuster", "not-an-email", "Password1!", "Password1!", "blue");
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email is invalid");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionBeiZuSchwachesPasswort() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max", "Mustermann", "maxmuster", "max@example.com", "password", "password", "blue");
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Password must be at least 9 characters");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionWennPasswoerterNichtUebereinstimmen() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max",
+            "Mustermann",
+            "maxmuster",
+            "max@example.com",
+            "Password1!",
+            "Different1!",
+            "blue");
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Passwords do not match");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionWennBenutzernameSchonVergeben() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max",
+            "Mustermann",
+            "maxmuster",
+            "max@example.com",
+            "Password1!",
+            "Password1!",
+            "blue");
+    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(true);
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Username is already used");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  @Test
+  void registerWirftExceptionWennEmailSchonVergeben() {
+    RegisterRequestDTO request =
+        new RegisterRequestDTO(
+            "Max",
+            "Mustermann",
+            "maxmuster",
+            "max@example.com",
+            "Password1!",
+            "Password1!",
+            "blue");
+    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(false);
+    when(userAccountRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(true);
+
+    assertThatThrownBy(() -> service.register(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email is already used");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  // --- login ---
+
+  @Test
+  void loginGibtTokenZurueckBeiErfolg() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(jwtService.createToken(user)).thenReturn("jwt-token");
+
+    AuthResponseDTO result = service.login(new LoginRequestDTO("maxmuster", "Password1!"));
+
+    assertThat(result.token()).isEqualTo("jwt-token");
+    assertThat(result.username()).isEqualTo("maxmuster");
+  }
+
+  @Test
+  void loginWirftExceptionBeiFalschenZugangsdaten() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(() -> service.login(new LoginRequestDTO("maxmuster", "WrongPass1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Wrong username or password");
+  }
+
+  @Test
+  void loginWirftExceptionWennEmailNichtVerifiziert() {
+    UserAccount user =
+        new UserAccount(
+            "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
+    user.setEmailVerified(false);
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(() -> service.login(new LoginRequestDTO("maxmuster", "Password1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Please verify your email before logging in");
+  }
+
+  @Test
+  void loginWirftExceptionWennBenutzerNichtGefunden() {
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.login(new LoginRequestDTO("unknown", "Password1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("No account found for this username or email");
+  }
+
+  // --- verifyEmail ---
+
+  @Test
+  void verifyEmailVerifiziertEmailErfolgreich() {
+    UserAccount user =
+        new UserAccount(
+            "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
+    user.setEmailVerified(false);
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
+    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
+        .thenReturn(Optional.of(user));
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+
+    MessageResponseDTO result =
+        service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "123456"));
+
+    assertThat(result.message()).contains("verified");
+    assertThat(user.isEmailVerified()).isTrue();
+    assertThat(user.getVerificationCode()).isNull();
+  }
+
+  @Test
+  void verifyEmailWirftExceptionBeiAbgelaufenemCode() {
+    UserAccount user =
+        new UserAccount(
+            "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().minusMinutes(1));
+    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () -> service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "123456")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Verification code expired");
+  }
+
+  @Test
+  void verifyEmailWirftExceptionBeiFalschenCode() {
+    UserAccount user =
+        new UserAccount(
+            "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
+    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () -> service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "999999")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Verification code is invalid");
+  }
+
+  // --- forgotPassword ---
+
+  @Test
+  void forgotPasswordBestaetigtRichtigeSicherheitsantwort() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    MessageResponseDTO result =
+        service.forgotPassword(new ForgotPasswordRequestDTO("maxmuster", "blue"));
+
+    assertThat(result.message()).contains("Security answer verified");
+  }
+
+  @Test
+  void forgotPasswordWirftExceptionBeiFalscherSicherheitsantwort() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () -> service.forgotPassword(new ForgotPasswordRequestDTO("maxmuster", "red")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Security answer is wrong");
+  }
+
+  // --- sendResetCode ---
+
+  @Test
+  void sendResetCodeSpeichertCodeUndGibtNachrichtZurueck() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+
+    MessageResponseDTO result = service.sendResetCode(new SendResetCodeRequestDTO("maxmuster"));
+
+    ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
+    verify(userAccountRepository).save(captor.capture());
+    assertThat(captor.getValue().getVerificationCode()).isNotNull();
+    assertThat(captor.getValue().getVerificationCodeExpiresAt()).isAfter(LocalDateTime.now());
+    assertThat(result.message()).isNotBlank();
+  }
+
+  @Test
+  void sendResetCodeWirftExceptionFuerUnbekanntenBenutzer() {
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.sendResetCode(new SendResetCodeRequestDTO("unknown")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("No account found for this username or email");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+
+  // --- resetPasswordWithCode ---
+
+  @Test
+  void resetPasswordWithCodeSetzNeuesPasswortErfolgreich() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+
+    MessageResponseDTO result =
+        service.resetPasswordWithCode(
+            new ResetPasswordWithCodeRequestDTO("maxmuster", "123456", "NewPass1!", "NewPass1!"));
+
+    assertThat(result.message()).contains("Password changed");
+    assertThat(ENCODER.matches("NewPass1!", user.getPasswordHash())).isTrue();
+    assertThat(user.getVerificationCode()).isNull();
+  }
+
+  @Test
+  void resetPasswordWithCodeWirftExceptionBeiAbgelaufenemCode() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().minusMinutes(1));
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () ->
+                service.resetPasswordWithCode(
+                    new ResetPasswordWithCodeRequestDTO(
+                        "maxmuster", "123456", "NewPass1!", "NewPass1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Reset code has expired");
+  }
+
+  @Test
+  void resetPasswordWithCodeWirftExceptionBeiFalschenCode() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () ->
+                service.resetPasswordWithCode(
+                    new ResetPasswordWithCodeRequestDTO(
+                        "maxmuster", "999999", "NewPass1!", "NewPass1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Reset code is invalid");
+  }
+
+  @Test
+  void resetPasswordWithCodeWirftExceptionWennPasswoerterNichtUebereinstimmen() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    user.setVerificationCode("123456");
+    user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () ->
+                service.resetPasswordWithCode(
+                    new ResetPasswordWithCodeRequestDTO(
+                        "maxmuster", "123456", "NewPass1!", "Different1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Passwords do not match");
+  }
+
+  // --- resetPassword (via security answer) ---
+
+  @Test
+  void resetPasswordSetzNeuesPasswortErfolgreich() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+
+    MessageResponseDTO result =
+        service.resetPassword(
+            new ResetPasswordRequestDTO("maxmuster", "blue", "NewPass1!", "NewPass1!"));
+
+    assertThat(result.message()).contains("Password changed");
+    assertThat(ENCODER.matches("NewPass1!", user.getPasswordHash())).isTrue();
+  }
+
+  @Test
+  void resetPasswordWirftExceptionBeiFalscherSicherheitsantwort() {
+    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+
+    assertThatThrownBy(
+            () ->
+                service.resetPassword(
+                    new ResetPasswordRequestDTO("maxmuster", "red", "NewPass1!", "NewPass1!")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Security answer is wrong");
+
+    verify(userAccountRepository, never()).save(any());
+  }
+}

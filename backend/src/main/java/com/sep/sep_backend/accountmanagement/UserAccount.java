@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
     name = "user_accounts",
-    uniqueConstraints = {@UniqueConstraint(columnNames = "username")})
+    uniqueConstraints = {
+      @UniqueConstraint(columnNames = "username"),
+      @UniqueConstraint(columnNames = "email")
+    })
 public class UserAccount {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,7 +18,7 @@ public class UserAccount {
   @Column(nullable = false, unique = true)
   private String username;
 
-  @Column(unique = true)
+  @Column(nullable = false, unique = true)
   private String email;
 
   @Column(nullable = false)
@@ -25,15 +28,17 @@ public class UserAccount {
   private String securityAnswerHash;
 
   @Column(nullable = false)
-  private boolean emailVerified = true;
+  private boolean emailVerified = false;
 
   private String verificationCode;
   private LocalDateTime verificationCodeExpiresAt;
+
   protected UserAccount() {}
 
-  public UserAccount(String username, String passwordHash, String securityAnswerHash) {
+  public UserAccount(
+      String username, String email, String passwordHash, String securityAnswerHash) {
     this.username = username;
-    this.email = username.toLowerCase() + "@sep.local";
+    this.email = email;
     this.passwordHash = passwordHash;
     this.securityAnswerHash = securityAnswerHash;
   }
@@ -74,4 +79,27 @@ public class UserAccount {
     this.securityAnswerHash = securityAnswerHash;
   }
 
+  public boolean isEmailVerified() {
+    return emailVerified;
+  }
+
+  public void setEmailVerified(boolean emailVerified) {
+    this.emailVerified = emailVerified;
+  }
+
+  public String getVerificationCode() {
+    return verificationCode;
+  }
+
+  public void setVerificationCode(String verificationCode) {
+    this.verificationCode = verificationCode;
+  }
+
+  public LocalDateTime getVerificationCodeExpiresAt() {
+    return verificationCodeExpiresAt;
+  }
+
+  public void setVerificationCodeExpiresAt(LocalDateTime verificationCodeExpiresAt) {
+    this.verificationCodeExpiresAt = verificationCodeExpiresAt;
+  }
 }

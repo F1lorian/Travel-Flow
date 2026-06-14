@@ -15,7 +15,8 @@ public class AccountManagementController {
 
   @PostMapping("/register")
   public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(accountManagementService.register(request));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(accountManagementService.register(request));
   }
 
   @PostMapping("/login")
@@ -23,9 +24,25 @@ public class AccountManagementController {
     return accountManagementService.login(request);
   }
 
+  @PostMapping("/verify-email")
+  public MessageResponseDTO verifyEmail(@RequestBody VerifyEmailRequestDTO request) {
+    return accountManagementService.verifyEmail(request);
+  }
+
   @PostMapping("/forgot-password")
   public MessageResponseDTO forgotPassword(@RequestBody ForgotPasswordRequestDTO request) {
     return accountManagementService.forgotPassword(request);
+  }
+
+  @PostMapping("/send-reset-code")
+  public MessageResponseDTO sendResetCode(@RequestBody SendResetCodeRequestDTO request) {
+    return accountManagementService.sendResetCode(request);
+  }
+
+  @PostMapping("/reset-password-with-code")
+  public MessageResponseDTO resetPasswordWithCode(
+      @RequestBody ResetPasswordWithCodeRequestDTO request) {
+    return accountManagementService.resetPasswordWithCode(request);
   }
 
   @PostMapping("/reset-password")

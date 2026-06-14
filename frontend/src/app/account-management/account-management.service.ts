@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 export interface AuthResponse {
   message: string;
   username: string;
+  token?: string;
 }
 
 export interface MessageResponse {
@@ -20,6 +21,7 @@ export class AccountManagementService {
     firstName: string;
     surname: string;
     username: string;
+    email: string;
     password: string;
     repeatPassword: string;
     favoriteColor: string;
@@ -29,6 +31,10 @@ export class AccountManagementService {
 
   login(username: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { username, password });
+  }
+
+  verifyEmail(email: string, code: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/verify-email`, { email, code });
   }
 
   forgotPassword(username: string, favoriteColor: string): Observable<MessageResponse> {
@@ -47,6 +53,24 @@ export class AccountManagementService {
     return this.http.post<MessageResponse>(`${this.apiUrl}/reset-password`, {
       username,
       favoriteColor,
+      newPassword,
+      repeatNewPassword
+    });
+  }
+
+  sendResetCode(username: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/send-reset-code`, { username });
+  }
+
+  resetPasswordWithCode(
+    username: string,
+    code: string,
+    newPassword: string,
+    repeatNewPassword: string
+  ): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/reset-password-with-code`, {
+      username,
+      code,
       newPassword,
       repeatNewPassword
     });

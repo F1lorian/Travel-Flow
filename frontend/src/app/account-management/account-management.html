@@ -10,7 +10,7 @@
         <p class="message error">{{ error() }}</p>
       }
 
-      <input name="loginUsername" placeholder="User name" [(ngModel)]="username" required />
+      <input name="loginUsername" placeholder="User name or email" [(ngModel)]="username" required />
       <input name="loginPassword" placeholder="Password" type="password" [(ngModel)]="password" required />
 
       <button class="primary-action" type="submit">Log in</button>
@@ -22,7 +22,7 @@
   @if (mode() === 'register') {
     <form class="create-panel" (ngSubmit)="register()">
       <h1>Create an account</h1>
-      <p>Create an account to use SEP calendar, trips and overview. No email is needed.</p>
+      <p>Create an account to use SEP calendar, trips and overview.</p>
 
       @if (message()) {
         <p class="message success">{{ message() }}</p>
@@ -43,6 +43,9 @@
         User name must start with a letter and be at least 3 characters. Use only letters, numbers,
         and underscores.
       </p>
+
+      <h2>Email</h2>
+      <input name="registerEmail" placeholder="Email" type="email" [(ngModel)]="email" required />
 
       <h2>Security question</h2>
       <label class="security-question">
@@ -74,6 +77,34 @@
     </form>
   }
 
+  @if (mode() === 'verify') {
+    <form class="login-panel" (ngSubmit)="verifyEmail()">
+      <h1>Verify email</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <p class="field-help">
+        A verification code was sent to your email. If you do not see it, please check your spam .
+      </p>
+
+      <input name="verifyEmail" placeholder="Email" type="email" [(ngModel)]="email" required />
+      <input
+        name="verificationCode"
+        placeholder="Verification code"
+        [(ngModel)]="verificationCode"
+        required
+      />
+
+      <button class="primary-action" type="submit">Verify email</button>
+      <button class="text-action" type="button" (click)="setMode('login')">Back to login</button>
+    </form>
+  }
+
   @if (mode() === 'forgot') {
     <form class="login-panel" (ngSubmit)="forgotPassword()">
       <h1>Forgotten password?</h1>
@@ -85,13 +116,83 @@
         <p class="message error">{{ error() }}</p>
       }
 
-      <input name="forgotUsername" placeholder="User name" [(ngModel)]="username" required />
+      <input name="forgotUsername" placeholder="User name or email" [(ngModel)]="username" required />
       <label class="security-question">
         What is your favorite color?
         <input name="forgotFavoriteColor" placeholder="Favorite color" [(ngModel)]="favoriteColor" required />
       </label>
       <button class="primary-action" type="submit">Continue</button>
+      <button class="text-action" type="button" (click)="setMode('forgot-email')">Forgot security answer? Verify via email</button>
       <button class="text-action" type="button" (click)="setMode('login')">Back to login</button>
+    </form>
+  }
+
+  @if (mode() === 'forgot-email') {
+    <form class="login-panel" (ngSubmit)="sendResetCode()">
+      <h1>Verify account</h1>
+      <p>Enter your username or email and we will send a reset code to your registered email address.</p>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input name="resetEmailUsername" placeholder="User name or email" [(ngModel)]="username" required />
+
+      <button class="primary-action" type="submit">Send reset code</button>
+      <button class="text-action" type="button" (click)="setMode('forgot')">Back</button>
+    </form>
+  }
+
+  @if (mode() === 'forgot-code') {
+    <form class="login-panel" (ngSubmit)="setMode('reset-email')">
+      <h1>Enter reset code</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input name="resetCode" placeholder="Reset code" [(ngModel)]="resetCode" required />
+
+      <button class="primary-action" type="submit">Continue</button>
+      <button class="text-action" type="button" (click)="setMode('forgot-email')">Resend code</button>
+    </form>
+  }
+
+  @if (mode() === 'reset-email') {
+    <form class="login-panel" (ngSubmit)="resetPasswordWithCode()">
+      <h1>Reset password</h1>
+
+      @if (message()) {
+        <p class="message success">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="message error">{{ error() }}</p>
+      }
+
+      <input
+        name="newPasswordEmail"
+        placeholder="New password"
+        type="password"
+        [(ngModel)]="newPassword"
+        required
+      />
+      <input
+        name="repeatNewPasswordEmail"
+        placeholder="Repeat new password"
+        type="password"
+        [(ngModel)]="repeatNewPassword"
+        required
+      />
+      <p class="field-help">
+        Password must be at least 9 characters and include a capital letter, a number, and a symbol.
+      </p>
+      <button class="primary-action" type="submit">Change password</button>
     </form>
   }
 
@@ -106,7 +207,7 @@
         <p class="message error">{{ error() }}</p>
       }
 
-      <input name="resetUsername" placeholder="User name" [(ngModel)]="username" required />
+      <input name="resetUsername" placeholder="User name or email" [(ngModel)]="username" required />
       <input
         name="newPassword"
         placeholder="New password"
