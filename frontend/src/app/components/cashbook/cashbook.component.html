@@ -1,19 +1,19 @@
 <!-- Cashbook page for adding a new expense -->
 <div class="page-shell">
-  <a class="back-link" routerLink="/overview">Zurück zur Übersicht</a>
+  <a class="back-link" routerLink="/overview">Back to overview</a>
 
   <!-- Expense input form -->
   <section class="dialog-card">
-    <h2>Ausgabe hinzufügen</h2>
+    <h2>Add expense</h2>
 
     <label class="field" for="betrag">
-      <span>Betrag (€)</span>
+      <span>Amount (€)</span>
       <input
         id="betrag"
         type="number"
         [ngModel]="amount()"
         (ngModelChange)="amount.set($event)"
-        placeholder="Betrag eingeben"
+        placeholder="Enter amount"
       />
     </label>
 
@@ -25,7 +25,7 @@
         (ngModelChange)="tripName.set($event)"
         [disabled]="loadingTrips() || trips().length === 0"
       >
-        <option value="">Trip wählen</option>
+        <option value="">Select trip</option>
 
         @for (trip of trips(); track trip.id) {
           <option [value]="trip.name">
@@ -36,15 +36,15 @@
     </label>
 
     @if (loadingTrips()) {
-      <p class="message muted">Trips werden geladen...</p>
+      <p class="message muted">Loading trips...</p>
     }
 
     @if (!loadingTrips() && trips().length === 0) {
-      <p class="message muted">Es sind noch keine Trips vorhanden.</p>
+      <p class="message muted">No trips available yet.</p>
     }
 
     <label class="field" for="datum">
-      <span>Datum</span>
+      <span>Date</span>
       <input
         id="datum"
         type="date"
@@ -54,17 +54,17 @@
     </label>
 
     <label class="field" for="kategorie">
-      <span>Kategorie</span>
+      <span>Category</span>
       <select
         id="kategorie"
         [ngModel]="category()"
         (ngModelChange)="category.set($event)"
       >
-        <option value="">Kategorie wählen</option>
+        <option value="">Select category</option>
 
         @for (cat of categories; track cat) {
           <option [value]="cat">
-            {{ cat }}
+            {{ getCategoryLabel(cat) }}
           </option>
         }
       </select>
@@ -84,7 +84,7 @@
 
     <!-- Form actions -->
     <div class="dialog-actions">
-      <a class="secondary-button" routerLink="/overview">Abbrechen</a>
+      <a class="secondary-button" routerLink="/overview">Cancel</a>
 
       <button
         class="primary-button"
@@ -92,7 +92,7 @@
         (click)="addExpense()"
         [disabled]="loadingTrips() || trips().length === 0"
       >
-        Hinzufügen
+        Add
       </button>
     </div>
   </section>

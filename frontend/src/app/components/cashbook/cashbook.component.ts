@@ -19,6 +19,16 @@ export class CashbookComponent implements OnInit {
   // Available categories for expenses. The values must match the backend enum/category names.
   categories = ['ESSEN', 'TRANSPORT', 'HOTEL', 'FREIZEIT', 'SONSTIGES'];
 
+  // English labels for displaying backend category values in the UI.
+  // The stored values remain unchanged, only the visible label is translated.
+  categoryLabels: Record<string, string> = {
+    ESSEN: 'FOOD',
+    TRANSPORT: 'TRANSPORT',
+    HOTEL: 'HOTEL',
+    FREIZEIT: 'LEISURE',
+    SONSTIGES: 'OTHER'
+  };
+
   // Form state for creating a new expense.
   // Signals are used so the template can reactively access and update the values.
   amount = signal(0);
@@ -58,11 +68,18 @@ export class CashbookComponent implements OnInit {
         this.loadingTrips.set(false);
       },
       error: (error) => {
-        console.error('Fehler beim Laden der Trips:', error);
+        console.error('Error while loading trips:', error);
         this.loadingTrips.set(false);
-        this.errorMessage.set('Trips konnten nicht geladen werden.');
+        this.errorMessage.set('Trips could not be loaded.');
       }
     });
+  }
+
+  /**
+   * Returns the English display label for a backend category value.
+   */
+  getCategoryLabel(category: string): string {
+    return this.categoryLabels[category] ?? category;
   }
 
   /**
@@ -85,28 +102,28 @@ export class CashbookComponent implements OnInit {
 
     // Expenses with negative values are not allowed.
     if (amountValue < 0) {
-      this.errorMessage.set('Negative Ausgaben können nicht hinzugefügt werden.');
+      this.errorMessage.set('Negative expenses cannot be added.');
       return;
     }
 
     // Reject empty, zero or invalid values.
     if (!amountValue) {
-      this.errorMessage.set('Bitte gib einen gültigen Betrag ein.');
+      this.errorMessage.set('Please enter a valid amount.');
       return;
     }
 
     if (!selectedTrip) {
-      this.errorMessage.set('Bitte wähle einen Trip aus.');
+      this.errorMessage.set('Please select a trip.');
       return;
     }
 
     if (!this.date()) {
-      this.errorMessage.set('Bitte wähle ein Datum aus.');
+      this.errorMessage.set('Please select a date.');
       return;
     }
 
     if (!this.category()) {
-      this.errorMessage.set('Bitte wähle eine Kategorie aus.');
+      this.errorMessage.set('Please select a category.');
       return;
     }
 
@@ -135,15 +152,15 @@ export class CashbookComponent implements OnInit {
           const exceededBy = amountValue - availableValue;
 
           const shouldStillAdd = window.confirm(
-            `Achtung: Für diesen Trip sind nur noch ${availableValue.toFixed(2)} € verfügbar.\n` +
-            `Diese Ausgabe beträgt ${amountValue.toFixed(2)} €.\n\n` +
-            `Das Budget wird um ${exceededBy.toFixed(2)} € überschritten.\n\n` +
-            `Ausgabe trotzdem hinzufügen?`
+            `Warning: This trip only has ${availableValue.toFixed(2)} € available.\n` +
+            `This expense is ${amountValue.toFixed(2)} €.\n\n` +
+            `The budget will be exceeded by ${exceededBy.toFixed(2)} €.\n\n` +
+            `Add expense anyway?`
           );
 
           if (!shouldStillAdd) {
             this.warningMessage.set(
-              'Ausgabe wurde nicht hinzugefügt, weil das verfügbare Budget nicht ausreicht.'
+              'Expense was not added because the available budget is not sufficient.'
             );
             return;
           }
@@ -161,14 +178,14 @@ export class CashbookComponent implements OnInit {
          */
         if (warningRangeValue > 0 && remainingAfterExpense <= warningRangeValue) {
           const shouldStillAdd = window.confirm(
-            `Achtung: Nach dieser Ausgabe bleiben nur noch ${remainingAfterExpense.toFixed(2)} € verfügbar.\n` +
-            `Das liegt innerhalb deines Warnbereichs von ${warningRangeValue.toFixed(2)} €.\n\n` +
-            `Ausgabe trotzdem hinzufügen?`
+            `Warning: After this expense, only ${remainingAfterExpense.toFixed(2)} € will remain.\n` +
+            `This is within your warning range of ${warningRangeValue.toFixed(2)} €.\n\n` +
+            `Add expense anyway?`
           );
 
           if (!shouldStillAdd) {
             this.warningMessage.set(
-              'Ausgabe wurde nicht hinzugefügt, weil sie innerhalb des Warnbereichs liegt.'
+              'Expense was not added because it falls within the warning range.'
             );
             return;
           }
@@ -178,8 +195,8 @@ export class CashbookComponent implements OnInit {
         this.saveExpense();
       },
       error: (error) => {
-        console.error('Fehler beim Prüfen des verfügbaren Budgets/Warnbereichs:', error);
-        this.errorMessage.set('Budget und Warnbereich konnten nicht geprüft werden.');
+        console.error('Error while checking available budget/warning range:', error);
+        this.errorMessage.set('Budget and warning range could not be checked.');
       }
     });
   }
@@ -206,17 +223,17 @@ export class CashbookComponent implements OnInit {
 
         this.errorMessage.set('');
         this.warningMessage.set('');
-        this.successMessage.set('Ausgabe wurde hinzugefuegt.');
+        this.successMessage.set('Expense has been added.');
       },
       error: (error) => {
-        console.error('Fehler beim Speichern der Ausgabe:', error);
+        console.error('Error while saving the expense:', error);
         this.successMessage.set('');
         this.warningMessage.set('');
 
         if (error.status === 404) {
-          this.errorMessage.set('Trip wurde nicht gefunden. Bitte pruefe den Tripnamen.');
+          this.errorMessage.set('Trip was not found. Please check the trip name.');
         } else {
-          this.errorMessage.set('Ausgabe konnte nicht gespeichert werden.');
+          this.errorMessage.set('Expense could not be saved.');
         }
       }
     });

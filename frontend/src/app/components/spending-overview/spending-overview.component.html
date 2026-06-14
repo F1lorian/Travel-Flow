@@ -6,18 +6,16 @@
 
     <div class="header-actions">
       <label class="field">
-        <span>Filtern</span>
+        <span>Filter</span>
         <select id="trip-auswaehlen" (change)="openTripOverview($event)">
-          <option value="">Nach Trip</option>
-          @for (trip of trips; track trip.id) {
-            <option [value]="trip.id">
-              {{ trip.name }}
-            </option>
-          }
+          <option value="">By trip</option>
+          <option *ngFor="let trip of trips" [value]="trip.id">
+            {{ trip.name }}
+          </option>
         </select>
       </label>
 
-      <a class="primary-button" routerLink="/cashbook">Ausgabe hinzufügen</a>
+      <a class="primary-button" routerLink="/cashbook">Add expense</a>
     </div>
   </div>
 
@@ -33,19 +31,18 @@
     </label>
 
     <label class="field">
-      <span>Bis</span>
+      <span>To</span>
       <input
         type="date"
         [(ngModel)]="endDate"
         (change)="loadExpenses()"
       />
     </label>
-
   </section>
 
   <!-- Category chart and summary table -->
   <section class="content-section">
-    <h2>Übersicht</h2>
+    <h2>Overview</h2>
 
     <apx-chart
       [series]="chartseries"
@@ -56,17 +53,15 @@
     <table class="data-table">
       <thead>
       <tr>
-        <th>Kategorie</th>
-        <th>Ausgaben</th>
+        <th>Category</th>
+        <th>Expenses</th>
       </tr>
       </thead>
       <tbody>
-      @for (item of categorySummary; track item.category) {
-        <tr>
-          <td>{{ item.category }}</td>
-          <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
-        </tr>
-      }
+      <tr *ngFor="let item of categorySummary">
+        <td>{{ getCategoryLabel(item.category) }}</td>
+        <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+      </tr>
       </tbody>
     </table>
   </section>
@@ -74,68 +69,58 @@
   <!-- Recent expenses list -->
   <section class="content-section">
     <div class="section-header">
-      <h2>Letzte Ausgaben</h2>
+      <h2>Recent expenses</h2>
 
       <label class="compact-field">
-        <span>Kategorie</span>
+        <span>Category</span>
         <select [(ngModel)]="selectedCategory">
-          <option value="ALL">Alle Kategorien</option>
-          @for (category of categories; track category) {
-            <option [value]="category">
-              {{ category }}
-            </option>
-          }
+          <option value="ALL">All categories</option>
+          <option *ngFor="let category of categories" [value]="category">
+            {{ getCategoryLabel(category) }}
+          </option>
         </select>
       </label>
     </div>
 
-    @if (expenses.length === 0) {
-      <p class="empty">
-        Keine Ausgaben gefunden.
-      </p>
-    }
+    <p *ngIf="expenses.length === 0" class="empty">
+      No expenses found.
+    </p>
 
-    @if (expenses.length > 0) {
-      <table class="data-table">
-        <thead>
-        <tr>
-          <th>Kosten</th>
-          <th>Trip</th>
-          <th>Datum</th>
-          <th>Kategorie</th>
-        </tr>
-        </thead>
-        <tbody>
-        @for (expense of displayedExpenses; track $index) {
-          <tr>
-            <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
-            <td>{{ expense.trip }}</td>
-            <td>{{ expense.date }}</td>
-            <td>{{ expense.kategorie }}</td>
-          </tr>
-        }
-        </tbody>
-      </table>
-    }
+    <table *ngIf="expenses.length > 0" class="data-table">
+      <thead>
+      <tr>
+        <th>Cost</th>
+        <th>Trip</th>
+        <th>Date</th>
+        <th>Category</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let expense of displayedExpenses">
+        <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ expense.trip }}</td>
+        <td>{{ expense.date }}</td>
+        <td>{{ getCategoryLabel(expense.kategorie) }}</td>
+      </tr>
+      </tbody>
+    </table>
 
-    @if (filteredAusgaben.length > 5 && !showAllExpenses) {
-      <button
-        class="secondary-button"
-        type="button"
-        (click)="showAllExpenses = true"
-      >
-        Mehr anzeigen
-      </button>
-    }
+    <button
+      *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = true"
+    >
+      Show more
+    </button>
 
-    @if (filteredAusgaben.length > 5 && showAllExpenses) {
-      <button
-        class="secondary-button"
-        type="button"
-        (click)="showAllExpenses = false"
-      >
-        Weniger anzeigen
-      </button>
-    }
+    <button
+      *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
+      class="secondary-button"
+      type="button"
+      (click)="showAllExpenses = false"
+    >
+      Show less
+    </button>
   </section>
 </div>
