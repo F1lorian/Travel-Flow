@@ -4,6 +4,8 @@ import {FormsModule} from '@angular/forms';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
+import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
+import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
 
 interface EventTransferDialogData {
   mode: 'import' | 'export';
@@ -97,7 +99,8 @@ export class EventTransferDialog implements OnInit {
   }
 
   /**
-   * uploads the file to the backend and returns the created event back to the calendar
+   * Parses the selected .eml file, checks the parsed time for conflicts, and saves the
+   * imported event only after the user confirms possible conflicts.
    */
   uploadFile() {
     if (!this.file) {
@@ -109,17 +112,53 @@ export class EventTransferDialog implements OnInit {
     formData.append('MailFile', this.file);
 
 
-    this.eventService.importEvents(formData, this.tripId).subscribe({
+    this.eventService.parseEvent(formData, this.tripId).subscribe({
+      next: (parsedEvent) => {
+        this.eventService.getConflictEvents(parsedEvent.start, parsedEvent.end).subscribe({
+          next: (conflicts) => {
+            if (conflicts.length > 0) {
+              const dialogRef = this.dialog.open(ConflictDialog, {
+                maxWidth: '560px',
+                data: { conflicts },
+              });
+
+              dialogRef.afterClosed().subscribe(confirmed => {
+                if (confirmed) {
+                  this.saveParsedEvent(parsedEvent);
+                }
+              });
+
+              return;
+            }
+
+            this.saveParsedEvent(parsedEvent);
+          },
+          error: (err) => {
+            this.showMessage(err.error || 'Konfliktpruefung fehlgeschlagen.');
+          }
+        });
+      },
+      error: (err) => {
+        this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
+      }
+    });
+  }
+
+  /**
+   * Saves a previously parsed imported event and returns the saved database event to the calendar.
+   * @param parsedEvent event values extracted from the uploaded .eml file
+   */
+  private saveParsedEvent(parsedEvent: ParsedEvent) {
+    this.eventService.saveParsedEvent(parsedEvent, this.tripId).subscribe({
       next: (event) => {
         this.dialogRef.close(event);
       },
       error: (err) => {
-        this.showMessage(
-          err.error || "Event konnte nicht erstellt werden!"
-        );
+        this.showMessage(err.error || 'Event konnte nicht erstellt werden!');
       }
     });
   }
+
 
   /**
    * lets the user download the .ics file with all of the events
@@ -175,4 +214,3 @@ export class EventTransferDialog implements OnInit {
   }
 
 }
-

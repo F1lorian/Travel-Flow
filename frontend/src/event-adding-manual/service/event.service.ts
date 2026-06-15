@@ -6,7 +6,7 @@ import { AddEventResponse } from '../models/AddEventResponse';
 import {CalendarEventImport} from '../models/CalendarEventImport';
 import {EditEventRequest} from '../models/EditEventRequest';
 import {EditEventResponse} from '../models/EditEventResponse';
-
+import { ParsedEvent } from '../models/ParsedEvent';
 
 
 @Injectable({
@@ -51,16 +51,31 @@ export class EventService {
   }
 
   /**
-   * sends the imported .eml file to the backend and returns the created and saved event
+   * Sends an imported .eml file to the backend for parsing only.
+   * The returned event is not saved yet and has no database id.
    * @param formData is the .eml file
    * @param tripId is the optional tripId
    */
-  importEvents(formData: FormData, tripId?: number): Observable<AddEventResponse> {
+  parseEvent(formData: FormData, tripId?: number): Observable<ParsedEvent> {
     let params = {};
     if (tripId !== undefined) {
       params = {tripId: tripId.toString()};
     }
-    return this.http.post<AddEventResponse>('/api/event/create/import', formData, { params });
+    return this.http.post<ParsedEvent>('/api/event/import/parse', formData, { params });
+  }
+
+  /**
+   * Saves an event that was already parsed from an imported .eml file.
+   * @param parsedEvent event values extracted from the uploaded file
+   * @param tripId optional trip that should be linked to the saved event
+   */
+  saveParsedEvent(parsedEvent: ParsedEvent, tripId?: number): Observable<AddEventResponse> {
+    let params = {};
+    if (tripId !== undefined) {
+      params = { tripId: tripId.toString() };
+    }
+
+    return this.http.post<AddEventResponse>('/api/event/create/import', parsedEvent, { params });
   }
 
   /**
@@ -72,6 +87,11 @@ export class EventService {
     });
   }
 
+  /**
+   * Returns events that overlap the given time interval.
+   * @param start start date-time of the event that should be checked
+   * @param end end date-time of the event that should be checked
+   */
   getConflictEvents(start: string, end: string): Observable<AddEventResponse[]> {
     return this.http.get<AddEventResponse[]>('/api/event/conflict', {
       params: { start, end }

@@ -60,7 +60,8 @@ export class EventDialog implements OnInit {
   }
 
   /**
-   * closes the dialog and gives the calendar the action 'save' as well as all the attributes for the event
+   * Checks for time conflicts before creating or editing an event.
+   * If conflicts exist, the user can confirm that the event should still be saved.
    */
   save() {
     if (this.mode === 'create') {
@@ -87,20 +88,35 @@ export class EventDialog implements OnInit {
     }
 
     if (this.mode === 'edit') {
-      this.eventService.editEvent({
-        id: this.data.id,
-        name: this.title,
-        kosten: this.kosten ?? 0,
-        tripId: this.tripId,
-        start: this.start,
-        end: this.end,
-      }).subscribe({
-        next: (response) => this.dialogRef.close({ action: 'saved', event: response }),
-        error: () => this.showError()
+      this.eventService.getConflictEvents(this.start, this.end).subscribe({
+        next: conflicts => {
+          // Do not warn about the event currently being edited.
+          const otherConflicts = conflicts.filter(conflict => conflict.id !== this.data.id);
+
+          if (otherConflicts.length > 0) {
+            const dialogRef = this.dialog.open(ConflictDialog, {
+              maxWidth: '560px',
+              data: { conflicts: otherConflicts },
+            });
+
+            dialogRef.afterClosed().subscribe(confirmed => {
+              if (confirmed) {
+                this.saveEditedEvent();
+              }
+            });
+            return;
+          }
+
+          this.saveEditedEvent();
+        },
+        error: err => this.showError(err)
       });
     }
   }
 
+  /**
+   * Creates a new manually entered event after conflict handling has finished.
+   */
   createEvent() {
     this.eventService.createManualEvent({
       name: this.title,
@@ -111,6 +127,23 @@ export class EventDialog implements OnInit {
     }).subscribe({
       next: (response) => this.dialogRef.close({ action: 'created', event: response }),
       error: (err) => this.showError(err)
+    });
+  }
+
+  /**
+   * Saves changes to an existing event after conflict handling has finished.
+   */
+  saveEditedEvent() {
+    this.eventService.editEvent({
+      id: this.data.id,
+      name: this.title,
+      kosten: this.kosten ?? 0,
+      tripId: this.tripId,
+      start: this.start,
+      end: this.end,
+    }).subscribe({
+      next: (response) => this.dialogRef.close({ action: 'saved', event: response }),
+      error: () => this.showError()
     });
   }
 

@@ -133,10 +133,10 @@ public class EventService {
   }
 
   /**
-   * Saves an imported event for the given trip.
+   * Saves an imported event after the client has parsed it and handled possible conflicts.
    *
-   * @param dto imported event values
-   * @param tripId identifier of the trip the event belongs to
+   * @param dto parsed imported event values
+   * @param tripId optional identifier of the trip the event belongs to
    * @return response data of the saved event
    */
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
@@ -173,6 +173,13 @@ public class EventService {
         .toList();
   }
 
+  /**
+   * Finds all saved events whose time interval overlaps the given interval.
+   *
+   * @param eventStart start date and time of the event being checked
+   * @param eventEnd end date and time of the event being checked
+   * @return response data for all conflicting events
+   */
   public List<EventResponseDTO> conflictCheck(LocalDateTime eventStart, LocalDateTime eventEnd) {
     List<Event> events = eventRepository.findByStartTimeBeforeAndEndTimeAfter(eventEnd, eventStart);
     List<EventResponseDTO> result = new ArrayList<>();
@@ -184,10 +191,10 @@ public class EventService {
   }
 
   /**
-   * Parses an uploaded email stream and extracts event data from it.
+   * Parses an uploaded email stream and extracts event data without saving it.
    *
    * @param inputStream email file content
-   * @return response data containing the extracted event values
+   * @return response data containing the extracted event values, without an event id
    * @throws Exception if the email content cannot be read or parsed
    */
   public EventResponseDTO ParseMailFile(InputStream inputStream) throws Exception {
