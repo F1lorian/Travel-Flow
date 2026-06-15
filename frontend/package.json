@@ -7,6 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:pw": "playwright test tests",
+    "test:pw:ui": "playwright test tests --ui",
     "lint": "ng lint"
   },
   "prettier": {
