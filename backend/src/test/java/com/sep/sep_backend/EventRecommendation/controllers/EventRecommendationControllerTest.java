@@ -18,7 +18,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 // @WebMvcTest loads only the web layer for this controller; the Gemini service is
 // mocked, so the test checks request/response wiring without calling the real API.
-@WebMvcTest(value = EventRecommendationController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
+@WebMvcTest(
+    value = EventRecommendationController.class,
+    excludeAutoConfiguration = {
+      SecurityAutoConfiguration.class,
+      SecurityFilterAutoConfiguration.class
+    })
 class EventRecommendationControllerTest {
 
   @Autowired private MockMvc mockMvc;
