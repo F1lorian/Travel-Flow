@@ -125,7 +125,6 @@ build_backend:
         docker push "$IMAGE:$CI_COMMIT_TAG"
       fi
 
-      backend_test:
 test_backend:
   stage: test
   image: eclipse-temurin:21-jdk
