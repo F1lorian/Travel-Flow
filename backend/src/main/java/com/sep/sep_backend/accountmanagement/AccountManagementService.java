@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,18 +25,20 @@ public class AccountManagementService {
   private final UserRepository userRepository;
   private final JavaMailSender mailSender;
   private final JwtService jwtService;
+  private final PasswordEncoder passwordEncoder;
   private final String mailUsername;
-  private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
   private final SecureRandom secureRandom = new SecureRandom();
 
   public AccountManagementService(
       UserRepository userRepository,
       JavaMailSender mailSender,
       JwtService jwtService,
+      PasswordEncoder passwordEncoder,
       @Value("${spring.mail.username:}") String mailUsername) {
     this.userRepository = userRepository;
     this.mailSender = mailSender;
     this.jwtService = jwtService;
+    this.passwordEncoder = passwordEncoder;
     this.mailUsername = mailUsername;
   }
 
