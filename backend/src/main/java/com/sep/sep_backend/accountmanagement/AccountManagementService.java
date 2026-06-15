@@ -1,5 +1,7 @@
 package com.sep.sep_backend.accountmanagement;
 
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.repos.UserRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -18,8 +20,9 @@ public class AccountManagementService {
   private static final int CODE_MIN = 100000;
   private static final int CODE_MAX = 900000;
   private static final int VERIFICATION_MINUTES = 15;
+  private static final String SECURITY_QUESTION = "What is your favorite color?";
 
-  private final UserAccountRepository userAccountRepository;
+  private final UserRepository userRepository;
   private final JavaMailSender mailSender;
   private final JwtService jwtService;
   private final String mailUsername;
@@ -27,59 +30,59 @@ public class AccountManagementService {
   private final SecureRandom secureRandom = new SecureRandom();
 
   public AccountManagementService(
-      UserAccountRepository userAccountRepository,
+      UserRepository userRepository,
       JavaMailSender mailSender,
       JwtService jwtService,
       @Value("${spring.mail.username:}") String mailUsername) {
-    this.userAccountRepository = userAccountRepository;
+    this.userRepository = userRepository;
     this.mailSender = mailSender;
     this.jwtService = jwtService;
     this.mailUsername = mailUsername;
   }
 
   public AuthResponseDTO register(RegisterRequestDTO request) {
-    String username = requireText(request.username(), "Username is required");
+    String name = requireText(request.username(), "Username is required");
     String email = requireText(request.email(), "Email is required").toLowerCase();
     String password = requireText(request.password(), "Password is required");
     String repeatPassword = requireText(request.repeatPassword(), "Repeat password is required");
     String favoriteColor = requireText(request.favoriteColor(), "Favorite color is required");
+    String firstName = requireText(request.firstName(), "First name is required");
+    String surname = requireText(request.surname(), "Surname is required");
 
-    validateUsername(username);
+    validateUsername(name);
     validateEmail(email);
     validatePassword(password);
     if (!password.equals(repeatPassword)) {
       throw new IllegalArgumentException("Passwords do not match");
     }
-    requireText(request.firstName(), "First name is required");
-    requireText(request.surname(), "Surname is required");
 
-    if (userAccountRepository.existsByUsernameIgnoreCase(username)) {
+    if (userRepository.existsByNameIgnoreCase(name)) {
       throw new IllegalArgumentException("Username is already used");
     }
-    if (userAccountRepository.existsByEmailIgnoreCase(email)) {
+    if (userRepository.existsByEmailIgnoreCase(email)) {
       throw new IllegalArgumentException("Email is already used");
     }
 
-    UserAccount user =
-        new UserAccount(
-            username,
-            email,
-            passwordEncoder.encode(password),
-            passwordEncoder.encode(favoriteColor));
+    User user =
+        new User(
+            name, email, passwordEncoder.encode(password), passwordEncoder.encode(favoriteColor));
+    user.setFirstName(firstName);
+    user.setSurname(surname);
+    user.setSecurityQuestion(SECURITY_QUESTION);
     user.setEmailVerified(false);
     user.setVerificationCode(createCode());
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_MINUTES));
-    userAccountRepository.save(user);
+    userRepository.save(user);
 
     String message = sendVerificationEmail(user);
-    return new AuthResponseDTO(message, user.getUsername(), null);
+    return new AuthResponseDTO(message, user.getName(), null);
   }
 
   public AuthResponseDTO login(LoginRequestDTO request) {
     String usernameOrEmail = requireText(request.username(), "Username or email is required");
     String password = requireText(request.password(), "Password is required");
 
-    UserAccount user = findByUsernameOrEmail(usernameOrEmail);
+    User user = findByNameOrEmail(usernameOrEmail);
 
     if (!passwordEncoder.matches(password, user.getPasswordHash())) {
       throw new IllegalArgumentException("Wrong username or password");
@@ -88,12 +91,11 @@ public class AccountManagementService {
       throw new IllegalArgumentException("Please verify your email before logging in");
     }
 
-    return new AuthResponseDTO(
-        "Login successful", user.getUsername(), jwtService.createToken(user));
+    return new AuthResponseDTO("Login successful", user.getName(), jwtService.createToken(user));
   }
 
   public MessageResponseDTO verifyEmail(VerifyEmailRequestDTO request) {
-    UserAccount user = findByEmail(requireText(request.email(), "Email is required"));
+    User user = findByEmail(requireText(request.email(), "Email is required"));
     String code = requireText(request.code(), "Verification code is required");
 
     if (user.getVerificationCodeExpiresAt() == null
@@ -107,12 +109,12 @@ public class AccountManagementService {
     user.setEmailVerified(true);
     user.setVerificationCode(null);
     user.setVerificationCodeExpiresAt(null);
-    userAccountRepository.save(user);
+    userRepository.save(user);
     return new MessageResponseDTO("Email verified successfully. You can log in now");
   }
 
   public MessageResponseDTO forgotPassword(ForgotPasswordRequestDTO request) {
-    UserAccount user = findByUsernameOrEmail(request.username());
+    User user = findByNameOrEmail(request.username());
     String favoriteColor = requireText(request.favoriteColor(), "Favorite color is required");
 
     if (!passwordEncoder.matches(favoriteColor, user.getSecurityAnswerHash())) {
@@ -123,16 +125,16 @@ public class AccountManagementService {
   }
 
   public MessageResponseDTO sendResetCode(SendResetCodeRequestDTO request) {
-    UserAccount user = findByUsernameOrEmail(request.username());
+    User user = findByNameOrEmail(request.username());
     user.setVerificationCode(createCode());
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(VERIFICATION_MINUTES));
-    userAccountRepository.save(user);
+    userRepository.save(user);
     String message = sendResetCodeEmail(user);
     return new MessageResponseDTO(message);
   }
 
   public MessageResponseDTO resetPasswordWithCode(ResetPasswordWithCodeRequestDTO request) {
-    UserAccount user = findByUsernameOrEmail(request.username());
+    User user = findByNameOrEmail(request.username());
     String code = requireText(request.code(), "Reset code is required");
     String newPassword = requireText(request.newPassword(), "New password is required");
     String repeatNewPassword =
@@ -151,12 +153,12 @@ public class AccountManagementService {
     user.setPasswordHash(passwordEncoder.encode(newPassword));
     user.setVerificationCode(null);
     user.setVerificationCodeExpiresAt(null);
-    userAccountRepository.save(user);
+    userRepository.save(user);
     return new MessageResponseDTO("Password changed successfully");
   }
 
   public MessageResponseDTO resetPassword(ResetPasswordRequestDTO request) {
-    UserAccount user = findByUsernameOrEmail(request.username());
+    User user = findByNameOrEmail(request.username());
     String newPassword = requireText(request.newPassword(), "New password is required");
     String repeatNewPassword =
         requireText(request.repeatNewPassword(), "Repeat new password is required");
@@ -172,21 +174,21 @@ public class AccountManagementService {
     }
 
     user.setPasswordHash(passwordEncoder.encode(newPassword));
-    userAccountRepository.save(user);
+    userRepository.save(user);
     return new MessageResponseDTO("Password changed successfully");
   }
 
-  private UserAccount findByUsernameOrEmail(String usernameOrEmail) {
-    return userAccountRepository
-        .findByUsernameIgnoreCaseOrEmailIgnoreCase(
+  private User findByNameOrEmail(String usernameOrEmail) {
+    return userRepository
+        .findByNameIgnoreCaseOrEmailIgnoreCase(
             requireText(usernameOrEmail, "Username or email is required"),
             requireText(usernameOrEmail, "Username or email is required"))
         .orElseThrow(
             () -> new IllegalArgumentException("No account found for this username or email"));
   }
 
-  private UserAccount findByEmail(String email) {
-    return userAccountRepository
+  private User findByEmail(String email) {
+    return userRepository
         .findByEmailIgnoreCase(requireText(email, "Email is required"))
         .orElseThrow(() -> new IllegalArgumentException("No account found for this email"));
   }
@@ -222,7 +224,7 @@ public class AccountManagementService {
     return String.valueOf(CODE_MIN + secureRandom.nextInt(CODE_MAX));
   }
 
-  private String sendResetCodeEmail(UserAccount user) {
+  private String sendResetCodeEmail(User user) {
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom(mailUsername);
     message.setTo(user.getEmail());
@@ -237,7 +239,7 @@ public class AccountManagementService {
     }
   }
 
-  private String sendVerificationEmail(UserAccount user) {
+  private String sendVerificationEmail(User user) {
     SimpleMailMessage message = new SimpleMailMessage();
     message.setFrom(mailUsername);
     message.setTo(user.getEmail());
