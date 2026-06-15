@@ -30,3 +30,13 @@
 .content {
   padding-top: 72px;
 }
+
+.content.no-nav {
+  padding-top: 0;
+}
+
+.logout-button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}

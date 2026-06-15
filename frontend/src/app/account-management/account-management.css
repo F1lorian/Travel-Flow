@@ -1,0 +1,162 @@
+.account-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: #ffffff;
+}
+
+.login-panel,
+.create-panel {
+  width: min(680px, 100%);
+}
+
+.login-panel {
+  width: min(680px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.create-panel {
+  display: grid;
+  gap: 14px;
+}
+
+h1 {
+  margin: 0 0 18px;
+  color: #050505;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.create-panel h1 {
+  margin-bottom: 0;
+  font-size: 30px;
+}
+
+.create-panel p {
+  margin: 0 0 6px;
+  color: #111827;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+h2 {
+  margin: 10px 0 0;
+  color: #050505;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccd0d5;
+  border-radius: 18px;
+  padding: 20px;
+  color: #1c1e21;
+  background: #ffffff;
+  font: inherit;
+  font-size: 20px;
+}
+
+select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+input::placeholder {
+  color: #5f6b7a;
+}
+
+.two-column,
+.three-column {
+  display: grid;
+  gap: 16px;
+}
+
+.two-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.three-column {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.security-question {
+  display: grid;
+  gap: 10px;
+  color: #050505;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.field-help {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.primary-action,
+.outline-action,
+.text-action {
+  width: 100%;
+  border-radius: 22px;
+  padding: 16px 20px;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-action {
+  border: 1px solid #0866ff;
+  color: #ffffff;
+  background: #0866ff;
+}
+
+.outline-action {
+  margin-top: 54px;
+  border: 1px solid #0866ff;
+  color: #0866ff;
+  background: #ffffff;
+}
+
+.text-action {
+  border: 0;
+  color: #050505;
+  background: transparent;
+}
+
+.message {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.success {
+  background: #e7f8ee;
+  color: #176438;
+}
+
+.error {
+  background: #fdeaea;
+  color: #9b1c1c;
+}
+
+@media (max-width: 640px) {
+  .two-column,
+  .three-column {
+    grid-template-columns: 1fr;
+  }
+
+  input,
+  select,
+  .primary-action,
+  .outline-action,
+  .text-action {
+    font-size: 18px;
+  }
+}

@@ -1,11 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { CalendarComponent } from './components/calendar/calendar';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CalendarComponent],
+  imports: [RouterOutlet, RouterLink],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -13,16 +12,13 @@ export class App {
   private router = inject(Router);
   protected readonly title = signal('sep');
 
-  get isCalendar(): boolean {
-    const url = this.router.url;
-    return url === '/' || url === '';
+  get showNavigation(): boolean {
+    return this.router.url !== '/account' && Boolean(localStorage.getItem('sepToken'));
   }
 
-  get navTarget(): string {
-    return this.isCalendar ? '/trips' : '/';
-  }
-
-  get navLabel(): string {
-    return this.isCalendar ? 'Manage Trips' : 'Calendar';
+  logout(): void {
+    localStorage.removeItem('sepUser');
+    localStorage.removeItem('sepToken');
+    this.router.navigateByUrl('/account');
   }
 }
