@@ -1,4 +1,4 @@
-# Repository Guidelines
+and what abot# Repository Guidelines
 
 ## Project Structure & Module Organization
 This repository contains a Spring Boot backend and an Angular frontend. Backend code lives in `backend/src/main/java/com/sep/sep_backend`, with JPA entities under `Enitys`, repositories under `repos`, and feature code such as `ausgabe` grouped by package. Backend configuration is in `backend/src/main/resources/application.properties`; tests are in `backend/src/test/java`.
