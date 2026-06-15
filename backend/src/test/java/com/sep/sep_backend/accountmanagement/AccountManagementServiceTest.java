@@ -7,6 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class AccountManagementServiceTest {
 
-  @Mock private UserAccountRepository userAccountRepository;
+  @Mock private UserRepository userRepository;
   @Mock private JavaMailSender mailSender;
   @Mock private JwtService jwtService;
 
@@ -32,13 +34,11 @@ class AccountManagementServiceTest {
   @BeforeEach
   void setUp() {
     service =
-        new AccountManagementService(
-            userAccountRepository, mailSender, jwtService, "noreply@example.com");
+        new AccountManagementService(userRepository, mailSender, jwtService, "noreply@example.com");
   }
 
-  private UserAccount verifiedUser(String username, String email, String password, String color) {
-    UserAccount user =
-        new UserAccount(username, email, ENCODER.encode(password), ENCODER.encode(color));
+  private User verifiedUser(String username, String email, String password, String color) {
+    User user = new User(username, email, ENCODER.encode(password), ENCODER.encode(color));
     user.setEmailVerified(true);
     return user;
   }
@@ -56,15 +56,15 @@ class AccountManagementServiceTest {
             "Password1!",
             "Password1!",
             "blue");
-    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(false);
-    when(userAccountRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(false);
-    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+    when(userRepository.existsByNameIgnoreCase("maxmuster")).thenReturn(false);
+    when(userRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(false);
+    when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     AuthResponseDTO result = service.register(request);
 
     assertThat(result.username()).isEqualTo("maxmuster");
-    ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-    verify(userAccountRepository).save(captor.capture());
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
     assertThat(captor.getValue().getVerificationCode()).isNotNull();
     assertThat(captor.getValue().isEmailVerified()).isFalse();
   }
@@ -79,7 +79,7 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Username is required");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -92,7 +92,7 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Username must start with a letter");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -105,7 +105,7 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Email is invalid");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -118,7 +118,7 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Password must be at least 9 characters");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -137,7 +137,7 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Passwords do not match");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -151,13 +151,13 @@ class AccountManagementServiceTest {
             "Password1!",
             "Password1!",
             "blue");
-    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(true);
+    when(userRepository.existsByNameIgnoreCase("maxmuster")).thenReturn(true);
 
     assertThatThrownBy(() -> service.register(request))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Username is already used");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -171,22 +171,22 @@ class AccountManagementServiceTest {
             "Password1!",
             "Password1!",
             "blue");
-    when(userAccountRepository.existsByUsernameIgnoreCase("maxmuster")).thenReturn(false);
-    when(userAccountRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(true);
+    when(userRepository.existsByNameIgnoreCase("maxmuster")).thenReturn(false);
+    when(userRepository.existsByEmailIgnoreCase("max@example.com")).thenReturn(true);
 
     assertThatThrownBy(() -> service.register(request))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Email is already used");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   // --- login ---
 
   @Test
   void loginGibtTokenZurueckBeiErfolg() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
     when(jwtService.createToken(user)).thenReturn("jwt-token");
 
@@ -198,8 +198,8 @@ class AccountManagementServiceTest {
 
   @Test
   void loginWirftExceptionBeiFalschenZugangsdaten() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(() -> service.login(new LoginRequestDTO("maxmuster", "WrongPass1!")))
@@ -209,11 +209,11 @@ class AccountManagementServiceTest {
 
   @Test
   void loginWirftExceptionWennEmailNichtVerifiziert() {
-    UserAccount user =
-        new UserAccount(
+    User user =
+        new User(
             "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
     user.setEmailVerified(false);
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(() -> service.login(new LoginRequestDTO("maxmuster", "Password1!")))
@@ -223,7 +223,7 @@ class AccountManagementServiceTest {
 
   @Test
   void loginWirftExceptionWennBenutzerNichtGefunden() {
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.login(new LoginRequestDTO("unknown", "Password1!")))
@@ -235,15 +235,14 @@ class AccountManagementServiceTest {
 
   @Test
   void verifyEmailVerifiziertEmailErfolgreich() {
-    UserAccount user =
-        new UserAccount(
+    User user =
+        new User(
             "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
     user.setEmailVerified(false);
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
-    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
-        .thenReturn(Optional.of(user));
-    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+    when(userRepository.findByEmailIgnoreCase("max@example.com")).thenReturn(Optional.of(user));
+    when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     MessageResponseDTO result =
         service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "123456"));
@@ -255,13 +254,12 @@ class AccountManagementServiceTest {
 
   @Test
   void verifyEmailWirftExceptionBeiAbgelaufenemCode() {
-    UserAccount user =
-        new UserAccount(
+    User user =
+        new User(
             "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().minusMinutes(1));
-    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
-        .thenReturn(Optional.of(user));
+    when(userRepository.findByEmailIgnoreCase("max@example.com")).thenReturn(Optional.of(user));
 
     assertThatThrownBy(
             () -> service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "123456")))
@@ -271,13 +269,12 @@ class AccountManagementServiceTest {
 
   @Test
   void verifyEmailWirftExceptionBeiFalschenCode() {
-    UserAccount user =
-        new UserAccount(
+    User user =
+        new User(
             "maxmuster", "max@example.com", ENCODER.encode("Password1!"), ENCODER.encode("blue"));
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
-    when(userAccountRepository.findByEmailIgnoreCase("max@example.com"))
-        .thenReturn(Optional.of(user));
+    when(userRepository.findByEmailIgnoreCase("max@example.com")).thenReturn(Optional.of(user));
 
     assertThatThrownBy(
             () -> service.verifyEmail(new VerifyEmailRequestDTO("max@example.com", "999999")))
@@ -289,8 +286,8 @@ class AccountManagementServiceTest {
 
   @Test
   void forgotPasswordBestaetigtRichtigeSicherheitsantwort() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     MessageResponseDTO result =
@@ -301,8 +298,8 @@ class AccountManagementServiceTest {
 
   @Test
   void forgotPasswordWirftExceptionBeiFalscherSicherheitsantwort() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(
@@ -315,15 +312,15 @@ class AccountManagementServiceTest {
 
   @Test
   void sendResetCodeSpeichertCodeUndGibtNachrichtZurueck() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
-    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+    when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     MessageResponseDTO result = service.sendResetCode(new SendResetCodeRequestDTO("maxmuster"));
 
-    ArgumentCaptor<UserAccount> captor = ArgumentCaptor.forClass(UserAccount.class);
-    verify(userAccountRepository).save(captor.capture());
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
     assertThat(captor.getValue().getVerificationCode()).isNotNull();
     assertThat(captor.getValue().getVerificationCodeExpiresAt()).isAfter(LocalDateTime.now());
     assertThat(result.message()).isNotBlank();
@@ -331,26 +328,26 @@ class AccountManagementServiceTest {
 
   @Test
   void sendResetCodeWirftExceptionFuerUnbekanntenBenutzer() {
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("unknown", "unknown"))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.sendResetCode(new SendResetCodeRequestDTO("unknown")))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("No account found for this username or email");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 
   // --- resetPasswordWithCode ---
 
   @Test
   void resetPasswordWithCodeSetzNeuesPasswortErfolgreich() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
-    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+    when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     MessageResponseDTO result =
         service.resetPasswordWithCode(
@@ -363,10 +360,10 @@ class AccountManagementServiceTest {
 
   @Test
   void resetPasswordWithCodeWirftExceptionBeiAbgelaufenemCode() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().minusMinutes(1));
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(
@@ -380,10 +377,10 @@ class AccountManagementServiceTest {
 
   @Test
   void resetPasswordWithCodeWirftExceptionBeiFalschenCode() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(
@@ -397,10 +394,10 @@ class AccountManagementServiceTest {
 
   @Test
   void resetPasswordWithCodeWirftExceptionWennPasswoerterNichtUebereinstimmen() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
     user.setVerificationCode("123456");
     user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(10));
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(
@@ -416,10 +413,10 @@ class AccountManagementServiceTest {
 
   @Test
   void resetPasswordSetzNeuesPasswortErfolgreich() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
-    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> i.getArgument(0));
+    when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
     MessageResponseDTO result =
         service.resetPassword(
@@ -431,8 +428,8 @@ class AccountManagementServiceTest {
 
   @Test
   void resetPasswordWirftExceptionBeiFalscherSicherheitsantwort() {
-    UserAccount user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
-    when(userAccountRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+    User user = verifiedUser("maxmuster", "max@example.com", "Password1!", "blue");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
 
     assertThatThrownBy(
@@ -442,6 +439,6 @@ class AccountManagementServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Security answer is wrong");
 
-    verify(userAccountRepository, never()).save(any());
+    verify(userRepository, never()).save(any());
   }
 }

@@ -1,5 +1,6 @@
 package com.sep.sep_backend.accountmanagement;
 
+import com.sep.sep_backend.Enitys.User;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -21,7 +22,7 @@ public class JwtService {
     this.secret = secret;
   }
 
-  public String createToken(UserAccount user) {
+  public String createToken(User user) {
     long issuedAt = Instant.now().getEpochSecond();
     long expiresAt = issuedAt + TOKEN_SECONDS;
 
@@ -29,10 +30,10 @@ public class JwtService {
     String payload =
         "{"
             + "\"sub\":\""
-            + escape(user.getUsername())
+            + escape(user.getName())
             + "\","
             + "\"username\":\""
-            + escape(user.getUsername())
+            + escape(user.getName())
             + "\","
             + "\"email\":\""
             + escape(user.getEmail())

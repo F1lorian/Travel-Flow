@@ -2,10 +2,8 @@ package com.sep.sep_backend.accountmanagement;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-@Component
 public class JwtAuthInterceptor implements HandlerInterceptor {
 
   private final JwtService jwtService;
