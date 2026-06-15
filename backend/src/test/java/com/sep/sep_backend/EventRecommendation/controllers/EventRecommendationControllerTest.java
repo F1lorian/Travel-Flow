@@ -9,6 +9,8 @@ import com.sep.sep_backend.EventRecommendation.services.GeminiEventSearchService
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,7 +18,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 // @WebMvcTest loads only the web layer for this controller; the Gemini service is
 // mocked, so the test checks request/response wiring without calling the real API.
-@WebMvcTest(EventRecommendationController.class)
+@WebMvcTest(
+    value = EventRecommendationController.class,
+    excludeAutoConfiguration = {
+      SecurityAutoConfiguration.class,
+      SecurityFilterAutoConfiguration.class
+    })
 class EventRecommendationControllerTest {
 
   @Autowired private MockMvc mockMvc;

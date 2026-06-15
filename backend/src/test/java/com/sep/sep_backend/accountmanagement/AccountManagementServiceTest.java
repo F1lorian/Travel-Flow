@@ -34,7 +34,8 @@ class AccountManagementServiceTest {
   @BeforeEach
   void setUp() {
     service =
-        new AccountManagementService(userRepository, mailSender, jwtService, "noreply@example.com");
+        new AccountManagementService(
+            userRepository, mailSender, jwtService, ENCODER, "noreply@example.com");
   }
 
   private User verifiedUser(String username, String email, String password, String color) {
