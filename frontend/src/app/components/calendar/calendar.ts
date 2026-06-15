@@ -1,4 +1,4 @@
-import {Component, inject, Input, NgZone, OnInit} from '@angular/core';
+import {Component, inject, Input, OnInit} from '@angular/core';
 import {CalendarOptions, EventInput} from '@fullcalendar/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -9,9 +9,8 @@ import { AddEventResponse } from '../../../event-adding-manual/models/AddEventRe
 import { EventService} from '../../../event-adding-manual/service/event.service';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from "@fullcalendar/list";
-import {AddEventRequest} from '../../../event-adding-manual/models/AddEventRequest';
-import {EditEventRequest} from '../../../event-adding-manual/models/EditEventRequest';
 import { EventClickArg } from '@fullcalendar/core';
+import { DateClickArg } from '@fullcalendar/interaction';
 import {EditEventResponse} from '../../../event-adding-manual/models/EditEventResponse';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { ViewChild } from '@angular/core';
@@ -37,6 +36,7 @@ export class CalendarComponent implements OnInit {
   tripService = inject(TripService);
   calendarEvents: EventInput[] = [];
   router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
@@ -79,9 +79,6 @@ export class CalendarComponent implements OnInit {
     dateClick: this.handleDateClick.bind(this)
   }
 
-  constructor(private dialog: MatDialog, private ngZone: NgZone) {
-  }
-
   ngOnInit(): void {
     this.loadEvents();
     this.loadTrips();
@@ -95,7 +92,7 @@ export class CalendarComponent implements OnInit {
    * @param clickInfo gives the event that is clicked by the user
    */
   handleEventClick(clickInfo: EventClickArg) {
-    let selectedEvent = clickInfo.event;
+    const selectedEvent = clickInfo.event;
     const type = clickInfo.event.extendedProps['type'];
 
     if (type === 'trip') {
@@ -134,7 +131,7 @@ export class CalendarComponent implements OnInit {
    * Handles what happens when a date is clicked in the calendar
    * @param clickInfo is the clicked Date
    */
-  handleDateClick(clickInfo: any) {
+  handleDateClick(clickInfo: DateClickArg) {
     this.createEvent(clickInfo.dateStr);
   }
 
@@ -206,37 +203,16 @@ export class CalendarComponent implements OnInit {
    */
   createEvent(selectedDateStr?: string) {
     const dialogRef = this.dialog.open(EventDialog, {
-      data:{mode: 'create',
-        ...(selectedDateStr && { start: selectedDateStr + 'T00:00' }),},
-    })
+      maxHeight: '90vh',
+      height: 'auto',
+      data: { mode: 'create', ...(selectedDateStr && { start: selectedDateStr + 'T00:00' }) }
+    });
 
     dialogRef.afterClosed().subscribe(result => {
-      if(result) {
-        let newEvent: AddEventRequest = {
-          name: result.title,
-          kosten: result.kosten,
-          tripId: result.tripId ?? undefined,
-          start: result.start,
-          end: result.end,
-        }
-        console.log(newEvent);
-        this.eventService.createManualEvent(newEvent)
-          .subscribe({
-            next: (response) => {
-              console.log("Event Response:", response);
-              this.addCreatedEvent(response);
-            },
-            error: (err) => {
-              console.error(err);
-              this.showMessage(
-                err.error || "Event konnte nicht erstellt werden!"
-              );
-            }
-          });
-      }
-    })
-    return;
+      if (result?.action === 'created') this.addCreatedEvent(result.event);
+    });
   }
+
 
   /**
    * opens a new dialog for editing or deleting events
@@ -244,56 +220,25 @@ export class CalendarComponent implements OnInit {
    * @param selectedEvent
    */
   editEvent(selectedEvent: EventImpl){
-    let id = selectedEvent.id;
     const dialogRef = this.dialog.open(EventDialog, {
-      data: {mode: 'edit',
+      maxHeight: '90vh',
+      height: 'auto',
+      data: {
+        mode: 'edit',
+        id: selectedEvent.id,
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
-        start: selectedEvent.startStr.substring(0,16),
-        end: selectedEvent.endStr.substring(0,16)
-      },
+        start: selectedEvent.startStr.substring(0, 16),
+        end: selectedEvent.endStr.substring(0, 16)}
     });
+
     dialogRef.afterClosed().subscribe(result => {
-      if(result){
-        console.log("result")
-        console.log(result)
-        if(result.action === 'save'){
-          let updatedEvent: EditEventRequest = {
-            id: id,
-            kosten: result.kosten,
-            name: result.title,
-            start: result.start,
-            end: result.end,
-            tripId: result.tripId,
-          }
-          console.log("Updated Event:");
-          console.log(updatedEvent);
-          this.eventService.editEvent(updatedEvent).subscribe({
-            next:(response: EditEventResponse) => {
-              console.log(response);
-              this.updateEditedEvent(id, response);
-            },
-            error: () => {
-              this.showMessage("Event konnte nicht geändert werden!");
-            }
-          })
-        }
-        if(result.action === 'delete'){
-          this.eventService.deleteEvent(id).subscribe({
-            next:(response: string) => {
-              console.log(response);
-              this.removeDeletedEvent(id)
-            },
-            error: () => {
-              this.showMessage("Event konnte nicht gelöscht werden!");
-            }
-          })
-        }
-      }
-    })
-    return;
+      if (result?.action === 'saved') this.updateEditedEvent(selectedEvent.id, result.event);
+      if (result?.action === 'deleted') this.removeDeletedEvent(selectedEvent.id);
+    });
   }
+
 
   /**
    * opens the dialog for importing events via .eml files

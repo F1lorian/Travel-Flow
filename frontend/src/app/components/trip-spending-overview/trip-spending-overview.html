@@ -7,9 +7,11 @@
       <label class="compact-field">
         <span>Trip</span>
         <select id="overview-auswaehlen" [value]="trip?.id" (change)="openOverview($event)">
-          <option *ngFor="let trip of trips" [value]="trip.id">
-            {{ trip.name }}
-          </option>
+          @for (trip of trips; track trip.id) {
+            <option [value]="trip.id">
+              {{ trip.name }}
+            </option>
+          }
           <option value="interval">Selbstgewählter Intervall</option>
         </select>
       </label>
@@ -17,9 +19,11 @@
     </div>
   </div>
 
-  <div *ngIf="errorMessage" class="error">
-    {{ errorMessage }}
-  </div>
+  @if (errorMessage) {
+    <div class="error">
+      {{ errorMessage }}
+    </div>
+  }
 
   <!-- Budget summary cards -->
   <section class="budget-summary">
@@ -43,9 +47,11 @@
     </div>
   </section>
 
-  <p *ngIf="budgetSuccessMessage" class="success">
-    {{ budgetSuccessMessage }}
-  </p>
+  @if (budgetSuccessMessage) {
+    <p class="success">
+      {{ budgetSuccessMessage }}
+    </p>
+  }
 
   <!-- Category chart and summary table -->
   <section class="content-section">
@@ -69,10 +75,12 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let item of categorySummary">
-        <td>{{ item.category }}</td>
-        <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
-      </tr>
+      @for (item of categorySummary; track item.category) {
+        <tr>
+          <td>{{ item.category }}</td>
+          <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+        </tr>
+      }
       </tbody>
     </table>
   </section>
@@ -89,58 +97,69 @@
           [(ngModel)]="selectedCategory"
         >
           <option value="ALL">Alle Kategorien</option>
-          <option *ngFor="let category of categories" [value]="category">
-            {{ category }}
-          </option>
+          @for (category of categories; track category) {
+            <option [value]="category">
+              {{ category }}
+            </option>
+          }
         </select>
       </label>
     </div>
 
-    <p *ngIf="expenses.length === 0" class="empty">
-      Keine Ausgaben gefunden.
-    </p>
+    @if (expenses.length === 0) {
+      <p class="empty">
+        Keine Ausgaben gefunden.
+      </p>
+    }
 
-    <table *ngIf="expenses.length > 0" class="data-table">
-      <thead>
-      <tr>
-        <th>Kosten</th>
-        <th>Trip</th>
-        <th>Datum</th>
-        <th>Kategorie</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let expense of displayedExpenses">
-        <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ expense.trip }}</td>
-        <td>{{ expense.date }}</td>
-        <td>{{ expense.kategorie }}</td>
-      </tr>
-      </tbody>
-    </table>
+    @if (expenses.length > 0) {
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Kosten</th>
+          <th>Trip</th>
+          <th>Datum</th>
+          <th>Kategorie</th>
+        </tr>
+        </thead>
+        <tbody>
+        @for (expense of displayedExpenses; track $index) {
+          <tr>
+            <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+            <td>{{ expense.trip }}</td>
+            <td>{{ expense.date }}</td>
+            <td>{{ expense.kategorie }}</td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
 
-    <button
-      *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"
-      class="secondary-button"
-      type="button"
-      (click)="showAllExpenses = true"
-    >
-      Mehr anzeigen
-    </button>
+    @if (filteredAusgaben.length > 5 && !showAllExpenses) {
+      <button
+        class="secondary-button"
+        type="button"
+        (click)="showAllExpenses = true"
+      >
+        Mehr anzeigen
+      </button>
+    }
 
-    <button
-      *ngIf="filteredAusgaben.length > 5 && showAllExpenses"
-      class="secondary-button"
-      type="button"
-      (click)="showAllExpenses = false"
-    >
-      Weniger anzeigen
-    </button>
+    @if (filteredAusgaben.length > 5 && showAllExpenses) {
+      <button
+        class="secondary-button"
+        type="button"
+        (click)="showAllExpenses = false"
+      >
+        Weniger anzeigen
+      </button>
+    }
   </section>
 
   <!-- Budget edit dialog -->
-  <div class="modal-overlay" *ngIf="showBudgetDialog">
-    <div class="modal">
+  @if (showBudgetDialog) {
+    <div class="modal-overlay">
+      <div class="modal">
       <h2>Budget bearbeiten</h2>
 
       <div class="budget-details">
@@ -186,9 +205,11 @@
         />
       </label>
 
-      <p *ngIf="budgetErrorMessage" class="error">
-        {{ budgetErrorMessage }}
-      </p>
+        @if (budgetErrorMessage) {
+          <p class="error">
+            {{ budgetErrorMessage }}
+          </p>
+        }
 
       <div class="modal-actions">
         <button class="secondary-muted-button" type="button" (click)="closeBudgetDialog()">
@@ -199,6 +220,7 @@
           Speichern
         </button>
       </div>
+      </div>
     </div>
-  </div>
+  }
 </div>
