@@ -72,4 +72,11 @@ export class EventService {
     });
   }
 
+  getConflictEvents(start: string, end: string): Observable<AddEventResponse[]> {
+    return this.http.get<AddEventResponse[]>('/api/event/conflict', {
+      params: { start, end }
+    });
+  }
+
+
 }

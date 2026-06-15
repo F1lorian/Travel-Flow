@@ -173,6 +173,16 @@ public class EventService {
         .toList();
   }
 
+  public List<EventResponseDTO> conflictCheck(LocalDateTime eventStart, LocalDateTime eventEnd) {
+    List<Event> events = eventRepository.findByStartTimeBeforeAndEndTimeAfter(eventEnd, eventStart);
+    List<EventResponseDTO> result = new ArrayList<>();
+    for(Event event : events){
+      EventResponseDTO dto = mapToResponseDTO(event);
+      result.add(dto);
+    }
+    return  result;
+  }
+
   /**
    * Parses an uploaded email stream and extracts event data from it.
    *

@@ -1,5 +1,6 @@
 package com.sep.sep_backend.EventHandling;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -87,5 +88,11 @@ public class EventController {
       @PathVariable Long id, @RequestBody EventRequestDTO dto) {
     var response = eventService.EditEvent(id, dto);
     return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("event/conflict")
+  public ResponseEntity<List<EventResponseDTO>> getConflictEvents(@RequestParam LocalDateTime start,
+                                                                  @RequestParam LocalDateTime end) {
+    return ResponseEntity.ok(eventService.conflictCheck(start, end));
   }
 }

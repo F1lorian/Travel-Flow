@@ -3,6 +3,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {EventService} from '../../../event-adding-manual/service/event.service';
+import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 
 interface EventDialogData {
   mode?: 'create' | 'edit' | 'show';
@@ -30,24 +31,25 @@ export class EventDialog implements OnInit {
   kosten: number | undefined;
   tripId: number | undefined;
   tripName = '';
-  start = "";
-  end = "";
+  start: string = "";
+  end: string = "";
   tripService = inject(TripService);
   eventService = inject(EventService);
+  dialog = inject(MatDialog);
   trips: Trip[] = [];
-  errorMessage = "";
+  errorMessage: string = "";
 
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
-  constructor() {
-    if(this.data) {
-      this.mode = this.data.mode || 'create';
-      this.title = this.data.title || '';
-      this.kosten = this.data.kosten || undefined;
-      this.tripId = this.data.tripId || undefined;
-      this.start = this.data.start || "";
-      this.end = this.data.end || "";
+  constructor(private dialogRef: MatDialogRef<EventDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
+    if(data) {
+      this.mode = data.mode || 'create';
+      this.title = data.title || '';
+      this.kosten = data.kosten || undefined;
+      this.tripId = data.tripId || undefined;
+      this.start = data.start || "";
+      this.end = data.end || "";
     }
     console.log("data dialog");
     console.log(this.data);
@@ -62,21 +64,31 @@ export class EventDialog implements OnInit {
    */
   save() {
     if (this.mode === 'create') {
-      this.eventService.createManualEvent({
-        name: this.title,
-        kosten: this.kosten ?? 0,
-        tripId: this.tripId,
-        start: this.start,
-        end: this.end,
-      }).subscribe({
-        next: (response) => this.dialogRef.close({ action: 'created', event: response }),
-        error: (err) => this.showError(err)
+      this.eventService.getConflictEvents(this.start, this.end).subscribe({
+        next: conflicts => {
+          if (conflicts.length > 0) {
+            const dialogRef = this.dialog.open(ConflictDialog, {
+              maxWidth: '560px',
+              data: { conflicts },
+            });
+
+            dialogRef.afterClosed().subscribe(confirmed => {
+              if (confirmed) {
+                this.createEvent();
+              }
+            });
+            return;
+          }
+
+          this.createEvent();
+        },
+        error: err => this.showError(err)
       });
     }
 
     if (this.mode === 'edit') {
       this.eventService.editEvent({
-        id: this.data.id!,
+        id: this.data.id,
         name: this.title,
         kosten: this.kosten ?? 0,
         tripId: this.tripId,
@@ -87,6 +99,19 @@ export class EventDialog implements OnInit {
         error: () => this.showError()
       });
     }
+  }
+
+  createEvent() {
+    this.eventService.createManualEvent({
+      name: this.title,
+      kosten: this.kosten ?? 0,
+      tripId: this.tripId,
+      start: this.start,
+      end: this.end,
+    }).subscribe({
+      next: (response) => this.dialogRef.close({ action: 'created', event: response }),
+      error: (err) => this.showError(err)
+    });
   }
 
 
