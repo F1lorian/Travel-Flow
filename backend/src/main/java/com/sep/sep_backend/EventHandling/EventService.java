@@ -183,11 +183,11 @@ public class EventService {
   public List<EventResponseDTO> conflictCheck(LocalDateTime eventStart, LocalDateTime eventEnd) {
     List<Event> events = eventRepository.findByStartTimeBeforeAndEndTimeAfter(eventEnd, eventStart);
     List<EventResponseDTO> result = new ArrayList<>();
-    for(Event event : events){
+    for (Event event : events) {
       EventResponseDTO dto = mapToResponseDTO(event);
       result.add(dto);
     }
-    return  result;
+    return result;
   }
 
   /**

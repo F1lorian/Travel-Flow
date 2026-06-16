@@ -77,7 +77,6 @@ public class EventController {
     return eventService.SaveEventResponseToDB(dto, tripId);
   }
 
-
   /**
    * Deletes the event with the given identifier.
    *

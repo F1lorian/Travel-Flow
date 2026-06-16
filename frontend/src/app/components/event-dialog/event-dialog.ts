@@ -31,13 +31,13 @@ export class EventDialog implements OnInit {
   kosten: number | undefined;
   tripId: number | undefined;
   tripName = '';
-  start: string = "";
-  end: string = "";
+  start = "";
+  end = "";
   tripService = inject(TripService);
   eventService = inject(EventService);
   dialog = inject(MatDialog);
   trips: Trip[] = [];
-  errorMessage: string = "";
+  errorMessage = "";
 
 
   mode: 'create' | 'edit' | 'show'= 'create';

@@ -1,4 +1,4 @@
-import {Component, Inject} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
 import {AddEventResponse} from '../../../event-adding-manual/models/AddEventResponse';
 
@@ -9,14 +9,10 @@ import {AddEventResponse} from '../../../event-adding-manual/models/AddEventResp
   styleUrl: './conflict-dialog.css',
 })
 export class ConflictDialog {
-  conflicts: AddEventResponse[] = [];
+  private readonly dialogRef = inject(MatDialogRef<ConflictDialog>);
+  readonly data = inject<{ conflicts: AddEventResponse[] }>(MAT_DIALOG_DATA);
 
-  constructor(
-    private dialogRef: MatDialogRef<ConflictDialog>,
-    @Inject(MAT_DIALOG_DATA) public data: { conflicts: AddEventResponse[] }
-  ) {
-    this.conflicts = data.conflicts;
-  }
+  conflicts: AddEventResponse[] = this.data.conflicts;
 
   confirm() {
     this.dialogRef.close(true);

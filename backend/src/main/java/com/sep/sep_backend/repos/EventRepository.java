@@ -10,8 +10,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
   List<Event> findByStartTimeBetween(LocalDateTime dateTimeAfter, LocalDateTime dateTimeBefore);
 
-  List<Event> findByStartTimeBeforeAndEndTimeAfter(
-          LocalDateTime endTime,
-          LocalDateTime startTime
-  );
+  List<Event> findByStartTimeBeforeAndEndTimeAfter(LocalDateTime endTime, LocalDateTime startTime);
 }

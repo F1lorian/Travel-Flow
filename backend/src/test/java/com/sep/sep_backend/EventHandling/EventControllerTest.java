@@ -44,6 +44,16 @@ class EventControllerTest {
   }
 
   @Test
+  void eventControllerHatDenConflictEndpoint() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod(
+            "getConflictEvents", LocalDateTime.class, LocalDateTime.class);
+
+    GetMapping getMapping = method.getAnnotation(GetMapping.class);
+    assertThat(getMapping.value()).containsExactly("event/conflict");
+  }
+
+  @Test
   void getAllEventsGibtCalendarDtosAusServiceZurueck() {
     EventService eventService = mock(EventService.class);
     EventController eventController = new EventController(eventService);
@@ -93,6 +103,31 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(created);
     verify(eventService).SaveEventToDB(request);
+  }
+
+  @Test
+  void getConflictEventsGibtServiceResponseZurueck() {
+    EventService eventService = mock(EventService.class);
+    EventController eventController = new EventController(eventService);
+    LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
+    LocalDateTime end = LocalDateTime.of(2026, 6, 1, 22, 0);
+    List<EventResponseDTO> conflicts =
+        List.of(
+            new EventResponseDTO(
+                "42",
+                "Konzert",
+                49,
+                LocalDateTime.of(2026, 6, 1, 19, 30),
+                LocalDateTime.of(2026, 6, 1, 21, 0),
+                null));
+
+    when(eventService.conflictCheck(start, end)).thenReturn(conflicts);
+
+    ResponseEntity<List<EventResponseDTO>> response = eventController.getConflictEvents(start, end);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(response.getBody()).isSameAs(conflicts);
+    verify(eventService).conflictCheck(start, end);
   }
 
   @Test
