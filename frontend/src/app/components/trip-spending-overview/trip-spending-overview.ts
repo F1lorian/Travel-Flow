@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @angular-eslint/prefer-inject */
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,7 +18,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
-export class TripSpendingOverviewComponent {
+export class TripSpendingOverviewComponent implements OnInit {
 
   // Currently selected trip. It is loaded based on the route parameter.
   trip: Trip | null = null;

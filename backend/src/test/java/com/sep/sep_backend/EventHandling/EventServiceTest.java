@@ -243,6 +243,50 @@ class EventServiceTest {
   }
 
   @Test
+  void conflictCheckGibtUeberlappendeEventsAlsResponseDtosZurueck() {
+    LocalDateTime requestedStart = LocalDateTime.of(2026, 6, 1, 20, 0);
+    LocalDateTime requestedEnd = LocalDateTime.of(2026, 6, 1, 22, 0);
+    Trip trip = new Trip("London");
+    trip.setId(7L);
+    Event event =
+        new Event(
+            "Konzert",
+            LocalDateTime.of(2026, 6, 1, 19, 30),
+            LocalDateTime.of(2026, 6, 1, 21, 0),
+            49,
+            trip);
+    event.setId(42L);
+
+    when(eventRepository.findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart))
+        .thenReturn(List.of(event));
+
+    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd);
+
+    assertThat(result).hasSize(1);
+    assertThat(result.getFirst().getId()).isEqualTo("42");
+    assertThat(result.getFirst().getName()).isEqualTo("Konzert");
+    assertThat(result.getFirst().getKosten()).isEqualTo(49);
+    assertThat(result.getFirst().getStart()).isEqualTo(event.getStartTime());
+    assertThat(result.getFirst().getEnd()).isEqualTo(event.getEndTime());
+    assertThat(result.getFirst().getTripId()).isEqualTo(7L);
+    verify(eventRepository).findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart);
+  }
+
+  @Test
+  void conflictCheckGibtLeereListeZurueckWennKeineEventsUeberlappen() {
+    LocalDateTime requestedStart = LocalDateTime.of(2026, 6, 1, 20, 0);
+    LocalDateTime requestedEnd = LocalDateTime.of(2026, 6, 1, 22, 0);
+
+    when(eventRepository.findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart))
+        .thenReturn(List.of());
+
+    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd);
+
+    assertThat(result).isEmpty();
+    verify(eventRepository).findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart);
+  }
+
+  @Test
   void deleteEventFromDBLoeschtVorhandenesEvent() {
     when(eventRepository.existsById(42L)).thenReturn(true);
 

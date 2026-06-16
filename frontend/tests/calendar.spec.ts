@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { authenticate, mockCalendarEvents, mockJson, mockTrips } from './helpers';
+import { authenticate, mockCalendarEvents, mockConflictEvents, mockJson, mockTrips } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
@@ -38,6 +38,7 @@ test('Event wird über Dialog erstellt', async ({ page }) => {
     },
     'POST',
   );
+  await mockConflictEvents(page);
 
   await page.goto('/calendar');
   await page.locator('[data-date]').first().click();

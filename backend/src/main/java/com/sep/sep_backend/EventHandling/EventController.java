@@ -1,5 +1,6 @@
 package com.sep.sep_backend.EventHandling;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,21 +47,34 @@ public class EventController {
   }
 
   /**
-   * Imports an event from an uploaded email file and assigns it to a trip.
+   * Parses an event from an uploaded email file without saving it.
    *
    * @param file uploaded email file containing event information
-   * @param tripId identifier of the trip the imported event belongs to
-   * @return response containing the imported and saved event data
+   * @param tripId optional trip identifier sent by the client; saving happens in a later request
+   * @return response containing the parsed event values
    * @throws Exception if the uploaded email cannot be read or parsed
    */
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/create/import")
-  public EventResponseDTO uploadEmail(
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/import/parse")
+  public EventResponseDTO parseEmail(
       @RequestParam("MailFile") MultipartFile file,
       @RequestParam(value = "tripId", required = false) Long tripId)
       throws Exception {
     // Inputstream Notwendig für jakarta
-    var eventDTO = eventService.ParseMailFile(file.getInputStream());
-    return eventService.SaveEventResponseToDB(eventDTO, tripId);
+    return eventService.ParseMailFile(file.getInputStream());
+  }
+
+  /**
+   * Saves a previously parsed imported event and optionally assigns it to a trip.
+   *
+   * @param dto parsed event values sent by the client after conflict handling
+   * @param tripId optional identifier of the trip the imported event belongs to
+   * @return response containing the saved event data
+   */
+  @PostMapping("event/create/import")
+  public EventResponseDTO saveImportedEvent(
+      @RequestBody EventResponseDTO dto,
+      @RequestParam(value = "tripId", required = false) Long tripId) {
+    return eventService.SaveEventResponseToDB(dto, tripId);
   }
 
   /**
@@ -87,5 +101,18 @@ public class EventController {
       @PathVariable Long id, @RequestBody EventRequestDTO dto) {
     var response = eventService.EditEvent(id, dto);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * Returns stored events that overlap the given time interval.
+   *
+   * @param start start date and time of the event being checked
+   * @param end end date and time of the event being checked
+   * @return response containing all conflicting events
+   */
+  @GetMapping("event/conflict")
+  public ResponseEntity<List<EventResponseDTO>> getConflictEvents(
+      @RequestParam LocalDateTime start, @RequestParam LocalDateTime end) {
+    return ResponseEntity.ok(eventService.conflictCheck(start, end));
   }
 }

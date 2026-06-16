@@ -5,8 +5,11 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { EventRecommendation, TripService, Trip, Event, Category } from '../../services/trip.service';
 import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
+import { EventService as CalendarEventService } from '../../../../event-adding-manual/service/event.service';
+import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
 
 @Component({
   selector: 'app-trip-detail',
@@ -17,6 +20,8 @@ import { EventSearchComponent } from '../../../EventRecommendation/pages/event-s
 })
 export class TripDetail implements OnInit {
   private tripService = inject(TripService);
+  private calendarEventService = inject(CalendarEventService);
+  private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -74,22 +79,24 @@ export class TripDetail implements OnInit {
     const endTime = this.newEventEndTime ? this.newEventEndTime + ':00' : undefined;
     const category = this.newEventCategory.trim() || undefined;
 
-    this.tripService.addEvent(tripId, this.newEventName, startTime, endTime, this.newEventKosten, category).subscribe({
-      next: (event) => {
-        this.events.update(list => [...list, event]);
-        this.newEventName = '';
-        this.newEventStartTime = '';
-        this.newEventEndTime = '';
-        this.newEventKosten = 0;
-        this.newEventCategory = '';
-        this.errorMessage = '';
+    this.checkConflictsBeforeCreate(startTime, endTime, () => {
+      this.tripService.addEvent(tripId, this.newEventName, startTime, endTime, this.newEventKosten, category).subscribe({
+        next: (event) => {
+          this.events.update(list => [...list, event]);
+          this.newEventName = '';
+          this.newEventStartTime = '';
+          this.newEventEndTime = '';
+          this.newEventKosten = 0;
+          this.newEventCategory = '';
+          this.errorMessage = '';
 
-        // If user typed a brand-new category, refresh the suggestion list
-        if (event.categoryName && !this.recentCategories().some(c => c.name.toLowerCase() === event.categoryName!.toLowerCase())) {
-          this.tripService.getRecentCategories().subscribe(cats => this.recentCategories.set(cats));
-        }
-      },
-      error: (err) => this.errorMessage = 'Could not add event: ' + err.message
+          // If user typed a brand-new category, refresh the suggestion list
+          if (event.categoryName && !this.recentCategories().some(c => c.name.toLowerCase() === event.categoryName!.toLowerCase())) {
+            this.tripService.getRecentCategories().subscribe(cats => this.recentCategories.set(cats));
+          }
+        },
+        error: (err) => this.errorMessage = 'Could not add event: ' + err.message
+      });
     });
   }
 
@@ -103,12 +110,14 @@ export class TripDetail implements OnInit {
     const startTime = this.normalizeRecommendationDate(recommendation.dateTime);
     const cost = recommendation.price ?? 0;
 
-    this.tripService.addEvent(tripId, recommendation.name, startTime, undefined, cost).subscribe({
-      next: (event) => {
-        this.events.update(list => [...list, event]);
-        this.errorMessage = '';
-      },
-      error: (err) => this.errorMessage = 'Could not add recommended event: ' + err.message
+    this.checkConflictsBeforeCreate(startTime, undefined, () => {
+      this.tripService.addEvent(tripId, recommendation.name, startTime, undefined, cost).subscribe({
+        next: (event) => {
+          this.events.update(list => [...list, event]);
+          this.errorMessage = '';
+        },
+        error: (err) => this.errorMessage = 'Could not add recommended event: ' + err.message
+      });
     });
   }
 
@@ -217,5 +226,33 @@ export class TripDetail implements OnInit {
     }
 
     return normalized.slice(0, 19);
+  }
+
+  private checkConflictsBeforeCreate(startTime: string | undefined, endTime: string | undefined, createEvent: () => void) {
+    if (!startTime) {
+      createEvent();
+      return;
+    }
+
+    this.calendarEventService.getConflictEvents(startTime, endTime ?? startTime).subscribe({
+      next: conflicts => {
+        if (conflicts.length === 0) {
+          createEvent();
+          return;
+        }
+
+        const dialogRef = this.dialog.open(ConflictDialog, {
+          maxWidth: '560px',
+          data: { conflicts },
+        });
+
+        dialogRef.afterClosed().subscribe(confirmed => {
+          if (confirmed) {
+            createEvent();
+          }
+        });
+      },
+      error: (err) => this.errorMessage = err?.error || 'Konfliktpruefung fehlgeschlagen.'
+    });
   }
 }
