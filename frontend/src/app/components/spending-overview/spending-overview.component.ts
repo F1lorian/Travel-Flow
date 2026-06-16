@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @angular-eslint/prefer-inject */
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
@@ -17,7 +17,7 @@ import { Trip, TripService } from '../../TripManagement/services/trip.service';
   templateUrl: './spending-overview.component.html',
   styleUrls: ['./spending-overview.component.css']
 })
-export class SpendingOverviewComponent {
+export class SpendingOverviewComponent implements OnInit {
 
   // Date interval used to filter expenses in the general spending overview.
   startDate: string = '';
