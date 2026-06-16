@@ -1,5 +1,5 @@
 import {Component, inject, OnInit} from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {EventService} from '../../../event-adding-manual/service/event.service';
@@ -42,14 +42,14 @@ export class EventDialog implements OnInit {
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
-  constructor(private dialogRef: MatDialogRef<EventDialog>, @Inject(MAT_DIALOG_DATA) public data: any) {
-    if(data) {
-      this.mode = data.mode || 'create';
-      this.title = data.title || '';
-      this.kosten = data.kosten || undefined;
-      this.tripId = data.tripId || undefined;
-      this.start = data.start || "";
-      this.end = data.end || "";
+  constructor() {
+    if(this.data) {
+      this.mode = this.data.mode || 'create';
+      this.title = this.data.title || '';
+      this.kosten = this.data.kosten || undefined;
+      this.tripId = this.data.tripId || undefined;
+      this.start = this.data.start || "";
+      this.end = this.data.end || "";
     }
     console.log("data dialog");
     console.log(this.data);
@@ -135,7 +135,7 @@ export class EventDialog implements OnInit {
    */
   saveEditedEvent() {
     this.eventService.editEvent({
-      id: this.data.id,
+      id: this.data.id!,
       name: this.title,
       kosten: this.kosten ?? 0,
       tripId: this.tripId,
