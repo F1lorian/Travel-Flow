@@ -1,7 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { authenticate, mockJson, mockTrips } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await authenticate(page);
+  await mockTrips(page, [{ id: 1, name: 'Berlin', events: [] }]);
+  await mockJson(page, '**/api/ausgabenliste?*', []);
+  await mockJson(page, '**/api/proKategorie?*', []);
+});
 
 test('Spending Overview wird angezeigt', async ({ page }) => {
-  await page.goto('http://localhost:4200/overview');
+  await page.goto('/overview');
 
   await expect(page.getByRole('heading', { name: 'Spending Overview' })).toBeVisible();
   await expect(page.getByText('From')).toBeVisible();
@@ -12,15 +20,14 @@ test('Spending Overview wird angezeigt', async ({ page }) => {
 });
 
 test('Filter werden angezeigt', async ({ page }) => {
-  await page.goto('http://localhost:4200/overview');
+  await page.goto('/overview');
 
   await expect(page.locator('#trip-auswaehlen')).toBeVisible();
   await expect(page.getByLabel('Kategorie')).toBeVisible();
 });
 
-test('Add expense button navigates to cashbook', async ({ page }) => {
-  await page.goto('http://localhost:4200/overview');
-
+test('Add-expense-Button navigiert zum Cashbook', async ({ page }) => {
+  await page.goto('/overview');
   await page.getByRole('link', { name: 'Ausgabe hinzufügen' }).click();
 
   await expect(page).toHaveURL(/\/cashbook$/);
