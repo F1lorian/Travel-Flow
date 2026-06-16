@@ -1,7 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
+/* eslint-disable @typescript-eslint/no-inferrable-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @angular-eslint/prefer-inject */
+
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CategorySummaryItem, Expense, ExpenseService } from '../../services/expense.service';
+import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
 import { Router, RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
@@ -13,18 +17,15 @@ import { Trip, TripService } from '../../TripManagement/services/trip.service';
   templateUrl: './spending-overview.component.html',
   styleUrls: ['./spending-overview.component.css']
 })
-export class SpendingOverviewComponent implements OnInit {
-  private readonly expenseService = inject(ExpenseService);
-  private readonly tripService = inject(TripService);
-  private readonly router = inject(Router);
+export class SpendingOverviewComponent {
 
   // Date interval used to filter expenses in the general spending overview.
-  startDate = '';
-  endDate = '';
+  startDate: string = '';
+  endDate: string = '';
 
   // Expenses loaded for the selected date interval.
-  expenses: Expense[] = [];
-  showAllExpenses = false;
+  expenses: any[] = [];
+  showAllExpenses: boolean = false;
 
   // Aggregated expenses by category.
   // Used for both the category table and the pie chart.
@@ -37,7 +38,23 @@ export class SpendingOverviewComponent implements OnInit {
 
   // Category filter for the expense table.
   categories: string[] = [];
-  selectedCategory = 'ALL';
+  selectedCategory: string = 'ALL';
+
+  // English labels for backend category values.
+  // Backend values stay unchanged, only the UI labels are translated.
+  categoryLabels: Record<string, string> = {
+    ESSEN: 'Food',
+    TRANSPORT: 'Transport',
+    HOTEL: 'Hotel',
+    FREIZEIT: 'Leisure',
+    SONSTIGES: 'Other'
+  };
+
+  constructor(
+    private expenseService: ExpenseService,
+    private tripService: TripService,
+    private router: Router
+  ) {}
 
   /**
    * Initializes the spending overview.
@@ -63,9 +80,16 @@ export class SpendingOverviewComponent implements OnInit {
         this.trips = trips;
       },
       error: (error) => {
-        console.error('Fehler beim Laden der Trips:', error);
+        console.error('Error while loading trips:', error);
       }
     });
+  }
+
+  /**
+   * Returns the English display label for a backend category value.
+   */
+  getCategoryLabel(category: string): string {
+    return this.categoryLabels[category] ?? category;
   }
 
   /**
@@ -78,14 +102,14 @@ export class SpendingOverviewComponent implements OnInit {
    */
   loadExpenses(): void {
     this.expenseService.getExpensesByPeriod(this.startDate, this.endDate).subscribe(
-      (data: Expense[]) => {
+      (data: any[]) => {
         this.expenses = data;
 
         // Build the category filter options from the loaded expenses.
         this.categories = [...new Set(data.map(expense => expense.kategorie))];
       },
       (error) => {
-        console.error('Fehler beim Laden der Ausgaben:', error);
+        console.error('Error while loading expenses:', error);
       }
     );
 
@@ -94,11 +118,11 @@ export class SpendingOverviewComponent implements OnInit {
         this.categorySummary = data;
 
         // ApexCharts requires separate arrays for labels and numeric values.
-        this.chartlabels = data.map(item => item.category);
+        this.chartlabels = data.map(item => this.getCategoryLabel(item.category));
         this.chartseries = data.map(item => item.cost);
       },
       (error) => {
-        console.error('Fehler beim Laden der Kategorie-Auswertung:', error);
+        console.error('Error while loading category summary:', error);
       }
     );
   }

@@ -1,5 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CategorySummaryItem, Expense, ExpenseService } from '../../services/expense.service';
+/* eslint-disable @angular-eslint/component-selector */
+/* eslint-disable @typescript-eslint/no-inferrable-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @angular-eslint/prefer-inject */
+
+import { Component } from '@angular/core';
+import { CategorySummaryItem, ExpenseService } from '../../services/expense.service';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -7,55 +12,68 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-trip-spending-overview',
+  selector: 'trip-spending-overview',
   standalone: true,
   imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule, FormsModule],
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
-export class TripSpendingOverviewComponent implements OnInit {
-  private readonly expenseService = inject(ExpenseService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly tripService = inject(TripService);
-  private readonly router = inject(Router);
+export class TripSpendingOverviewComponent {
 
   // Currently selected trip. It is loaded based on the route parameter.
   trip: Trip | null = null;
-  tripname = '';
+  tripname: string = '';
 
   // Budget-related values displayed at the top of the page.
-  budget = 0;
-  summedExpenses = 0;
-  available = 0;
+  budget: number = 0;
+  summedExpenses: number = 0;
+  available: number = 0;
 
   // Custom warning range.
   // Interpreted as remaining-budget threshold, e.g. warn when <= 100 € remain.
-  warningRange = 0;
+  warningRange: number = 0;
 
   // State for the budget editing dialog.
-  showBudgetDialog = false;
-  budgetInput = 0;
-  warningRangeInput = 0;
-  budgetErrorMessage = '';
-  budgetSuccessMessage = '';
+  showBudgetDialog: boolean = false;
+  budgetInput: number = 0;
+  warningRangeInput: number = 0;
+  budgetErrorMessage: string = '';
+  budgetSuccessMessage: string = '';
 
   // Expense list and display state.
-  expenses: Expense[] = [];
-  showAllExpenses = false;
+  expenses: any[] = [];
+  showAllExpenses: boolean = false;
 
   // Data used for category table and ApexCharts pie chart.
   categorySummary: CategorySummaryItem[] = [];
   chartseries: number[] = [];
   chartlabels: string[] = [];
 
-  errorMessage = '';
+  errorMessage: string = '';
 
   // Available trips for switching between trip-specific overviews.
   trips: Trip[] = [];
 
   // Category filter for the expense table.
   categories: string[] = [];
-  selectedCategory = 'ALL';
+  selectedCategory: string = 'ALL';
+
+  // English labels for backend category values.
+  // Backend values stay unchanged, only the UI labels are translated.
+  categoryLabels: Record<string, string> = {
+    ESSEN: 'Food',
+    TRANSPORT: 'Transport',
+    HOTEL: 'Hotel',
+    FREIZEIT: 'Leisure',
+    SONSTIGES: 'Other'
+  };
+
+  constructor(
+    private expenseService: ExpenseService,
+    private route: ActivatedRoute,
+    private tripService: TripService,
+    private router: Router
+  ) {}
 
   /**
    * Initializes the component.
@@ -71,7 +89,7 @@ export class TripSpendingOverviewComponent implements OnInit {
       const tripId = Number(params['id']);
 
       if (!tripId) {
-        this.errorMessage = 'TripId fehlt';
+        this.errorMessage = 'Trip ID is missing.';
         return;
       }
 
@@ -83,9 +101,16 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.trips = trips;
       },
       error: (error) => {
-        console.error('Fehler beim Laden der Trips', error);
+        console.error('Error while loading trips:', error);
       }
     });
+  }
+
+  /**
+   * Returns the English display label for a backend category value.
+   */
+  getCategoryLabel(category: string): string {
+    return this.categoryLabels[category] ?? category;
   }
 
   /**
@@ -100,8 +125,8 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.loadTripExpenses();
       },
       error: (error) => {
-        console.error('Fehler beim Laden des Trips', error);
-        this.errorMessage = 'Trip konnte nicht geladen werden.';
+        console.error('Error while loading the trip:', error);
+        this.errorMessage = 'Trip could not be loaded.';
       }
     });
   }
@@ -121,7 +146,7 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.budget = data;
       },
       error: (error) => {
-        console.error('Fehler beim Laden des Budgets', error);
+        console.error('Error while loading the budget:', error);
       }
     });
 
@@ -130,7 +155,7 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.warningRange = data;
       },
       error: (error) => {
-        console.error('Fehler beim Laden des Warnbereichs', error);
+        console.error('Error while loading the warning range:', error);
       }
     });
 
@@ -139,7 +164,7 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.summedExpenses = data;
       },
       error: (error) => {
-        console.error('Fehler beim Laden der Summe des Trips', error);
+        console.error('Error while loading the trip expense sum:', error);
       }
     });
 
@@ -148,7 +173,7 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.available = data;
       },
       error: (error) => {
-        console.error('Fehler beim Laden der verfuegbaren Mitteln des Trips', error);
+        console.error('Error while loading the available budget:', error);
       }
     });
 
@@ -160,7 +185,7 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.categories = [...new Set(data.map(expense => expense.kategorie))];
       },
       error: (error) => {
-        console.error('Fehler beim Laden der Ausgaben', error);
+        console.error('Error while loading expenses:', error);
       }
     });
 
@@ -169,11 +194,11 @@ export class TripSpendingOverviewComponent implements OnInit {
         this.categorySummary = data;
 
         // ApexCharts expects labels and series as separate arrays.
-        this.chartlabels = data.map(item => item.category);
+        this.chartlabels = data.map(item => this.getCategoryLabel(item.category));
         this.chartseries = data.map(item => item.cost);
       },
       error: (error) => {
-        console.error('Fehler beim Laden der kategorisierten Ausgaben', error);
+        console.error('Error while loading categorized expenses:', error);
       }
     });
   }
@@ -262,12 +287,12 @@ export class TripSpendingOverviewComponent implements OnInit {
     this.budgetSuccessMessage = '';
 
     if (!this.tripname) {
-      this.budgetErrorMessage = 'Tripname fehlt.';
+      this.budgetErrorMessage = 'Trip name is missing.';
       return;
     }
 
     if (this.budgetInput === null || this.budgetInput === undefined || this.budgetInput < 0) {
-      this.budgetErrorMessage = 'Bitte gib ein gültiges Budget ein.';
+      this.budgetErrorMessage = 'Please enter a valid budget.';
       return;
     }
 
@@ -276,12 +301,12 @@ export class TripSpendingOverviewComponent implements OnInit {
       this.warningRangeInput === undefined ||
       this.warningRangeInput < 0
     ) {
-      this.budgetErrorMessage = 'Bitte gib einen gültigen Warnbereich ein.';
+      this.budgetErrorMessage = 'Please enter a valid warning range.';
       return;
     }
 
     if (this.warningRangeInput > this.budgetInput) {
-      this.budgetErrorMessage = 'Der Warnbereich darf nicht größer als das Budget sein.';
+      this.budgetErrorMessage = 'The warning range must not be greater than the budget.';
       return;
     }
 
@@ -298,19 +323,19 @@ export class TripSpendingOverviewComponent implements OnInit {
           next: (updatedWarningRange) => {
             this.warningRange = updatedWarningRange;
             this.showBudgetDialog = false;
-            this.budgetSuccessMessage = 'Budget und Warnbereich wurden aktualisiert.';
+            this.budgetSuccessMessage = 'Budget and warning range have been updated.';
 
             this.loadTripExpenses();
           },
           error: (error) => {
-            console.error('Fehler beim Aktualisieren des Warnbereichs:', error);
-            this.budgetErrorMessage = 'Warnbereich konnte nicht gespeichert werden.';
+            console.error('Error while updating the warning range:', error);
+            this.budgetErrorMessage = 'Warning range could not be saved.';
           }
         });
       },
       error: (error) => {
-        console.error('Fehler beim Aktualisieren des Budgets:', error);
-        this.budgetErrorMessage = 'Budget konnte nicht gespeichert werden.';
+        console.error('Error while updating the budget:', error);
+        this.budgetErrorMessage = 'Budget could not be saved.';
       }
     });
   }
