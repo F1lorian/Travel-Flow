@@ -11,26 +11,26 @@ test.beforeEach(async ({ page }) => {
 test('Cashbook wird angezeigt', async ({ page }) => {
   await page.goto('/cashbook');
 
-  await expect(page.getByRole('heading', { name: 'Ausgabe hinzufügen' })).toBeVisible();
-  await expect(page.getByText('Betrag (€)')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add expense' })).toBeVisible();
+  await expect(page.getByText(/Amount/)).toBeVisible();
   await expect(page.getByText('Trip', { exact: true })).toBeVisible();
-  await expect(page.getByText('Datum', { exact: true })).toBeVisible();
-  await expect(page.getByText('Kategorie', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Hinzufügen' })).toBeEnabled();
+  await expect(page.getByText('Date', { exact: true })).toBeVisible();
+  await expect(page.getByText('Category', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add' })).toBeEnabled();
 });
 
 test('Eingabefelder werden angezeigt', async ({ page }) => {
   await page.goto('/cashbook');
 
-  await expect(page.getByLabel('Betrag (€)')).toBeVisible();
+  await expect(page.getByLabel(/Amount/)).toBeVisible();
   await expect(page.getByLabel('Trip')).toBeVisible();
-  await expect(page.getByLabel('Datum')).toBeVisible();
-  await expect(page.getByLabel('Kategorie')).toBeVisible();
+  await expect(page.getByLabel('Date')).toBeVisible();
+  await expect(page.getByLabel('Category')).toBeVisible();
 });
 
-test('Zurück-Link navigiert zur Spending Overview', async ({ page }) => {
+test('Zurueck-Link navigiert zur Spending Overview', async ({ page }) => {
   await page.goto('/cashbook');
-  await page.getByRole('link', { name: 'Zurück zur Übersicht' }).click();
+  await page.getByRole('link', { name: 'Back to overview' }).click();
 
   await expect(page).toHaveURL(/\/overview$/);
 });
