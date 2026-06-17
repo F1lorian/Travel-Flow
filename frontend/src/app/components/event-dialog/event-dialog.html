@@ -9,21 +9,21 @@
         <div class="bg-gray-50 rounded-lg p-3">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
-            Beginn
+            Start
           </p>
           <p class="text-base text-slate-800">{{ start | date:'dd.MM.yyyy, HH:mm' }}</p>
         </div>
         <div class="bg-gray-50 rounded-lg p-3">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
-            Ende
+            End
           </p>
           <p class="text-base text-slate-800">{{ end | date:'dd.MM.yyyy, HH:mm' }}</p>
         </div>
         <div class="bg-gray-50 rounded-lg p-3">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">euro</mat-icon>
-            Kosten
+            Cost
           </p>
           <p class="text-base text-slate-800">{{ data.kosten }} €</p>
         </div>
@@ -39,7 +39,7 @@
     <div class="border-t border-gray-200 px-6 py-4">
       <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
         <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
-        Teilnehmende Freunde · {{friends.length}}
+        Attending friends · {{friends.length}}
       </p>
       @for (friend of friends; track friend) {
         <div class="flex items-center gap-3 mb-2">
@@ -50,30 +50,30 @@
         </div>
       }
       @if (friends.length === 0) {
-        <p class="text-sm text-gray-400">Keine Freunde eingeladen</p>
+        <p class="text-sm text-gray-400">No friends are currently attending</p>
       }
     </div>
   } @else {
     <div class="border-t border-gray-200 px-6 py-4">
-      <label class="mb-2 block text-sm font-semibold text-slate-700" for="title">Titel:</label>
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="title">Title:</label>
       <input
         [(ngModel)]="title"
-        placeholder="Titel eingeben"
+        placeholder="Enter the title"
         class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
          text-slate-900 placeholder:text-slate-400
          outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
-      <label class="mb-2 block text-sm font-semibold text-slate-700" for="kosten">Kosten</label>
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="kosten">Cost</label>
       <input
         [(ngModel)]="kosten"
-        placeholder="Kosten eingeben"
+        placeholder="Enter the costs"
         class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
          text-slate-900 placeholder:text-slate-400
          outline-none transition
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
-      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip wählen</label>
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose Trip</label>
       <select
         [(ngModel)]="tripId"
         class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
@@ -81,11 +81,11 @@
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
         <option [ngValue]="undefined" disabled>
-          Bitte Trip auswählen
+          Please choose a trip
         </option>
 
         <option [ngValue]="undefined">
-          Das Event gehört zu keinem Trip
+          The Event doesn´t belong to a trip
         </option>
 
         @for (trip of trips; track trip.id) {
@@ -100,7 +100,7 @@
     <div class="border-t border-gray-200 px-6 py-4">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">Startzeit</label>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">start-time</label>
           <input
             [(ngModel)]="start"
             type="datetime-local"
@@ -110,7 +110,7 @@
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
         </div>
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">Endzeit</label>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">end-time</label>
           <input
             [(ngModel)]="end"
             type="datetime-local"
@@ -122,13 +122,13 @@
       </div>
       <label class="flex items-center gap-2">
         <input type="checkbox" [(ngModel)]="allDay">
-        Ganztägig
+        all-day
       </label>
     </div>
     <div class="border-t border-gray-200 px-6 py-4">
       <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
         <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
-        Freunde einladen
+        Invite friends
       </p>
       <select
         [(ngModel)]="friends"
@@ -137,7 +137,7 @@
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
         <option [ngValue]="undefined" disabled>
-          Freunde auswählen
+          Choose friends
         </option>
 <!-- hier die freundesliste auslesen und alle freunde zur auswahl zeigen
         @for (trip of trips; track trip.id) {
@@ -158,7 +158,7 @@
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]">
 
-        {{ mode === 'create' ? 'Erstellen' : 'Änderungen speichern' }}
+        {{ mode === 'create' ? 'Create event' : 'Save changes' }}
       </button>
     }
 
@@ -169,7 +169,7 @@
          font-semibold text-slate-700
          transition hover:bg-slate-100">
 
-        Löschen
+        Delete
       </button>
     }
 
@@ -179,7 +179,7 @@
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]">
 
-        Event bearbeiten
+        Edit
       </button>
     }
 
@@ -189,7 +189,7 @@
          font-semibold text-slate-700
          transition hover:bg-slate-100">
 
-      Abbrechen
+      Cancel
     </button>
 
   </div>
