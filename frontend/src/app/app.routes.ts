@@ -7,6 +7,7 @@ import { TripSpendingOverviewComponent } from './components/trip-spending-overvi
 import { AccountManagement } from './account-management/account-management';
 import { authGuard } from './account-management/auth.guard';
 import { CalendarComponent } from './components/calendar/calendar';
+import { Friends } from './components/friends/friends';
 
 export const routes: Routes = [
   { path: 'account', component: AccountManagement },
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'trip-spending-overview/:id', component: TripSpendingOverviewComponent, canActivate: [authGuard] },
   { path: 'cashbook', component: CashbookComponent, canActivate: [authGuard] },
   { path: 'overview', component: SpendingOverviewComponent, canActivate: [authGuard] },
+  { path: 'friends', component: Friends, canActivate: [authGuard] },
   { path: '', redirectTo: 'account', pathMatch: 'full' },
-  { path: '**', redirectTo: 'account' }
+  { path: '**', redirectTo: 'account' },
 ];

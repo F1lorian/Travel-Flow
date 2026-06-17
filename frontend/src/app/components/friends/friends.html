@@ -1,0 +1,103 @@
+<div class="mx-auto w-full max-w-5xl px-6 py-8 text-slate-900">
+  <h1 class="mb-8 text-3xl font-bold tracking-tight">Friends</h1>
+
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Search for users</h2>
+
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <input
+        type="text"
+        [(ngModel)]="searchName"
+        placeholder="Search by name or username"
+        (keyup.enter)="searchUsers()"
+        class="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3
+                 text-slate-900 placeholder:text-slate-400 outline-none transition
+                 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+      />
+
+      <button
+        type="button"
+        (click)="searchUsers()"
+        class="min-h-11 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
+                 transition hover:bg-blue-700 active:scale-[0.99]"
+      >
+        Search
+      </button>
+    </div>
+  </section>
+
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Results</h2>
+
+    @if (searchResults.length === 0) {
+      <p class="text-slate-500">No users found.</p>
+    } @else {
+      <ul class="divide-y divide-slate-200">
+        @for (user of searchResults; track user.id) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="font-semibold text-slate-900">
+                {{ user.firstName }} {{ user.surname }}
+              </p>
+              <p class="text-sm text-slate-500">
+                &#64;{{ user.username }}
+              </p>
+            </div>
+
+            @if (user.connected) {
+              <button
+                type="button"
+                disabled
+                class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2
+                         font-semibold text-slate-500"
+              >
+                Already connected
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="addFriend(user.id)"
+                class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
+                         transition hover:bg-slate-700 active:scale-[0.99]"
+              >
+                Add to friends
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Your friends</h2>
+
+    @if (friends.length === 0) {
+      <p class="text-slate-500">You have not added any friends yet.</p>
+    } @else {
+      <ul class="divide-y divide-slate-200">
+        @for (friend of friends; track friend.id) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="font-semibold text-slate-900">
+                {{ friend.firstName }} {{ friend.surname }}
+              </p>
+              <p class="text-sm text-slate-500">
+                &#64;{{ friend.username }}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              (click)="removeFriend(friend.id)"
+              class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Remove
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>
