@@ -20,9 +20,9 @@ test('Alle Elemente werden angezeigt', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'week', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'day', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'list', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Event hinzufügen' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Event importieren' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Events exportieren' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Import Event' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Export Event' })).toBeVisible();
 });
 
 test('Event wird über Dialog erstellt', async ({ page }) => {
@@ -42,8 +42,8 @@ test('Event wird über Dialog erstellt', async ({ page }) => {
 
   await page.goto('/calendar');
   await page.locator('[data-date]').first().click();
-  await page.getByPlaceholder('Titel eingeben').fill('Mein Test Event');
-  await page.getByRole('button', { name: 'Erstellen' }).click();
+  await page.getByPlaceholder('Enter the title').fill('Mein Test Event');
+  await page.getByRole('button', { name: 'Create' }).click();
 
   await expect(page.getByText('Mein Test Event')).toBeVisible();
 });

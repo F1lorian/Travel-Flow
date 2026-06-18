@@ -11,11 +11,11 @@ test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
   await page.goto('/calendar');
   await page.locator('[data-date]').first().click();
 
-  await expect(page.getByRole('heading', { name: 'Neues Event' })).toBeVisible();
-  await expect(page.getByPlaceholder('Titel eingeben')).toBeVisible();
-  await expect(page.getByPlaceholder('Kosten eingeben')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Erstellen' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Abbrechen' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Create new Event' })).toBeVisible();
+  await expect(page.getByPlaceholder('Enter the title')).toBeVisible();
+  await expect(page.getByPlaceholder('Enter the costs')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create event' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
 });
 
 test('Alle Elemente werden angezeigt wenn mode = edit', async ({ page }) => {
@@ -31,11 +31,11 @@ test('Alle Elemente werden angezeigt wenn mode = edit', async ({ page }) => {
 
   await page.goto('/calendar');
   await page.getByText('Test Event').click();
-  await page.getByRole('button', { name: 'Event bearbeiten' }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Event bearbeiten' })).toBeVisible();
-  await expect(page.getByPlaceholder('Titel eingeben')).toHaveValue('Test Event');
-  await expect(page.getByRole('button', { name: 'Änderungen speichern' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Löschen' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Abbrechen' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edit Event' })).toBeVisible();
+  await expect(page.getByPlaceholder('Enter the title')).toHaveValue('Test Event');
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
 });

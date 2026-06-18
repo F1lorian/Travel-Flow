@@ -52,7 +52,7 @@ export class EventDialog implements OnInit {
   dialog = inject(MatDialog);
   trips: Trip[] = [];
   friends: string[] = [];
-  allDay: boolean = false;
+  allDay = false;
   errorMessage = "";
 
 
