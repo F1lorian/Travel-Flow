@@ -3,7 +3,9 @@ package com.sep.sep_backend.Enitys;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -44,6 +46,13 @@ public class User {
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "trip_id"))
   private List<Trip> trips;
+
+  @ManyToMany
+  @JoinTable(
+      name = "user_friends",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "friend_id"))
+  private Set<User> friends = new HashSet<>();
 
   public User() {}
 
@@ -156,5 +165,13 @@ public class User {
 
   public void setTrips(List<Trip> trips) {
     this.trips = trips;
+  }
+
+  public Set<User> getFriends() {
+    return friends;
+  }
+
+  public void setFriends(Set<User> friends) {
+    this.friends = friends;
   }
 }
