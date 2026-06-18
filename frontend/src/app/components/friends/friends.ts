@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {Friend, FriendSearchResult, FriendsService} from '../../services/friends.service';
 import {FormsModule} from '@angular/forms';
 
@@ -11,13 +11,12 @@ import {FormsModule} from '@angular/forms';
 })
 
 export class Friends implements OnInit {
+  private readonly friendsService = inject(FriendsService);
+
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
-  searchName: string = '';
+  searchName = '';
 
-  constructor(
-              private friendsService: FriendsService
-  ) {}
   ngOnInit() {
     this.friendsService.getFriends().subscribe((data) => {
         this.friends = data;
