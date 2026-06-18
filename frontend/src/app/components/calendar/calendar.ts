@@ -212,6 +212,7 @@ export class CalendarComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result?.action === 'created') this.addCreatedEvent(result.event);
+      if (result?.action === 'error') this.showMessage(result.message);
     });
   }
 
@@ -238,6 +239,7 @@ export class CalendarComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result?.action === 'saved') this.updateEditedEvent(selectedEvent.id, result.event);
       if (result?.action === 'deleted') this.removeDeletedEvent(selectedEvent.id);
+      if (result?.action === 'error') this.showMessage(result.message);
     });
   }
 
