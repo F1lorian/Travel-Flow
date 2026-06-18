@@ -47,19 +47,19 @@ export class CalendarComponent implements OnInit {
     fixedWeekCount: true,
     customButtons:{
       eventAddenButton:{
-        text:'Event hinzufügen',
+        text:'Add Event',
         click: () => {
           this.createEvent();
         }
       },
       eventImportButton:{
-        text:'Event importieren',
+        text:'Import Event',
         click: () => {
           this.importEvent();
         }
       },
       eventExportButton:{
-        text:'Events exportieren',
+        text:'Export Event',
         click: () => {
           this.exportEvents();
         }
@@ -109,6 +109,8 @@ export class CalendarComponent implements OnInit {
     }
 
     const dialogRef = this.dialog.open(EventDialog, {
+      maxHeight: '90vh',
+      height: 'auto',
       data: {
         mode: 'show',
         id: selectedEvent.id,

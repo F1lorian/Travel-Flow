@@ -1,0 +1,25 @@
+::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .mat-mdc-dialog-content {
+  flex: 1 1 auto !important;
+  overflow-y: scroll !important;
+  max-height: unset !important;
+  min-height: 0 !important;
+}
+
+::ng-deep .mat-mdc-dialog-content .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+::ng-deep .mat-mdc-dialog-title {
+  flex: 0 0 auto !important;
+}
+
+::ng-deep .mat-mdc-dialog-actions {
+  flex: 0 0 auto !important;
+}

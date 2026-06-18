@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-2">
 
       <label class="font-semibold text-sm" for="event-file">
-        Event-Datei importieren
+        Import event file
       </label>
 
       <div
@@ -21,11 +21,11 @@
 
         @if (!fileName){
           <p class="text-base font-semibold text-slate-800">
-            Datei hier ablegen
+            Drop the file here
           </p>
 
           <p class="mt-1 text-sm text-slate-500">
-            oder klicken zum Hochladen
+            or click to upload
           </p>
 
         }
@@ -39,7 +39,7 @@
 
       </div>
 
-      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Trip auswählen</label>
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
       <select
         id="tripId"
         [(ngModel)]="tripId"
@@ -48,11 +48,11 @@
          focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
         <option [ngValue]="undefined" disabled>
-          Bitte Trip auswählen
+          Please choose a trip
         </option>
 
         <option [ngValue]="undefined">
-          Das Event gehört zu keinem Trip
+          The Event doesn´t belong to a trip
         </option>
 
         @for (trip of trips; track trip.id) {
@@ -95,7 +95,7 @@
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]">
 
-        Importieren
+        Import
       </button>
     }
 
@@ -104,7 +104,7 @@
       class="rounded-lg border border-slate-300 bg-white px-5 py-3
          font-semibold text-slate-700
          transition hover:bg-slate-100">
-      Schließen
+      Close
     </button>
   </div>
 
