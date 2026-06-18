@@ -19,7 +19,11 @@
         } @else {
           <ul class="event-list">
             @for (event of events(); track event.id) {
-              <li class="event-item" (click)="openShowDialog(event)" style="cursor: pointer;">
+              <li class="event-item"
+                  tabindex="0"
+                  (click)="openShowDialog(event)"
+                  (keydown.enter)="openShowDialog(event)"
+                  style="cursor: pointer;">
                 <div class="event-main">
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
