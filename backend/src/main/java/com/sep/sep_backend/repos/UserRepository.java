@@ -21,4 +21,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
   List<User>
       findByNameContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrSurnameContainingIgnoreCase(
           String name, String firstName, String surname);
+
 }

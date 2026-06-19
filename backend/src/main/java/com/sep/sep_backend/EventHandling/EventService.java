@@ -159,18 +159,16 @@ public class EventService {
    *
    * @return list of calendar event DTOs
    */
-  public List<EventCalendarDTO> GetAllEventsFromDb() {
-    return eventRepository.findAll().stream()
-        .map(
-            event ->
-                new EventCalendarDTO(
+  public List<EventCalendarDTO> getAllEventsFromDb(Long userId) {
+    return eventRepository.findAllByUserId(userId).stream()
+            .map(event -> new EventCalendarDTO(
                     String.valueOf(event.getId()),
                     event.getName(),
                     event.getKosten(),
                     event.getStartTime(),
                     event.getEndTime(),
                     event.getTripId()))
-        .toList();
+            .toList();
   }
 
   /**

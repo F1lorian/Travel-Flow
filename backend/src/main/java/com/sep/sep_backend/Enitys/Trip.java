@@ -29,6 +29,17 @@ public class Trip {
   @OneToMany(mappedBy = "trip")
   private List<Ausgabe> ausgaben;
 
+  @ManyToMany(mappedBy = "trips")
+  private List<User> users;
+
+  public List<User> getUsers() {
+    return users;
+  }
+
+  public void setUsers(List<User> users) {
+    this.users = users;
+  }
+
   public Trip() {}
 
   public Trip(String name) {

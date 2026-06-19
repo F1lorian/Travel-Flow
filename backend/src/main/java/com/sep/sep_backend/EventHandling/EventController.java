@@ -2,8 +2,12 @@ package com.sep.sep_backend.EventHandling;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.repos.UserRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,14 +18,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class EventController {
 
   private final EventService eventService;
+  private final UserRepository userRepository;
 
   /**
    * Creates an event controller that delegates event operations to the service layer.
    *
    * @param eventService service used to process event requests
    */
-  public EventController(EventService eventService) {
+  public EventController(EventService eventService, UserRepository userRepository) {
     this.eventService = eventService;
+    this.userRepository = userRepository;
   }
 
   /**
@@ -42,8 +48,10 @@ public class EventController {
    * @return response containing all calendar events
    */
   @GetMapping("event/pull/all_events")
-  public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
-    return ResponseEntity.ok(eventService.GetAllEventsFromDb());
+  public ResponseEntity<List<EventCalendarDTO>> getAllEvents(Authentication authentication) {
+    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    return ResponseEntity.ok(eventService.getAllEventsFromDb(user.getId()));
   }
 
   /**
