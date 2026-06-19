@@ -1,9 +1,63 @@
 .account-page {
   min-height: 100vh;
   display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #ffffff;
+}
+
+.brand-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0866ff 0%, #4f46e5 55%, #7c3aed 100%);
+}
+
+.brand-content {
+  width: min(440px, 100%);
+}
+
+.brand-name {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.brand-tagline {
+  margin: 0 0 20px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.brand-description {
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.brand-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.brand-points li {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.form-side {
+  display: grid;
   place-items: center;
   padding: 32px 16px;
-  background: #ffffff;
 }
 
 .login-panel,
@@ -144,6 +198,24 @@ input::placeholder {
 .error {
   background: #fdeaea;
   color: #9b1c1c;
+}
+
+@media (max-width: 900px) {
+  .account-page {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    padding: 40px 24px;
+  }
+
+  .brand-name {
+    font-size: 36px;
+  }
+
+  .brand-tagline {
+    font-size: 20px;
+  }
 }
 
 @media (max-width: 640px) {

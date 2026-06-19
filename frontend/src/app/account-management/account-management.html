@@ -1,4 +1,22 @@
 <section class="account-page">
+  <aside class="brand-panel">
+    <div class="brand-content">
+      <h1 class="brand-name">SEP Travel</h1>
+      <p class="brand-tagline">Plan smarter. Travel better. Together.</p>
+      <p class="brand-description">
+        Organize your trips with AI that finds the events suited best to you — then share them
+        with friends and make every journey easier, cheaper, and more memorable.
+      </p>
+      <ul class="brand-points">
+        <li>🤖 AI-picked events tailored to your taste</li>
+        <li>👫 Plan and share trips with your friends</li>
+        <li>💸 Keep budgets and expenses under control</li>
+        <li>🗓️ Your whole trip in one smart calendar</li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="form-side">
   @if (mode() === 'login') {
     <form class="login-panel" (ngSubmit)="login()">
       <h1>Log in to SEP</h1>
@@ -228,4 +246,5 @@
       <button class="primary-action" type="submit">Change password</button>
     </form>
   }
+  </div>
 </section>
