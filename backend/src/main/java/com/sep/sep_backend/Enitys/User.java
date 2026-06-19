@@ -49,6 +49,13 @@ public class User {
 
   @ManyToMany
   @JoinTable(
+      name = "user_events",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "event_id"))
+  private List<Event> events;
+
+  @ManyToMany
+  @JoinTable(
       name = "user_friends",
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "friend_id"))
@@ -165,6 +172,14 @@ public class User {
 
   public void setTrips(List<Trip> trips) {
     this.trips = trips;
+  }
+
+  public List<Event> getEvents() {
+    return events;
+  }
+
+  public void setEvents(List<Event> events) {
+    this.events = events;
   }
 
   public Set<User> getFriends() {
