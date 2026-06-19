@@ -10,6 +10,7 @@ import { EventRecommendation, TripService, Trip, Event, Category } from '../../s
 import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
 import { EventService as CalendarEventService } from '../../../../event-adding-manual/service/event.service';
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
+import { EventDialog } from '../../../components/event-dialog/event-dialog';
 
 @Component({
   selector: 'app-trip-detail',
@@ -41,12 +42,6 @@ export class TripDetail implements OnInit {
   tripSearch = '';
   targetTrip = signal<Trip | null>(null);
 
-  newEventName = '';
-  newEventStartTime = '';
-  newEventEndTime = '';
-  newEventKosten = 0;
-  newEventCategory = '';
-
   ngOnInit() {
     // Trip id comes from the route (/trips/:id). The trip response already
     // includes its events, so we seed both signals from one request.
@@ -65,38 +60,88 @@ export class TripDetail implements OnInit {
     });
   }
 
-  addEvent() {
+  openCreateDialog() {
     const tripId = this.trip()?.id;
-    if (!tripId) return;
+    const dialogRef = this.dialog.open(EventDialog, {
+      maxHeight: '90vh',
+      height: 'auto',
+      data: { mode: 'create', tripId: tripId }
+    });
 
-    if (!this.newEventName.trim()) {
-      this.errorMessage = 'Please enter an event name';
-      return;
-    }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'created') {
+        this.events.update(list => [...list, {
+          id: Number(result.event.id),
+          name: result.event.name,
+          kosten: result.event.kosten,
+          startTime: result.event.start,
+          endTime: result.event.end,
+        }]);
+      }
+      if (result?.action === 'error') {
+        this.errorMessage = result.message;
+      }
+    });
+  }
 
-    // datetime-local gives YYYY-MM-DDTHH:MM, backend needs seconds appended
-    const startTime = this.newEventStartTime ? this.newEventStartTime + ':00' : undefined;
-    const endTime = this.newEventEndTime ? this.newEventEndTime + ':00' : undefined;
-    const category = this.newEventCategory.trim() || undefined;
+  openShowDialog(event: Event) {
+    const dialogRef = this.dialog.open(EventDialog, {
+      maxHeight: '90vh',
+      height: 'auto',
+      data: {
+        mode: 'show',
+        id: String(event.id),
+        title: event.name,
+        kosten: event.kosten,
+        tripId: this.trip()?.id,
+        start: event.startTime?.substring(0, 16),
+        end: event.endTime?.substring(0, 16),
+      }
+    });
 
-    this.checkConflictsBeforeCreate(startTime, endTime, () => {
-      this.tripService.addEvent(tripId, this.newEventName, startTime, endTime, this.newEventKosten, category).subscribe({
-        next: (event) => {
-          this.events.update(list => [...list, event]);
-          this.newEventName = '';
-          this.newEventStartTime = '';
-          this.newEventEndTime = '';
-          this.newEventKosten = 0;
-          this.newEventCategory = '';
-          this.errorMessage = '';
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'edit') {
+        this.openEditDialog(event);
+      }
+    });
+  }
 
-          // If user typed a brand-new category, refresh the suggestion list
-          if (event.categoryName && !this.recentCategories().some(c => c.name.toLowerCase() === event.categoryName!.toLowerCase())) {
-            this.tripService.getRecentCategories().subscribe(cats => this.recentCategories.set(cats));
-          }
-        },
-        error: (err) => this.errorMessage = 'Could not add event: ' + err.message
-      });
+  openEditDialog(event: Event) {
+    const dialogRef = this.dialog.open(EventDialog, {
+      maxHeight: '90vh',
+      height: 'auto',
+      data: {
+        mode: 'edit',
+        id: String(event.id),
+        title: event.name,
+        kosten: event.kosten,
+        tripId: this.trip()?.id,
+        start: event.startTime?.substring(0, 16),
+        end: event.endTime?.substring(0, 16),
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'saved') {
+        this.events.update(list =>
+          list.map(e => e.id === event.id
+            ? {
+              ...e,
+              name: result.event.name,
+              kosten: result.event.kosten,
+              startTime: result.event.start,
+              endTime: result.event.end,
+            }
+            : e
+          )
+        );
+      }
+      if (result?.action === 'deleted') {
+        this.events.update(list => list.filter(e => e.id !== event.id));
+      }
+      if (result?.action === 'error') {
+        this.errorMessage = result.message;
+      }
     });
   }
 

@@ -51,7 +51,7 @@ export class EventDialog implements OnInit {
   eventService = inject(EventService);
   dialog = inject(MatDialog);
   trips: Trip[] = [];
-  friends: string[] = [];
+  friends: string[] = ["nikolay", "florian"];
   allDay = false;
   errorMessage = "";
 
@@ -142,7 +142,8 @@ export class EventDialog implements OnInit {
       end: this.end,
     }).subscribe({
       next: (response) => this.dialogRef.close({ action: 'created', event: response }),
-      error: (err) => this.showError(err)
+      error: (err) => {this.dialogRef.close({ action: 'error', message: err?.error || 'Event konnte nicht erstellt werden.' });
+      }
     });
   }
 

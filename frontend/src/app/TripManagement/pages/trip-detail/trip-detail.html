@@ -4,53 +4,14 @@
   @if (trip()) {
     <div class="trip-header">
       <h1>{{ trip()!.name }}</h1>
-      <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+      <div class="trip-header-actions">
+        <button class="add-event-btn" (click)="openCreateDialog()">Add Event</button>
+        <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+      </div>
     </div>
 
     <div class="main-layout">
       <div class="left-content">
-        <!-- Add event form -->
-        <div class="add-event-section">
-          <h2>Add an event</h2>
-          <div class="form-grid">
-            <label class="field">
-              <span>Name <span class="req">*</span></span>
-              <input type="text" [(ngModel)]="newEventName" placeholder="e.g. Dinner" />
-            </label>
-            <label class="field">
-              Start time
-              <input type="datetime-local" [(ngModel)]="newEventStartTime" />
-            </label>
-            <label class="field">
-              End time
-              <input type="datetime-local" [(ngModel)]="newEventEndTime" />
-            </label>
-            <label class="field">
-              Cost (€)
-              <input type="number" [(ngModel)]="newEventKosten" min="0" />
-            </label>
-            <label class="field">
-              Category
-              <input
-                type="text"
-                [(ngModel)]="newEventCategory"
-                placeholder="pick or type new"
-                list="recent-categories"
-              />
-            </label>
-            <datalist id="recent-categories">
-              @for (cat of recentCategories(); track cat.id) {
-                <option [value]="cat.name"></option>
-              }
-            </datalist>
-            <button (click)="addEvent()">Add Event</button>
-          </div>
-
-          @if (errorMessage) {
-            <div class="error">{{ errorMessage }}</div>
-          }
-        </div>
-
         <!-- Events list -->
         <h2>Events</h2>
         @if (events().length === 0) {
@@ -58,23 +19,36 @@
         } @else {
           <ul class="event-list">
             @for (event of events(); track event.id) {
-              <li class="event-item">
+              <li class="event-item"
+                  tabindex="0"
+                  (click)="openShowDialog(event)"
+                  (keydown.enter)="openShowDialog(event)"
+                  style="cursor: pointer;">
                 <div class="event-main">
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
                     <span class="event-date">
-                      {{ formatDateTime(event.startTime) }}
+        {{ formatDateTime(event.startTime) }}
                       @if (event.endTime) {
                         – {{ formatDateTime(event.endTime) }}
                       }
-                    </span>
+      </span>
                   }
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
                   }
                 </div>
-                <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
-                <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
+                  <button
+                    class="delete-event-icon-btn"
+                    (click)="$event.stopPropagation(); openEventDelete(event)"
+                    title="Delete event">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                    </svg>
+                  </button>
+                </div>
               </li>
             }
           </ul>

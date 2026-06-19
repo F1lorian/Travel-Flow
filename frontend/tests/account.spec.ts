@@ -44,5 +44,5 @@ test('Login fuehrt vom Startscreen zum Kalender', async ({ page }) => {
   await page.getByRole('button', { name: 'Log in' }).click();
 
   await expect(page).toHaveURL(/\/calendar$/);
-  await expect(page.getByRole('heading', { name: 'Kalender' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Calendar' })).toBeVisible();
 });
