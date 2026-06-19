@@ -2,6 +2,7 @@ package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class Event {
@@ -25,6 +26,9 @@ public class Event {
   @ManyToOne
   @JoinColumn(name = "categorie_id")
   private Categories categorie;
+
+  @ManyToMany(mappedBy = "events")
+  private List<User> users;
 
   public Event() {}
 
@@ -94,5 +98,13 @@ public class Event {
 
   public Long getTripId() {
     return this.trip == null ? null : this.trip.getId();
+  }
+
+  public List<User> getUsers() {
+    return users;
+  }
+
+  public void setUsers(List<User> users) {
+    this.users = users;
   }
 }
