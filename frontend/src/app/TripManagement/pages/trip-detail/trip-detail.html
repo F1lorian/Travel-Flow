@@ -28,18 +28,27 @@
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
                     <span class="event-date">
-                      {{ formatDateTime(event.startTime) }}
+        {{ formatDateTime(event.startTime) }}
                       @if (event.endTime) {
                         – {{ formatDateTime(event.endTime) }}
                       }
-                    </span>
+      </span>
                   }
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
                   }
                 </div>
-                <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
-                <button class="delete-event-btn" (click)="openEventDelete(event)">Delete</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
+                  <button
+                    class="delete-event-icon-btn"
+                    (click)="$event.stopPropagation(); openEventDelete(event)"
+                    title="Delete event">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                    </svg>
+                  </button>
+                </div>
               </li>
             }
           </ul>

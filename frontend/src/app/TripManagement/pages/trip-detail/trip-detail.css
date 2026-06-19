@@ -339,6 +339,25 @@
   background: #fecaca;
 }
 
+.delete-event-icon-btn {
+  border: 0;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fee2e2;
+  color: #b91c1c;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.delete-event-icon-btn:hover {
+  background: #fecaca;
+}
+
 .trip-search {
   width: 100%;
   min-height: 40px;

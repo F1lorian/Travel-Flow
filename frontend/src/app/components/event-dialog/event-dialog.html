@@ -151,21 +151,31 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <div class="border-t border-gray-200 px-6 py-4">
+  <div class="border-t border-gray-200 px-6 py-4 flex gap-3 w-full">
     @if (mode === 'create' || mode === 'edit') {
       <button
         (click)="save()"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+        class="flex-1 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]">
 
         {{ mode === 'create' ? 'Create event' : 'Save changes' }}
       </button>
     }
 
-    @if (mode === 'edit') {
+    @if (mode === 'show') {
+      <button
+        (click)="edit()"
+        class="flex-1 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]">
+
+        Edit
+      </button>
+    }
+
+    @if (mode === 'edit' || mode === 'show') {
       <button
         (click)="delete()"
-        class="rounded-lg border border-slate-300 bg-white px-5 py-3
+        class="flex-1 rounded-lg border border-slate-300 bg-white px-5 py-3
          font-semibold text-slate-700
          transition hover:bg-slate-100">
 
@@ -173,19 +183,9 @@
       </button>
     }
 
-    @if (mode === 'show') {
-      <button
-        (click)="edit()"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
-
-        Edit
-      </button>
-    }
-
     <button
       (click)="close()"
-      class="rounded-lg border border-slate-300 bg-white px-5 py-3
+      class="flex-1 rounded-lg border border-slate-300 bg-white px-5 py-3
          font-semibold text-slate-700
          transition hover:bg-slate-100">
 
