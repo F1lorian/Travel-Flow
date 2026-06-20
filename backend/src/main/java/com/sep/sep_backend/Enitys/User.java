@@ -27,6 +27,9 @@ public class User {
   @Column(nullable = false)
   private String passwordHash;
 
+  /** Authentication origin of the account: "LOCAL" for password accounts, "GOOGLE" for OAuth. */
+  private String provider = "LOCAL";
+
   private LocalDate dateOfBirth;
 
   private String securityQuestion;
@@ -116,6 +119,14 @@ public class User {
 
   public void setPasswordHash(String passwordHash) {
     this.passwordHash = passwordHash;
+  }
+
+  public String getProvider() {
+    return provider;
+  }
+
+  public void setProvider(String provider) {
+    this.provider = provider;
   }
 
   public LocalDate getDateOfBirth() {

@@ -18,6 +18,7 @@ services:
       SPRING_MAIL_STARTTLS: ${SPRING_MAIL_STARTTLS:-true}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-0ede0s968df42p8h5fkr8fajod9gju5k.apps.googleusercontent.com}
     depends_on:
       - db
 

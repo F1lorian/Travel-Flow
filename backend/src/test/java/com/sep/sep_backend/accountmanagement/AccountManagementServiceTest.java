@@ -26,6 +26,7 @@ class AccountManagementServiceTest {
   @Mock private UserRepository userRepository;
   @Mock private JavaMailSender mailSender;
   @Mock private JwtService jwtService;
+  @Mock private GoogleTokenVerifier googleTokenVerifier;
 
   private AccountManagementService service;
 
@@ -35,7 +36,12 @@ class AccountManagementServiceTest {
   void setUp() {
     service =
         new AccountManagementService(
-            userRepository, mailSender, jwtService, ENCODER, "noreply@example.com");
+            userRepository,
+            mailSender,
+            jwtService,
+            ENCODER,
+            googleTokenVerifier,
+            "noreply@example.com");
   }
 
   private User verifiedUser(String username, String email, String password, String color) {

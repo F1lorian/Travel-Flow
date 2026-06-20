@@ -1,27 +1,19 @@
 package com.sep.sep_backend.TripManagement.controllers;
 
-/* back-front relation: REST endpoints for events within a trip.
-GET  /api/trips/{tripId}/events  → frontend trip-detail page (loads events list)
-POST /api/trips/{tripId}/events  → frontend add-event form */
-
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.TripManagement.dto.EventDTO;
 import com.sep.sep_backend.TripManagement.services.TripEventService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST endpoints for the events that belong to a trip: list, add, delete, and move an event to
- * another trip. Delegates to {@link TripEventService} and returns {@link EventDTO}s.
- */
 @RestController
 @RequestMapping("/api/trips/{tripId}/events")
 @CrossOrigin(origins = "*")
 public class TripEventController {
 
-  // Shape of the JSON body sent by the frontend when adding an event
   public record CreateEventRequest(
       String name,
       LocalDateTime startTime,
@@ -35,17 +27,19 @@ public class TripEventController {
     this.eventService = eventService;
   }
 
-  // GET /api/trips/{tripId}/events — all events belonging to one trip, as DTOs.
   @GetMapping
-  public List<EventDTO> getEvents(@PathVariable Long tripId) {
+  public List<EventDTO> getEvents(
+      @PathVariable Long tripId, @AuthenticationPrincipal String username) {
+    eventService.verifyTripOwnership(tripId, username);
     return eventService.getEventsForTrip(tripId).stream().map(EventDTO::from).toList();
   }
 
-  // POST /api/trips/{tripId}/events — add an event to the trip. Invalid input
-  // (e.g. blank name or unknown trip) becomes HTTP 400.
   @PostMapping
   public ResponseEntity<EventDTO> addEvent(
-      @PathVariable Long tripId, @RequestBody CreateEventRequest request) {
+      @PathVariable Long tripId,
+      @RequestBody CreateEventRequest request,
+      @AuthenticationPrincipal String username) {
+    eventService.verifyTripOwnership(tripId, username);
     try {
       Event created =
           eventService.addEventToTrip(
@@ -61,10 +55,12 @@ public class TripEventController {
     }
   }
 
-  // DELETE /api/trips/{tripId}/events/{eventId} — 204 on success, 404 if not found.
-  // tripId is part of the URL for REST nesting but the event is deleted by its own id.
   @DeleteMapping("/{eventId}")
-  public ResponseEntity<Void> deleteEvent(@PathVariable Long tripId, @PathVariable Long eventId) {
+  public ResponseEntity<Void> deleteEvent(
+      @PathVariable Long tripId,
+      @PathVariable Long eventId,
+      @AuthenticationPrincipal String username) {
+    eventService.verifyTripOwnership(tripId, username);
     try {
       eventService.deleteEvent(eventId);
       return ResponseEntity.noContent().build();
@@ -73,11 +69,14 @@ public class TripEventController {
     }
   }
 
-  // PUT /api/trips/{tripId}/events/{eventId}/move/{newTripId} — reassign an event to
-  // another trip (used by the "move to another trip" flow on the trip-detail page).
   @PutMapping("/{eventId}/move/{newTripId}")
   public ResponseEntity<EventDTO> moveEvent(
-      @PathVariable Long tripId, @PathVariable Long eventId, @PathVariable Long newTripId) {
+      @PathVariable Long tripId,
+      @PathVariable Long eventId,
+      @PathVariable Long newTripId,
+      @AuthenticationPrincipal String username) {
+    eventService.verifyTripOwnership(tripId, username);
+    eventService.verifyTripOwnership(newTripId, username);
     try {
       Event moved = eventService.moveEventToTrip(eventId, newTripId);
       return ResponseEntity.ok(EventDTO.from(moved));

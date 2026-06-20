@@ -10,7 +10,9 @@ import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Business logic for the events within trips: adding an event (resolving its category), listing a
@@ -67,6 +69,12 @@ public class TripEventService {
     }
 
     return eventRepository.save(newEvent);
+  }
+
+  public void verifyTripOwnership(Long tripId, String username) {
+    if (tripRepository.countByUsernameAndTripId(username, tripId) == 0) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+    }
   }
 
   public List<Event> getEventsForTrip(Long tripId) {

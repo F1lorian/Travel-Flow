@@ -33,7 +33,7 @@ class TripControllerTest {
   void getAllTrips_returnsOkWithTripList() throws Exception {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    when(tripService.getAllTrips()).thenReturn(List.of(trip));
+    when(tripService.getAllTripsForUser(any())).thenReturn(List.of(trip));
 
     mockMvc
         .perform(get("/api/trips"))
@@ -45,7 +45,7 @@ class TripControllerTest {
   void getTrip_returnsOk_whenFound() throws Exception {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    when(tripService.getTrip(1L)).thenReturn(Optional.of(trip));
+    when(tripService.getTrip(eq(1L), any())).thenReturn(Optional.of(trip));
 
     mockMvc
         .perform(get("/api/trips/1"))
@@ -55,7 +55,7 @@ class TripControllerTest {
 
   @Test
   void getTrip_returns404_whenNotFound() throws Exception {
-    when(tripService.getTrip(99L)).thenReturn(Optional.empty());
+    when(tripService.getTrip(eq(99L), any())).thenReturn(Optional.empty());
 
     mockMvc.perform(get("/api/trips/99")).andExpect(status().isNotFound());
   }
@@ -64,7 +64,7 @@ class TripControllerTest {
   void createTrip_returnsOkWithCreatedTrip() throws Exception {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    when(tripService.createTrip(eq("Paris"), any(), any())).thenReturn(trip);
+    when(tripService.createTrip(eq("Paris"), any(), any(), any())).thenReturn(trip);
 
     mockMvc
         .perform(

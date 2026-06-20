@@ -1,10 +1,5 @@
 package com.sep.sep_backend.TripManagement.controllers;
 
-/* back-front relation: REST endpoints for trips.
-GET /api/trips         → frontend trip-list page (loads all trips)
-GET /api/trips/{id}    → frontend trip-detail page (loads one trip)
-POST /api/trips        → frontend create-trip form */
-
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
@@ -12,19 +7,14 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST endpoints for trips: list, fetch, create, and delete. Maps HTTP requests to {@link
- * TripService} and converts entities to {@link TripDTO}s so JPA entities aren't serialized directly
- * to the client.
- */
 @RestController
 @RequestMapping("/api/trips")
 @CrossOrigin(origins = "*")
 public class TripController {
 
-  // Shape of the JSON body sent by the frontend when creating a trip
   public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;
@@ -33,39 +23,38 @@ public class TripController {
     this.tripService = tripService;
   }
 
-  // GET /api/trips — all trips, each mapped to a DTO so entities aren't serialized directly.
   @GetMapping
-  public List<TripDTO> getAllTrips() {
-    return tripService.getAllTrips().stream().map(TripDTO::from).toList();
+  public List<TripDTO> getAllTrips(@AuthenticationPrincipal String username) {
+    return tripService.getAllTripsForUser(username).stream().map(TripDTO::from).toList();
   }
 
-  // GET /api/trips/{id} — one trip, or 404 if the id doesn't exist.
   @GetMapping("/{id}")
-  public ResponseEntity<TripDTO> getTrip(@PathVariable Long id) {
-    Optional<Trip> trip = tripService.getTrip(id);
+  public ResponseEntity<TripDTO> getTrip(
+      @PathVariable Long id, @AuthenticationPrincipal String username) {
+    Optional<Trip> trip = tripService.getTrip(id, username);
     if (trip.isEmpty()) {
       return ResponseEntity.notFound().build();
     }
     return ResponseEntity.ok(TripDTO.from(trip.get()));
   }
 
-  // POST /api/trips — create a trip. The service throws IllegalArgumentException
-  // on invalid input (e.g. blank name), which we translate to HTTP 400.
   @PostMapping
-  public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request) {
+  public ResponseEntity<TripDTO> createTrip(
+      @RequestBody CreateTripRequest request, @AuthenticationPrincipal String username) {
     try {
-      Trip created = tripService.createTrip(request.name(), request.startDate(), request.endDate());
+      Trip created =
+          tripService.createTrip(request.name(), request.startDate(), request.endDate(), username);
       return ResponseEntity.ok(TripDTO.from(created));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().build();
     }
   }
 
-  // DELETE /api/trips/{id} — 204 No Content on success, 404 if the trip is missing.
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteTrip(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteTrip(
+      @PathVariable Long id, @AuthenticationPrincipal String username) {
     try {
-      tripService.deleteTrip(id);
+      tripService.deleteTrip(id, username);
       return ResponseEntity.noContent().build();
     } catch (IllegalArgumentException e) {
       return ResponseEntity.notFound().build();
