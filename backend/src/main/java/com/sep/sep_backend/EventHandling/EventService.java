@@ -7,10 +7,12 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
@@ -33,6 +35,7 @@ public class EventService {
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
   private final AusgabeService ausgabeService;
+  private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
 
   @Value("${gemini.api-key}")
@@ -51,14 +54,15 @@ public class EventService {
    */
   @Autowired
   public EventService(
-      EventRepository eventRepository,
-      TripRepository triprepository,
-      AusgabeService ausgabeService,
-      ObjectMapper objectMapper) {
+          EventRepository eventRepository,
+          TripRepository triprepository,
+          AusgabeService ausgabeService, UserRepository userRepository,
+          ObjectMapper objectMapper) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
-    this.objectMapper = objectMapper;
+      this.userRepository = userRepository;
+      this.objectMapper = objectMapper;
   }
 
   /**
@@ -67,7 +71,7 @@ public class EventService {
    * @param dto request data containing event values and the trip identifier
    * @return response data of the saved event
    */
-  public EventResponseDTO SaveEventToDB(EventRequestDTO dto) {
+  public EventResponseDTO SaveEventToDB(EventRequestDTO dto, Long userId) {
     Trip matchingTrip = findTripByIdIfPresent(dto.getTripId());
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
@@ -76,6 +80,12 @@ public class EventService {
     }
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
+
+    // User dem Event zuweisen
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    user.getEvents().add(savedEvent);
+    userRepository.save(user);
 
     return mapToResponseDTO(savedEvent);
   }

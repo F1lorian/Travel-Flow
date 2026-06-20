@@ -37,11 +37,13 @@ public class EventController {
    * @return response containing the created event data
    */
   @PostMapping("event/create/manual")
-  public ResponseEntity<EventResponseDTO> EventsManuellErstellen(@RequestBody EventRequestDTO dto) {
-    var responsedto = eventService.SaveEventToDB(dto);
+  public ResponseEntity<EventResponseDTO> EventsManuellErstellen(
+          @RequestBody EventRequestDTO dto, Authentication authentication) {
+    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    var responsedto = eventService.SaveEventToDB(dto, user.getId());
     return ResponseEntity.ok().body(responsedto);
   }
-
   /**
    * Returns all stored events in the format required by the calendar view.
    *
