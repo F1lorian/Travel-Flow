@@ -5,11 +5,14 @@ Called by TripController, which exposes the results to the Angular frontend. */
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
+import com.sep.sep_backend.repos.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,14 +26,16 @@ public class TripService {
 
   private final TripRepository tripRepository;
   private final EventRepository eventRepository;
+  private final UserRepository userRepository;
 
-  public TripService(TripRepository tripRepository, EventRepository eventRepository) {
+  public TripService(TripRepository tripRepository, EventRepository eventRepository, UserRepository userRepository) {
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
+    this.userRepository = userRepository;
   }
 
-  public List<Trip> getAllTrips() {
-    return tripRepository.findAll();
+  public List<Trip> getAllTrips(Long userId) {
+    return tripRepository.findAllByUserId(userId);
   }
 
   public Optional<Trip> getTrip(Long id) {
@@ -38,14 +43,21 @@ public class TripService {
   }
 
   // Creates a trip. Name is required; dates are optional. Throws if the name is blank.
-  public Trip createTrip(String name, LocalDate startDate, LocalDate endDate) {
+  public Trip createTrip(String name, LocalDate startDate, LocalDate endDate, Long userId) {
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Trip name cannot be empty");
     }
     Trip trip = new Trip(name);
     trip.setStartDate(startDate);
     trip.setEndDate(endDate);
-    return tripRepository.save(trip);
+    Trip savedTrip = tripRepository.save(trip);
+
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    user.getTrips().add(savedTrip);
+    userRepository.save(user);
+
+    return savedTrip;
   }
 
   /**

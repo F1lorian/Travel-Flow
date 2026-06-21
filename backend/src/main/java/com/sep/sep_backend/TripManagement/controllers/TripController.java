@@ -6,12 +6,16 @@ GET /api/trips/{id}    → frontend trip-detail page (loads one trip)
 POST /api/trips        → frontend create-trip form */
 
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
+import com.sep.sep_backend.repos.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -28,15 +32,18 @@ public class TripController {
   public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;
+  private final UserRepository userRepository;
 
-  public TripController(TripService tripService) {
+  public TripController(TripService tripService, UserRepository userRepository) {
     this.tripService = tripService;
+    this.userRepository = userRepository;
   }
 
   // GET /api/trips — all trips, each mapped to a DTO so entities aren't serialized directly.
   @GetMapping
-  public List<TripDTO> getAllTrips() {
-    return tripService.getAllTrips().stream().map(TripDTO::from).toList();
+  public List<TripDTO> getAllTrips(Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    return tripService.getAllTrips(userId).stream().map(TripDTO::from).toList();
   }
 
   // GET /api/trips/{id} — one trip, or 404 if the id doesn't exist.
@@ -52,9 +59,10 @@ public class TripController {
   // POST /api/trips — create a trip. The service throws IllegalArgumentException
   // on invalid input (e.g. blank name), which we translate to HTTP 400.
   @PostMapping
-  public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request) {
+  public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request, Authentication authentication) {
     try {
-      Trip created = tripService.createTrip(request.name(), request.startDate(), request.endDate());
+      Long userId = getCurrentUserId(authentication);
+      Trip created = tripService.createTrip(request.name(), request.startDate(), request.endDate(), userId);
       return ResponseEntity.ok(TripDTO.from(created));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().build();
@@ -70,5 +78,11 @@ public class TripController {
     } catch (IllegalArgumentException e) {
       return ResponseEntity.notFound().build();
     }
+  }
+
+  private Long getCurrentUserId(Authentication authentication) {
+    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    return user.getId();
   }
 }
