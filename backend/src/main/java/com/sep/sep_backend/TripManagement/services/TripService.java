@@ -8,11 +8,10 @@ import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-
-import com.sep.sep_backend.repos.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +27,10 @@ public class TripService {
   private final EventRepository eventRepository;
   private final UserRepository userRepository;
 
-  public TripService(TripRepository tripRepository, EventRepository eventRepository, UserRepository userRepository) {
+  public TripService(
+      TripRepository tripRepository,
+      EventRepository eventRepository,
+      UserRepository userRepository) {
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.userRepository = userRepository;
@@ -52,7 +54,9 @@ public class TripService {
     trip.setEndDate(endDate);
     Trip savedTrip = tripRepository.save(trip);
 
-    User user = userRepository.findById(userId)
+    User user =
+        userRepository
+            .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     user.getTrips().add(savedTrip);
     userRepository.save(user);

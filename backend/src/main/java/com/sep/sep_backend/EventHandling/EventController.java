@@ -1,10 +1,9 @@
 package com.sep.sep_backend.EventHandling;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.repos.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,12 +37,15 @@ public class EventController {
    */
   @PostMapping("event/create/manual")
   public ResponseEntity<EventResponseDTO> EventsManuellErstellen(
-          @RequestBody EventRequestDTO dto, Authentication authentication) {
-    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+      @RequestBody EventRequestDTO dto, Authentication authentication) {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     var responsedto = eventService.SaveEventToDB(dto, user.getId());
     return ResponseEntity.ok().body(responsedto);
   }
+
   /**
    * Returns all stored events in the format required by the calendar view.
    *
@@ -51,7 +53,9 @@ public class EventController {
    */
   @GetMapping("event/pull/all_events")
   public ResponseEntity<List<EventCalendarDTO>> getAllEvents(Authentication authentication) {
-    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     return ResponseEntity.ok(eventService.getAllEventsFromDb(user.getId()));
   }

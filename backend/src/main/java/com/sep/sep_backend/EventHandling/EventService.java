@@ -54,15 +54,16 @@ public class EventService {
    */
   @Autowired
   public EventService(
-          EventRepository eventRepository,
-          TripRepository triprepository,
-          AusgabeService ausgabeService, UserRepository userRepository,
-          ObjectMapper objectMapper) {
+      EventRepository eventRepository,
+      TripRepository triprepository,
+      AusgabeService ausgabeService,
+      UserRepository userRepository,
+      ObjectMapper objectMapper) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
-      this.userRepository = userRepository;
-      this.objectMapper = objectMapper;
+    this.userRepository = userRepository;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -82,7 +83,9 @@ public class EventService {
     Event savedEvent = eventRepository.save(newEvent);
 
     // User dem Event zuweisen
-    User user = userRepository.findById(userId)
+    User user =
+        userRepository
+            .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     user.getEvents().add(savedEvent);
     userRepository.save(user);
@@ -171,14 +174,16 @@ public class EventService {
    */
   public List<EventCalendarDTO> getAllEventsFromDb(Long userId) {
     return eventRepository.findAllByUserId(userId).stream()
-            .map(event -> new EventCalendarDTO(
+        .map(
+            event ->
+                new EventCalendarDTO(
                     String.valueOf(event.getId()),
                     event.getName(),
                     event.getKosten(),
                     event.getStartTime(),
                     event.getEndTime(),
                     event.getTripId()))
-            .toList();
+        .toList();
   }
 
   /**

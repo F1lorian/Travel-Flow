@@ -9,11 +9,10 @@ import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-
-import com.sep.sep_backend.repos.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -59,10 +58,12 @@ public class TripController {
   // POST /api/trips — create a trip. The service throws IllegalArgumentException
   // on invalid input (e.g. blank name), which we translate to HTTP 400.
   @PostMapping
-  public ResponseEntity<TripDTO> createTrip(@RequestBody CreateTripRequest request, Authentication authentication) {
+  public ResponseEntity<TripDTO> createTrip(
+      @RequestBody CreateTripRequest request, Authentication authentication) {
     try {
       Long userId = getCurrentUserId(authentication);
-      Trip created = tripService.createTrip(request.name(), request.startDate(), request.endDate(), userId);
+      Trip created =
+          tripService.createTrip(request.name(), request.startDate(), request.endDate(), userId);
       return ResponseEntity.ok(TripDTO.from(created));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().build();
@@ -81,7 +82,9 @@ public class TripController {
   }
 
   private Long getCurrentUserId(Authentication authentication) {
-    User user = userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     return user.getId();
   }
