@@ -5,9 +5,10 @@ import { AccountManagementService } from './account-management.service';
 
 type AccountMode = 'login' | 'register' | 'verify' | 'forgot' | 'reset' | 'forgot-email' | 'forgot-code' | 'reset-email';
 
-// Set this to your Google OAuth Web client id (Google Cloud Console > Credentials).
-// At runtime it can also be provided via the GOOGLE_OAUTH_CLIENT_ID build/env wiring.
-const GOOGLE_CLIENT_ID = '1025057911520-0ede0s968df42p8h5fkr8fajod9gju5k.apps.googleusercontent.com';
+// Google OAuth Web client id, supplied at runtime via public/config.js
+// (regenerated from the GOOGLE_OAUTH_CLIENT_ID env var in Docker, see .env).
+const GOOGLE_CLIENT_ID =
+  (globalThis as { __APP_CONFIG__?: { googleClientId?: string } }).__APP_CONFIG__?.googleClientId ?? '';
 
 // Loaded globally by the Google Identity Services script in index.html.
 declare const google: { accounts?: { id?: any } } | undefined;
