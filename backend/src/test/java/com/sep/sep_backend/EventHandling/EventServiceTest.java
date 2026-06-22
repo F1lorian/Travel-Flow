@@ -10,17 +10,18 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,8 @@ class EventServiceTest {
 
   @Mock private AusgabeService ausgabeService;
 
+  @Mock private UserRepository userRepository;
+
   @Mock private ObjectMapper objectMapper;
 
   @InjectMocks private EventService eventService;
@@ -52,8 +55,9 @@ class EventServiceTest {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    when(userRepository.findById(7L)).thenReturn(Optional.of(userWithEvents(7L)));
 
-    saveEventToDB(request);
+    eventService.SaveEventToDB(request, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -73,8 +77,10 @@ class EventServiceTest {
 
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventToDB(request);
+    EventResponseDTO result = eventService.SaveEventToDB(request, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -83,7 +89,9 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isNull();
     assertThat(savedEvent.getTripId()).isNull();
     assertThat(result.getTripId()).isNull();
+    assertThat(user.getEvents()).contains(savedEvent);
     verify(tripRepository, never()).findById(any());
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -91,10 +99,9 @@ class EventServiceTest {
     EventRequestDTO request = new EventRequestDTO("Museum", 25, 99L);
     when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> saveEventToDB(request))
-        .isInstanceOf(InvocationTargetException.class)
-        .hasCauseInstanceOf(RuntimeException.class)
-        .hasRootCauseMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
+    assertThatThrownBy(() -> eventService.SaveEventToDB(request, 7L))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Zu dieser trip Id findet sich kein eintrag in der Datenbank");
 
     verify(eventRepository, never()).save(any(Event.class));
   }
@@ -114,7 +121,7 @@ class EventServiceTest {
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
-    assertThatThrownBy(() -> eventService.SaveEventToDB(request))
+    assertThatThrownBy(() -> eventService.SaveEventToDB(request, 7L))
         .isInstanceOf(EventOutsideTripException.class)
         .hasMessage("Event liegt außerhalb des Trips");
 
@@ -135,7 +142,7 @@ class EventServiceTest {
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
-    assertThatThrownBy(() -> eventService.SaveEventResponseToDB(responseDTO, 1L))
+    assertThatThrownBy(() -> eventService.SaveEventResponseToDB(responseDTO, 1L, 7L))
         .isInstanceOf(EventOutsideTripException.class)
         .hasMessage("Event liegt außerhalb des Trips");
 
@@ -152,8 +159,10 @@ class EventServiceTest {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -166,6 +175,8 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isSameAs(trip);
     assertThat(result.getName()).isEqualTo("Konzert");
     assertThat(result.getKosten()).isEqualTo(49);
+    assertThat(user.getEvents()).contains(savedEvent);
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -175,14 +186,18 @@ class EventServiceTest {
 
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
 
     assertThat(eventCaptor.getValue().getName()).isEqualTo("Unbekanntes Event");
     assertThat(result.getName()).isEqualTo("Unbekanntes Event");
+    assertThat(user.getEvents()).contains(eventCaptor.getValue());
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -193,8 +208,10 @@ class EventServiceTest {
 
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -204,7 +221,9 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isNull();
     assertThat(savedEvent.getTripId()).isNull();
     assertThat(result.getTripId()).isNull();
+    assertThat(user.getEvents()).contains(savedEvent);
     verify(tripRepository, never()).findById(any());
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -215,15 +234,15 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, trip);
     event.setId(42L);
 
-    when(eventRepository.findAll()).thenReturn(List.of(event));
+    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
-    List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
+    List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getId()).isEqualTo("42");
     assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
     assertThat(result.getFirst().getStart()).isEqualTo(start);
-    verify(eventRepository).findAll();
+    verify(eventRepository).findAllByUserId(7L);
   }
 
   @Test
@@ -233,13 +252,13 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, null);
     event.setId(42L);
 
-    when(eventRepository.findAll()).thenReturn(List.of(event));
+    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
-    List<EventCalendarDTO> result = eventService.GetAllEventsFromDb();
+    List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getTripId()).isNull();
-    verify(eventRepository).findAll();
+    verify(eventRepository).findAllByUserId(7L);
   }
 
   @Test
@@ -439,14 +458,16 @@ class EventServiceTest {
     assertThat(result.getEnd()).isEqualTo(result.getStart().plusDays(1));
   }
 
-  private void saveEventToDB(EventRequestDTO request)
-      throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Method method = EventService.class.getDeclaredMethod("SaveEventToDB", EventRequestDTO.class);
-    method.invoke(eventService, request);
+  private EventService serviceWithRealObjectMapper() {
+    return new EventService(
+        eventRepository, tripRepository, ausgabeService, userRepository, new ObjectMapper());
   }
 
-  private EventService serviceWithRealObjectMapper() {
-    return new EventService(eventRepository, tripRepository, ausgabeService, new ObjectMapper());
+  private User userWithEvents(long id) {
+    User user = new User();
+    user.setId(id);
+    user.setEvents(new ArrayList<>());
+    return user;
   }
 
   private ByteArrayInputStream jsonLdMail(String json) {

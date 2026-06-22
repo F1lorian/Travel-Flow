@@ -1,9 +1,12 @@
 package com.sep.sep_backend.EventHandling;
 
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,14 +17,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class EventController {
 
   private final EventService eventService;
+  private final UserRepository userRepository;
 
   /**
    * Creates an event controller that delegates event operations to the service layer.
    *
    * @param eventService service used to process event requests
    */
-  public EventController(EventService eventService) {
+  public EventController(EventService eventService, UserRepository userRepository) {
     this.eventService = eventService;
+    this.userRepository = userRepository;
   }
 
   /**
@@ -31,8 +36,13 @@ public class EventController {
    * @return response containing the created event data
    */
   @PostMapping("event/create/manual")
-  public ResponseEntity<EventResponseDTO> EventsManuellErstellen(@RequestBody EventRequestDTO dto) {
-    var responsedto = eventService.SaveEventToDB(dto);
+  public ResponseEntity<EventResponseDTO> EventsManuellErstellen(
+      @RequestBody EventRequestDTO dto, Authentication authentication) {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    var responsedto = eventService.SaveEventToDB(dto, user.getId());
     return ResponseEntity.ok().body(responsedto);
   }
 
@@ -42,8 +52,12 @@ public class EventController {
    * @return response containing all calendar events
    */
   @GetMapping("event/pull/all_events")
-  public ResponseEntity<List<EventCalendarDTO>> getAllEvents() {
-    return ResponseEntity.ok(eventService.GetAllEventsFromDb());
+  public ResponseEntity<List<EventCalendarDTO>> getAllEvents(Authentication authentication) {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    return ResponseEntity.ok(eventService.getAllEventsFromDb(user.getId()));
   }
 
   /**
@@ -57,8 +71,13 @@ public class EventController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/import/parse")
   public EventResponseDTO parseEmail(
       @RequestParam("MailFile") MultipartFile file,
-      @RequestParam(value = "tripId", required = false) Long tripId)
+      @RequestParam(value = "tripId", required = false) Long tripId,
+      Authentication authentication)
       throws Exception {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
     // Inputstream Notwendig für jakarta
     return eventService.ParseMailFile(file.getInputStream());
   }
@@ -73,8 +92,13 @@ public class EventController {
   @PostMapping("event/create/import")
   public EventResponseDTO saveImportedEvent(
       @RequestBody EventResponseDTO dto,
-      @RequestParam(value = "tripId", required = false) Long tripId) {
-    return eventService.SaveEventResponseToDB(dto, tripId);
+      @RequestParam(value = "tripId", required = false) Long tripId,
+      Authentication authentication) {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    return eventService.SaveEventResponseToDB(dto, tripId, user.getId());
   }
 
   /**
