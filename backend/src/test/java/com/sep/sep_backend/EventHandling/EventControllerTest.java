@@ -195,7 +195,8 @@ class EventControllerTest {
         .thenReturn(Optional.of(user));
     when(eventService.SaveEventResponseToDB(parsedEvent, null, 7L)).thenReturn(savedEvent);
 
-    EventResponseDTO response = eventController.saveImportedEvent(parsedEvent, null, authentication);
+    EventResponseDTO response =
+        eventController.saveImportedEvent(parsedEvent, null, authentication);
 
     assertThat(response).isSameAs(savedEvent);
     verify(eventService).SaveEventResponseToDB(parsedEvent, null, 7L);
