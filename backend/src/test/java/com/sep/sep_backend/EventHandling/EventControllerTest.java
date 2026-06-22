@@ -150,7 +150,8 @@ class EventControllerTest {
   @Test
   void parseEmailErlaubtImportOhneTripId() throws NoSuchMethodException {
     Method method =
-        EventController.class.getDeclaredMethod("parseEmail", MultipartFile.class, Long.class);
+        EventController.class.getDeclaredMethod(
+            "parseEmail", MultipartFile.class, Long.class, Authentication.class);
 
     RequestParam tripIdParam = method.getParameters()[1].getAnnotation(RequestParam.class);
 
@@ -165,12 +166,16 @@ class EventControllerTest {
     EventController eventController = new EventController(eventService, userRepository);
     MultipartFile file = mock(MultipartFile.class);
     InputStream inputStream = new ByteArrayInputStream("mail".getBytes());
+    Authentication authentication = authentication("Max");
+    User user = user(7L);
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
 
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("Max", ""))
+        .thenReturn(Optional.of(user));
     when(file.getInputStream()).thenReturn(inputStream);
     when(eventService.ParseMailFile(inputStream)).thenReturn(parsedEvent);
 
-    EventResponseDTO response = eventController.parseEmail(file, null, authentication("Max"));
+    EventResponseDTO response = eventController.parseEmail(file, null, authentication);
 
     assertThat(response).isSameAs(parsedEvent);
     verify(eventService).ParseMailFile(inputStream);
@@ -181,15 +186,19 @@ class EventControllerTest {
     EventService eventService = mock(EventService.class);
     UserRepository userRepository = mock(UserRepository.class);
     EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
     EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, null);
 
-    when(eventService.SaveEventResponseToDB(parsedEvent, null)).thenReturn(savedEvent);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.SaveEventResponseToDB(parsedEvent, null, 7L)).thenReturn(savedEvent);
 
-    EventResponseDTO response = eventController.saveImportedEvent(parsedEvent, null);
+    EventResponseDTO response = eventController.saveImportedEvent(parsedEvent, null, authentication);
 
     assertThat(response).isSameAs(savedEvent);
-    verify(eventService).SaveEventResponseToDB(parsedEvent, null);
+    verify(eventService).SaveEventResponseToDB(parsedEvent, null, 7L);
   }
 
   @Test
@@ -197,15 +206,19 @@ class EventControllerTest {
     EventService eventService = mock(EventService.class);
     UserRepository userRepository = mock(UserRepository.class);
     EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
     EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, 7L);
 
-    when(eventService.SaveEventResponseToDB(parsedEvent, 7L)).thenReturn(savedEvent);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.SaveEventResponseToDB(parsedEvent, 7L, 7L)).thenReturn(savedEvent);
 
-    EventResponseDTO response = eventController.saveImportedEvent(parsedEvent, 7L);
+    EventResponseDTO response = eventController.saveImportedEvent(parsedEvent, 7L, authentication);
 
     assertThat(response).isSameAs(savedEvent);
-    verify(eventService).SaveEventResponseToDB(parsedEvent, 7L);
+    verify(eventService).SaveEventResponseToDB(parsedEvent, 7L, 7L);
   }
 
   @Test

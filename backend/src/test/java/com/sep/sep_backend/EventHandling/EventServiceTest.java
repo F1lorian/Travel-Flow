@@ -142,7 +142,7 @@ class EventServiceTest {
 
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
-    assertThatThrownBy(() -> eventService.SaveEventResponseToDB(responseDTO, 1L))
+    assertThatThrownBy(() -> eventService.SaveEventResponseToDB(responseDTO, 1L, 7L))
         .isInstanceOf(EventOutsideTripException.class)
         .hasMessage("Event liegt außerhalb des Trips");
 
@@ -159,8 +159,10 @@ class EventServiceTest {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, 1L, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -173,6 +175,8 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isSameAs(trip);
     assertThat(result.getName()).isEqualTo("Konzert");
     assertThat(result.getKosten()).isEqualTo(49);
+    assertThat(user.getEvents()).contains(savedEvent);
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -182,14 +186,18 @@ class EventServiceTest {
 
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
 
     assertThat(eventCaptor.getValue().getName()).isEqualTo("Unbekanntes Event");
     assertThat(result.getName()).isEqualTo("Unbekanntes Event");
+    assertThat(user.getEvents()).contains(eventCaptor.getValue());
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -200,8 +208,10 @@ class EventServiceTest {
 
     when(eventRepository.save(any(Event.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = userWithEvents(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
-    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null);
+    EventResponseDTO result = eventService.SaveEventResponseToDB(responseDTO, null, 7L);
 
     ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
     verify(eventRepository).save(eventCaptor.capture());
@@ -211,7 +221,9 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isNull();
     assertThat(savedEvent.getTripId()).isNull();
     assertThat(result.getTripId()).isNull();
+    assertThat(user.getEvents()).contains(savedEvent);
     verify(tripRepository, never()).findById(any());
+    verify(userRepository).save(user);
   }
 
   @Test
