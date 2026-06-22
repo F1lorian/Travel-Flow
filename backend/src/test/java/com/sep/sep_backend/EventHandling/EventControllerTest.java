@@ -170,7 +170,7 @@ class EventControllerTest {
     when(file.getInputStream()).thenReturn(inputStream);
     when(eventService.ParseMailFile(inputStream)).thenReturn(parsedEvent);
 
-    EventResponseDTO response = eventController.parseEmail(file, null);
+    EventResponseDTO response = eventController.parseEmail(file, null, authentication("Max"));
 
     assertThat(response).isSameAs(parsedEvent);
     verify(eventService).ParseMailFile(inputStream);

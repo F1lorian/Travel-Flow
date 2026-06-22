@@ -71,8 +71,13 @@ public class EventController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, value = "event/import/parse")
   public EventResponseDTO parseEmail(
       @RequestParam("MailFile") MultipartFile file,
-      @RequestParam(value = "tripId", required = false) Long tripId)
+      @RequestParam(value = "tripId", required = false) Long tripId,
+      Authentication authentication)
       throws Exception {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
     // Inputstream Notwendig für jakarta
     return eventService.ParseMailFile(file.getInputStream());
   }
@@ -87,8 +92,13 @@ public class EventController {
   @PostMapping("event/create/import")
   public EventResponseDTO saveImportedEvent(
       @RequestBody EventResponseDTO dto,
-      @RequestParam(value = "tripId", required = false) Long tripId) {
-    return eventService.SaveEventResponseToDB(dto, tripId);
+      @RequestParam(value = "tripId", required = false) Long tripId,
+      Authentication authentication) {
+    User user =
+        userRepository
+            .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    return eventService.SaveEventResponseToDB(dto, tripId, user.getId());
   }
 
   /**

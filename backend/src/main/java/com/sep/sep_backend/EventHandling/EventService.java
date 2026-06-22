@@ -152,7 +152,7 @@ public class EventService {
    * @param tripId optional identifier of the trip the event belongs to
    * @return response data of the saved event
    */
-  public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId) {
+  public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId, Long UserID) {
     Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
         dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
@@ -163,6 +163,12 @@ public class EventService {
     }
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
+    User user =
+        userRepository
+            .findById(UserID)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    user.getEvents().add(newEvent);
+    userRepository.save(user);
 
     return mapToResponseDTO(savedEvent);
   }
