@@ -5,13 +5,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.repos.UserRepository;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +33,8 @@ class EventControllerTest {
     assertThat(classMapping.value()).containsExactly("/api");
 
     Method method =
-        EventController.class.getDeclaredMethod("EventsManuellErstellen", EventRequestDTO.class);
+        EventController.class.getDeclaredMethod(
+            "EventsManuellErstellen", EventRequestDTO.class, Authentication.class);
 
     PostMapping postMapping = method.getAnnotation(PostMapping.class);
     assertThat(postMapping.value()).containsExactly("event/create/manual");
@@ -37,7 +42,7 @@ class EventControllerTest {
 
   @Test
   void eventControllerHatDenAllEventsEndpoint() throws NoSuchMethodException {
-    Method method = EventController.class.getDeclaredMethod("getAllEvents");
+    Method method = EventController.class.getDeclaredMethod("getAllEvents", Authentication.class);
 
     GetMapping getMapping = method.getAnnotation(GetMapping.class);
     assertThat(getMapping.value()).containsExactly("event/pull/all_events");
@@ -56,7 +61,10 @@ class EventControllerTest {
   @Test
   void getAllEventsGibtCalendarDtosAusServiceZurueck() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     List<EventCalendarDTO> events =
         List.of(
             new EventCalendarDTO(
@@ -67,19 +75,24 @@ class EventControllerTest {
                 LocalDateTime.of(2026, 5, 8, 14, 30),
                 1L));
 
-    when(eventService.GetAllEventsFromDb()).thenReturn(events);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.getAllEventsFromDb(7L)).thenReturn(events);
 
-    ResponseEntity<List<EventCalendarDTO>> response = eventController.getAllEvents();
+    ResponseEntity<List<EventCalendarDTO>> response = eventController.getAllEvents(authentication);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isEqualTo(events);
-    verify(eventService).GetAllEventsFromDb();
+    verify(eventService).getAllEventsFromDb(7L);
   }
 
   @Test
   void eventsManuellErstellenGibtServiceResponseZurueck() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     EventRequestDTO request =
         new EventRequestDTO(
             "Museum",
@@ -96,19 +109,23 @@ class EventControllerTest {
             LocalDateTime.of(2026, 6, 1, 16, 0),
             1L);
 
-    when(eventService.SaveEventToDB(request)).thenReturn(created);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.SaveEventToDB(request, 7L)).thenReturn(created);
 
-    ResponseEntity<EventResponseDTO> response = eventController.EventsManuellErstellen(request);
+    ResponseEntity<EventResponseDTO> response =
+        eventController.EventsManuellErstellen(request, authentication);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(created);
-    verify(eventService).SaveEventToDB(request);
+    verify(eventService).SaveEventToDB(request, 7L);
   }
 
   @Test
   void getConflictEventsGibtServiceResponseZurueck() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
     LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
     LocalDateTime end = LocalDateTime.of(2026, 6, 1, 22, 0);
     List<EventResponseDTO> conflicts =
@@ -144,7 +161,8 @@ class EventControllerTest {
   @Test
   void parseEmailGibtGeparstesEventZurueckOhneEsZuSpeichern() throws Exception {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
     MultipartFile file = mock(MultipartFile.class);
     InputStream inputStream = new ByteArrayInputStream("mail".getBytes());
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
@@ -161,7 +179,8 @@ class EventControllerTest {
   @Test
   void saveImportedEventSpeichertImportOhneTripId() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
     EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, null);
 
@@ -176,7 +195,8 @@ class EventControllerTest {
   @Test
   void saveImportedEventSpeichertImportMitTripId() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
     EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
     EventResponseDTO savedEvent = new EventResponseDTO("1", "Konzert", 49, null, null, 7L);
 
@@ -191,7 +211,8 @@ class EventControllerTest {
   @Test
   void deleteEventFromDBGibtBestaetigungZurueck() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
 
     ResponseEntity<DeleteEventResponseDTO> response = eventController.DeleteEventFromDB(42L);
 
@@ -204,7 +225,8 @@ class EventControllerTest {
   @Test
   void editEventGibtServiceResponseZurueck() {
     EventService eventService = mock(EventService.class);
-    EventController eventController = new EventController(eventService);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
     EventRequestDTO request =
         new EventRequestDTO(
             "Theater",
@@ -228,5 +250,17 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(edited);
     verify(eventService).EditEvent(42L, request);
+  }
+
+  private Authentication authentication(String username) {
+    Authentication authentication = mock(Authentication.class);
+    when(authentication.getName()).thenReturn(username);
+    return authentication;
+  }
+
+  private User user(long id) {
+    User user = new User();
+    user.setId(id);
+    return user;
   }
 }
