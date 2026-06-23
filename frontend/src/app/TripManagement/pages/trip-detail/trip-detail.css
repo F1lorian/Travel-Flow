@@ -239,6 +239,22 @@
   transition: background 0.15s ease;
 }
 
+.invite-to-trip-btn{
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #fee2e2;
+  color: #16a34a;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.invite-to-trip-btn:hover {
+  background: #15803d;
+}
+
 .delete-trip-btn:hover {
   background: #fecaca;
 }

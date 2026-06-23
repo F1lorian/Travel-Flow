@@ -19,6 +19,7 @@ export class FriendsService {
   private readonly http = inject(HttpClient);
   // Base path for friends-related backend endpoints.
   private apiUrl = '/api/friends';
+  private iviteUrl = '/api/TripInvites';
 
 getFriends(): Observable<Friend[]> {
   return this.http.get<Friend[]>(`${this.apiUrl}`);}
@@ -35,5 +36,8 @@ addFriend(userId: number): Observable<unknown> {
 removeFriend(userId: number): Observable<unknown> {
   return this.http.delete(`${this.apiUrl}/${userId}`);}
 
+  sendIviteMessage(tripID: number, friendID: number): Observable<unknown> {
+    return this.http.post(`${this.iviteUrl}/${tripID}`,{});
+  }
 }
 
