@@ -14,9 +14,6 @@ public class Trip {
   private String name;
 
   @Column(nullable = false, columnDefinition = "double precision default 0")
-  private double budget = 0;
-
-  @Column(nullable = false, columnDefinition = "double precision default 0")
   private double warningRange = 0;
 
   @OneToMany(mappedBy = "trip")
@@ -89,14 +86,6 @@ public class Trip {
 
   public void setAusgaben(List<Ausgabe> ausgaben) {
     this.ausgaben = ausgaben;
-  }
-
-  public double getBudget() {
-    return this.budget;
-  }
-
-  public void setBudget(double budget) {
-    this.budget = budget;
   }
 
   public double getWarningRange() {

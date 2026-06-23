@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +36,7 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
     // eine Ausgabe erstellen
     Trip requestedTrip = new Trip("Berlin");
@@ -43,12 +45,14 @@ public class AusgabenControllerTest {
         new AusgabeRequestDTO(10, requestedTrip, LocalDate.of(2026, 5, 11), "Freizeit");
 
     when(tripRepository.findByName("Berlin")).thenReturn(existingTrip);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
 
     // Controller fuehrt die Methode aus
-    ausgabeController.ausgabeHinzufuegen(request);
+    ausgabeController.ausgabeHinzufuegen(request, authentication);
 
     // pruefen, ob der Service aufgerufen wurde
-    verify(ausgabeService).ausgabeHinzufuegen(request);
+    verify(ausgabeService).ausgabeHinzufuegen(request, "maxmuster");
     assertThat(request.getTrip()).isSameAs(existingTrip);
   }
 
@@ -60,6 +64,7 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
     LocalDate start = LocalDate.of(2026, 5, 1);
     LocalDate end = LocalDate.of(2026, 5, 11);
@@ -71,14 +76,16 @@ public class AusgabenControllerTest {
         new AusgabeResponseDTO(10, trip, LocalDate.of(2026, 5, 11), new Categories());
     List<AusgabeResponseDTO> expected = List.of(ausgabe);
 
-    when(ausgabeService.ausgabenliste(start, end)).thenReturn(expected);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.ausgabenliste(start, end, "maxmuster")).thenReturn(expected);
 
     // fuehr die Methode im Controller aus
-    List<AusgabeResponseDTO> result = ausgabeController.ausgabenliste(start, end);
+    List<AusgabeResponseDTO> result = ausgabeController.ausgabenliste(start, end, authentication);
 
     // pruefe ob er das richtige zurueckgibt und ob der Service aufgerufen wurde
     assertThat(result).isEqualTo(expected);
-    verify(ausgabeService).ausgabenliste(start, end);
+    verify(ausgabeService).ausgabenliste(start, end, "maxmuster");
   }
 
   @Test
@@ -89,6 +96,7 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
     LocalDate start = LocalDate.of(2026, 5, 1);
     LocalDate end = LocalDate.of(2026, 5, 11);
@@ -97,14 +105,17 @@ public class AusgabenControllerTest {
     List<KategorieSummeDTO> expected = new ArrayList<>();
     expected.add(new KategorieSummeDTO("Freizeit", 10));
 
-    when(ausgabeService.ausgabenProKategorie(start, end)).thenReturn(expected);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.ausgabenProKategorie(start, end, "maxmuster")).thenReturn(expected);
 
     // tatsaechliches ergebnis
-    List<KategorieSummeDTO> result = ausgabeController.ausgabenProKategorie(start, end);
+    List<KategorieSummeDTO> result =
+        ausgabeController.ausgabenProKategorie(start, end, authentication);
 
     // beide miteinander vergleichen und pruefen ob der service aufgerufen wurde
     assertThat(result).isEqualTo(expected);
-    verify(ausgabeService).ausgabenProKategorie(start, end);
+    verify(ausgabeService).ausgabenProKategorie(start, end, "maxmuster");
   }
 
   @Test
@@ -115,6 +126,7 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
     Trip trip = new Trip("London");
     List<AusgabeResponseDTO> expected =
@@ -122,14 +134,17 @@ public class AusgabenControllerTest {
             new AusgabeResponseDTO(
                 100, trip, LocalDate.of(2026, 1, 1), new Categories("Freizeit")));
 
-    when(ausgabeService.ausgabenlisteTrip("London")).thenReturn(expected);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.ausgabenlisteTrip("London", "maxmuster")).thenReturn(expected);
 
     // tatsaechliches Ergebnis
-    List<AusgabeResponseDTO> result = ausgabeController.ausgabenListeTrip("London");
+    List<AusgabeResponseDTO> result =
+        ausgabeController.ausgabenListeTrip("London", authentication);
 
     // pruefen ob das Service-Ergebnis zurueckgegeben wird
     assertThat(result).isEqualTo(expected);
-    verify(ausgabeService).ausgabenlisteTrip("London");
+    verify(ausgabeService).ausgabenlisteTrip("London", "maxmuster");
   }
 
   @Test
@@ -140,11 +155,14 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
-    when(ausgabeService.ausgabenlisteTrip("London")).thenReturn(null);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.ausgabenlisteTrip("London", "maxmuster")).thenReturn(null);
 
     // pruefen ob ein Fehler geworfen wird
-    assertThatThrownBy(() -> ausgabeController.ausgabenListeTrip("London"))
+    assertThatThrownBy(() -> ausgabeController.ausgabenListeTrip("London", authentication))
         .isInstanceOf(ResponseStatusException.class)
         .hasMessageContaining("404 NOT_FOUND");
   }
@@ -157,39 +175,43 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
     List<KategorieSummeDTO> expected = List.of(new KategorieSummeDTO("Freizeit", 100));
 
-    when(ausgabeService.ausgabenProKategorieTrip("London")).thenReturn(expected);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.ausgabenProKategorieTrip("London", "maxmuster")).thenReturn(expected);
 
     // tatsaechliches Ergebnis
-    List<KategorieSummeDTO> result = ausgabeController.ausgabenProKategorieTrip("London");
+    List<KategorieSummeDTO> result =
+        ausgabeController.ausgabenProKategorieTrip("London", authentication);
 
     // pruefen ob das Service-Ergebnis zurueckgegeben wird
     assertThat(result).isEqualTo(expected);
-    verify(ausgabeService).ausgabenProKategorieTrip("London");
+    verify(ausgabeService).ausgabenProKategorieTrip("London", "maxmuster");
   }
 
   @Test
-  void budgetGibtBudgetVomTripZurueck() {
+  void budgetGibtServiceErgebnisZurueck() {
     // du erstellst dir einen Controller
     AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
     AusgabeService ausgabeService = mock(AusgabeService.class);
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
-    Trip trip = new Trip("London");
-    trip.setBudget(500);
-
-    when(tripRepository.findByName("London")).thenReturn(trip);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.budget("London", "maxmuster")).thenReturn(500.0);
 
     // tatsaechliches Ergebnis
-    double result = ausgabeController.budget("London");
+    double result = ausgabeController.budget("London", authentication);
 
     // pruefen ob das Budget zurueckgegeben wird
     assertThat(result).isEqualTo(500);
-    verify(tripRepository).findByName("London");
+    verify(ausgabeService).budget("London", "maxmuster");
   }
 
   @Test
@@ -200,15 +222,18 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
-    when(ausgabeService.gesamtausgabenTrip("London")).thenReturn(125.0);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.gesamtausgabenTrip("London", "maxmuster")).thenReturn(125.0);
 
     // tatsaechliches Ergebnis
-    double result = ausgabeController.gesamtausgabenTrip("London");
+    double result = ausgabeController.gesamtausgabenTrip("London", authentication);
 
     // pruefen ob das Service-Ergebnis zurueckgegeben wird
     assertThat(result).isEqualTo(125);
-    verify(ausgabeService).gesamtausgabenTrip("London");
+    verify(ausgabeService).gesamtausgabenTrip("London", "maxmuster");
   }
 
   @Test
@@ -219,15 +244,18 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
-    when(ausgabeService.verfuegbarTrip("London")).thenReturn(175.0);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.verfuegbarTrip("London", "maxmuster")).thenReturn(175.0);
 
     // tatsaechliches Ergebnis
-    double result = ausgabeController.verfuegbar("London");
+    double result = ausgabeController.verfuegbar("London", authentication);
 
     // pruefen ob das Service-Ergebnis zurueckgegeben wird
     assertThat(result).isEqualTo(175);
-    verify(ausgabeService).verfuegbarTrip("London");
+    verify(ausgabeService).verfuegbarTrip("London", "maxmuster");
   }
 
   @Test
@@ -238,11 +266,14 @@ public class AusgabenControllerTest {
     TripRepository tripRepository = mock(TripRepository.class);
     AusgabeController ausgabeController =
         new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
 
-    when(ausgabeService.verfuegbarTrip("London")).thenReturn(-2.0);
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.verfuegbarTrip("London", "maxmuster")).thenReturn(-2.0);
 
     // tatsaechliches Ergebnis
-    double result = ausgabeController.verfuegbar("London");
+    double result = ausgabeController.verfuegbar("London", authentication);
 
     // pruefen ob ohne Budget 0 zurueckgegeben wird
     assertThat(result).isEqualTo(0);
@@ -255,38 +286,44 @@ public class AusgabenControllerTest {
     assertThat(controllerMapping.value()).containsExactly("/api");
 
     Method postMethod =
-        AusgabeController.class.getDeclaredMethod("ausgabeHinzufuegen", AusgabeRequestDTO.class);
+        AusgabeController.class.getDeclaredMethod(
+            "ausgabeHinzufuegen", AusgabeRequestDTO.class, Authentication.class);
 
     PostMapping postMapping = postMethod.getAnnotation(PostMapping.class);
     assertThat(postMapping.value()).containsExactly("/ausgabe");
 
     Method listMethod =
         AusgabeController.class.getDeclaredMethod(
-            "ausgabenliste", LocalDate.class, LocalDate.class);
+            "ausgabenliste", LocalDate.class, LocalDate.class, Authentication.class);
 
     GetMapping getMapping = listMethod.getAnnotation(GetMapping.class);
     assertThat(getMapping.value()).containsExactly("/ausgabenliste");
 
     Method tripListMethod =
-        AusgabeController.class.getDeclaredMethod("ausgabenListeTrip", String.class);
+        AusgabeController.class.getDeclaredMethod(
+            "ausgabenListeTrip", String.class, Authentication.class);
     GetMapping tripListMapping = tripListMethod.getAnnotation(GetMapping.class);
     assertThat(tripListMapping.value()).containsExactly("/ausgabenlisteTrip");
 
     Method proKategorieTripMethod =
-        AusgabeController.class.getDeclaredMethod("ausgabenProKategorieTrip", String.class);
+        AusgabeController.class.getDeclaredMethod(
+            "ausgabenProKategorieTrip", String.class, Authentication.class);
     GetMapping proKategorieTripMapping = proKategorieTripMethod.getAnnotation(GetMapping.class);
     assertThat(proKategorieTripMapping.value()).containsExactly("/proKategorieTrip");
 
-    Method budgetMethod = AusgabeController.class.getDeclaredMethod("budget", String.class);
+    Method budgetMethod =
+        AusgabeController.class.getDeclaredMethod("budget", String.class, Authentication.class);
     GetMapping budgetMapping = budgetMethod.getAnnotation(GetMapping.class);
     assertThat(budgetMapping.value()).containsExactly("/budget");
 
     Method gesamtausgabenMethod =
-        AusgabeController.class.getDeclaredMethod("gesamtausgabenTrip", String.class);
+        AusgabeController.class.getDeclaredMethod(
+            "gesamtausgabenTrip", String.class, Authentication.class);
     GetMapping gesamtausgabenMapping = gesamtausgabenMethod.getAnnotation(GetMapping.class);
     assertThat(gesamtausgabenMapping.value()).containsExactly("/gesamtausgabenTrip");
 
-    Method verfuegbarMethod = AusgabeController.class.getDeclaredMethod("verfuegbar", String.class);
+    Method verfuegbarMethod =
+        AusgabeController.class.getDeclaredMethod("verfuegbar", String.class, Authentication.class);
     GetMapping verfuegbarMapping = verfuegbarMethod.getAnnotation(GetMapping.class);
     assertThat(verfuegbarMapping.value()).containsExactly("/verfuegbar");
   }

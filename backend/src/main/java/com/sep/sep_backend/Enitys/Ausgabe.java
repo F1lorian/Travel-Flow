@@ -29,6 +29,10 @@ public class Ausgabe {
   @JoinColumn(name = "kategorie_id")
   private Categories kategorie;
 
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "user_id")
+  private User user;
+
   // Getter und Setter
   public long getId() {
     return id;
@@ -68,5 +72,13 @@ public class Ausgabe {
 
   public void setKategorie(Categories kategorie) {
     this.kategorie = kategorie;
+  }
+
+  public User getUser() {
+    return this.user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
   }
 }

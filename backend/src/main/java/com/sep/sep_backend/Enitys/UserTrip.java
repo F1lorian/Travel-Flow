@@ -21,6 +21,9 @@ public class UserTrip {
   @JoinColumn(name = "invited_by_id")
   private User invitedBy;
 
+  @Column(nullable = false, columnDefinition = "double precision default 0")
+  private double budget = 0;
+
   public UserTrip() {}
 
   public UserTrip(User user, Trip trip, User invitedBy) {
@@ -56,9 +59,15 @@ public class UserTrip {
 
   public User getInvitedBy() {
     return invitedBy;
+    }
+  public double getBudget() {
+    return budget;
   }
 
   public void setInvitedBy(User invitedBy) {
     this.invitedBy = invitedBy;
+    }
+  public void setBudget(double budget) {
+    this.budget = budget;
   }
 }
