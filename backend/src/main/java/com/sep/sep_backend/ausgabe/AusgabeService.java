@@ -1,9 +1,9 @@
 package com.sep.sep_backend.ausgabe;
 
-import com.sep.sep_backend.Enitys.Ausgabe;
-import com.sep.sep_backend.Enitys.Categories;
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.entities.Ausgabe;
+import com.sep.sep_backend.entities.Categories;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.CategoriesRepository;
 import com.sep.sep_backend.repos.EventRepository;

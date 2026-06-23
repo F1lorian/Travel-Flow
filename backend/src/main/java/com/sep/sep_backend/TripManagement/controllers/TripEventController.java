@@ -4,7 +4,7 @@ package com.sep.sep_backend.TripManagement.controllers;
 GET  /api/trips/{tripId}/events  → frontend trip-detail page (loads events list)
 POST /api/trips/{tripId}/events  → frontend add-event form */
 
-import com.sep.sep_backend.Enitys.Event;
+import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.TripManagement.dto.EventDTO;
 import com.sep.sep_backend.TripManagement.services.TripEventService;
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.sep.sep_backend.TripManagement.services;
 
-import com.sep.sep_backend.Enitys.Categories;
+import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.repos.CategoriesRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.sep.sep_backend.EventHandling;
 
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;

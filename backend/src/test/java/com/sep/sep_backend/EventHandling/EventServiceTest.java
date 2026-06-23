@@ -8,9 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;

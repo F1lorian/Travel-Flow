@@ -1,6 +1,6 @@
 package com.sep.sep_backend.repos;
 
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
