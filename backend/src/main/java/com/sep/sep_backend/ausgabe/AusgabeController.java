@@ -165,14 +165,14 @@ public class AusgabeController {
    * 100 means the user is warned if 100 € or less remain.
    */
   @GetMapping("/warningRange")
-  public double warningRange(@RequestParam String tripname) {
-    Trip trip = tripRepository.findByName(tripname);
+  public double warningRange(@RequestParam String tripname, Authentication authentication) {
+    double result = ausgabeService.warningRange(tripname, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    return trip.getWarningRange();
+    return result;
   }
 
   /**
@@ -182,22 +182,23 @@ public class AusgabeController {
    */
   @PutMapping("/warningRange")
   public double warningRangeAktualisieren(
-      @RequestParam String tripname, @RequestParam double warningRange) {
+      @RequestParam String tripname,
+      @RequestParam double warningRange,
+      Authentication authentication) {
     if (warningRange < 0) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Warning range must not be negative");
     }
 
-    Trip trip = tripRepository.findByName(tripname);
+    double result =
+        ausgabeService.warningRangeAktualisieren(
+            tripname, warningRange, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    trip.setWarningRange(warningRange);
-    tripRepository.save(trip);
-
-    return trip.getWarningRange();
+    return result;
   }
 
   /**

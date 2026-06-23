@@ -41,12 +41,8 @@ public class User {
 
   private LocalDateTime verificationCodeExpiresAt;
 
-  @ManyToMany
-  @JoinTable(
-      name = "user_trips",
-      joinColumns = @JoinColumn(name = "user_id"),
-      inverseJoinColumns = @JoinColumn(name = "trip_id"))
-  private List<Trip> trips;
+  @OneToMany(mappedBy = "user")
+  private List<UserTrip> userTrips;
 
   @ManyToMany
   @JoinTable(
@@ -171,12 +167,12 @@ public class User {
     this.verificationCodeExpiresAt = verificationCodeExpiresAt;
   }
 
-  public List<Trip> getTrips() {
-    return trips;
+  public List<UserTrip> getUserTrips() {
+    return userTrips;
   }
 
-  public void setTrips(List<Trip> trips) {
-    this.trips = trips;
+  public void setUserTrips(List<UserTrip> userTrips) {
+    this.userTrips = userTrips;
   }
 
   public List<Event> getEvents() {

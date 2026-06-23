@@ -64,7 +64,11 @@ public class AusgabeService {
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
 
-    Ausgabe ausgabe = new Ausgabe(dto.getKosten(), dto.getTrip(), dto.getDate(), category);
+    Trip trip = dto.getTrip();
+    if (userTripRepository.findByUserAndTrip(user, trip).isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip not found");
+    }
+    Ausgabe ausgabe = new Ausgabe(dto.getKosten(), trip, dto.getDate(), category);
     ausgabe.setUser(user);
     repo.save(ausgabe);
   }
@@ -245,11 +249,46 @@ public class AusgabeService {
     }
 
     UserTrip userTrip =
-        userTripRepository.findByUserAndTrip(user, trip).orElseGet(() -> new UserTrip(user, trip));
+        userTripRepository
+            .findByUserAndTrip(user, trip)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
     userTrip.setBudget(budget);
     userTripRepository.save(userTrip);
 
     return userTrip.getBudget();
+  }
+
+  public double warningRange(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    return userTripRepository
+        .findByUserAndTrip(user, trip)
+        .map(UserTrip::getWarningRange)
+        .orElse(0.0);
+  }
+
+  public double warningRangeAktualisieren(
+      String tripname, double warningRange, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    UserTrip userTrip =
+        userTripRepository
+            .findByUserAndTrip(user, trip)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+    userTrip.setWarningRange(warningRange);
+    userTripRepository.save(userTrip);
+
+    return userTrip.getWarningRange();
   }
 
   private User getCurrentUserOrThrow(String username) {

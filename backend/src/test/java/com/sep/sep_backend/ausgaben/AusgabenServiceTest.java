@@ -36,18 +36,26 @@ public class AusgabenServiceTest {
     EventRepository eventRepository = mock(EventRepository.class);
     CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
     UserRepository userRepository = mock(UserRepository.class);
+    UserTripRepository userTripRepository = mock(UserTripRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository,
+            userTripRepository);
 
     Trip requestedTrip = new Trip();
     requestedTrip.setName("Berlin");
     Categories category = new Categories("Freizeit");
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
+    UserTrip userTrip = new UserTrip(user, requestedTrip);
 
     when(categoriesRepository.findByName("Freizeit")).thenReturn(Optional.of(category));
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
+    when(userTripRepository.findByUserAndTrip(user, requestedTrip)).thenReturn(Optional.of(userTrip));
 
     // du fuegst eine Ausgabe hinzu
     AusgabeRequestDTO ausgabeDTO =
@@ -324,5 +332,70 @@ public class AusgabenServiceTest {
 
     // pruefst ob Budget minus Gesamtausgaben zurueckgegeben wird
     assertThat(result).isEqualTo(175);
+  }
+
+  @Test
+  void warningRangeGibtWertAusUserTripZurueck() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    UserTripRepository userTripRepository = mock(UserTripRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository,
+            userTripRepository);
+
+    Trip trip = new Trip("London");
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+    UserTrip userTrip = new UserTrip(user, trip);
+    userTrip.setWarningRange(50);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(tripRepository.findByName("London")).thenReturn(trip);
+    when(userTripRepository.findByUserAndTrip(user, trip)).thenReturn(Optional.of(userTrip));
+
+    double result = ausgabeService.warningRange("London", "maxmuster");
+
+    assertThat(result).isEqualTo(50);
+  }
+
+  @Test
+  void warningRangeAktualisierenSpeichertWertInUserTrip() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    UserTripRepository userTripRepository = mock(UserTripRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository,
+            userTripRepository);
+
+    Trip trip = new Trip("London");
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+    UserTrip userTrip = new UserTrip(user, trip);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(tripRepository.findByName("London")).thenReturn(trip);
+    when(userTripRepository.findByUserAndTrip(user, trip)).thenReturn(Optional.of(userTrip));
+
+    double result = ausgabeService.warningRangeAktualisieren("London", 75, "maxmuster");
+
+    assertThat(result).isEqualTo(75);
+    assertThat(userTrip.getWarningRange()).isEqualTo(75);
+    verify(userTripRepository).save(userTrip);
   }
 }
