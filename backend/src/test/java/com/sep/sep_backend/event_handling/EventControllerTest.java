@@ -1,4 +1,4 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.event_handling;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

@@ -1,4 +1,4 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.event_handling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
