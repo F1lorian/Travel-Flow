@@ -1,4 +1,4 @@
-package com.sep.sep_backend.accountmanagement;
+package com.sep.sep_backend.account_management;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

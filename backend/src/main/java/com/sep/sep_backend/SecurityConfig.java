@@ -1,7 +1,7 @@
 package com.sep.sep_backend;
 
-import com.sep.sep_backend.accountmanagement.JwtAuthFilter;
-import com.sep.sep_backend.accountmanagement.JwtService;
+import com.sep.sep_backend.account_management.JwtAuthFilter;
+import com.sep.sep_backend.account_management.JwtService;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

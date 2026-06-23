@@ -1,4 +1,4 @@
-package com.sep.sep_backend.accountmanagement;
+package com.sep.sep_backend.account_management;
 
 import com.sep.sep_backend.entities.User;
 import java.nio.charset.StandardCharsets;

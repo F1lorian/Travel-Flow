@@ -1,4 +1,4 @@
-package com.sep.sep_backend.accountmanagement;
+package com.sep.sep_backend.account_management;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

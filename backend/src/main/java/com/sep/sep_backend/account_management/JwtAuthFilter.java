@@ -1,4 +1,4 @@
-package com.sep.sep_backend.accountmanagement;
+package com.sep.sep_backend.account_management;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
