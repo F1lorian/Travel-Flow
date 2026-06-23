@@ -1,11 +1,11 @@
-package com.sep.sep_backend.EventRecommendation.controllers;
+package com.sep.sep_backend.event_recommendation.controllers;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.sep.sep_backend.EventRecommendation.dto.EventRecommendationDTO;
-import com.sep.sep_backend.EventRecommendation.services.GeminiEventSearchService;
+import com.sep.sep_backend.event_recommendation.dto.EventRecommendationDTO;
+import com.sep.sep_backend.event_recommendation.services.GeminiEventSearchService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

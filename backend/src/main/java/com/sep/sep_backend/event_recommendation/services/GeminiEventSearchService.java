@@ -1,10 +1,10 @@
-package com.sep.sep_backend.EventRecommendation.services;
+package com.sep.sep_backend.event_recommendation.services;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sep.sep_backend.EventRecommendation.dto.EventRecommendationDTO;
+import com.sep.sep_backend.event_recommendation.dto.EventRecommendationDTO;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;

@@ -1,8 +1,8 @@
-package com.sep.sep_backend.EventRecommendation.controllers;
+package com.sep.sep_backend.event_recommendation.controllers;
 
-import com.sep.sep_backend.EventRecommendation.dto.EventRecommendationDTO;
-import com.sep.sep_backend.EventRecommendation.dto.EventSearchRequest;
-import com.sep.sep_backend.EventRecommendation.services.GeminiEventSearchService;
+import com.sep.sep_backend.event_recommendation.dto.EventRecommendationDTO;
+import com.sep.sep_backend.event_recommendation.dto.EventSearchRequest;
+import com.sep.sep_backend.event_recommendation.services.GeminiEventSearchService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
