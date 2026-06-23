@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.dto;
+package com.sep.sep_backend.trip_management.dto;
 
 import com.sep.sep_backend.entities.Categories;
 

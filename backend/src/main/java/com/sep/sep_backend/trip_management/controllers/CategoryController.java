@@ -1,7 +1,7 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.trip_management.controllers;
 
-import com.sep.sep_backend.TripManagement.dto.CategoryDTO;
-import com.sep.sep_backend.TripManagement.services.CategoryService;
+import com.sep.sep_backend.trip_management.dto.CategoryDTO;
+import com.sep.sep_backend.trip_management.services.CategoryService;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
 

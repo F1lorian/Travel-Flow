@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.trip_management.controllers;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
-import com.sep.sep_backend.TripManagement.services.TripService;
+import com.sep.sep_backend.trip_management.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;
 import java.util.List;
 import java.util.Optional;

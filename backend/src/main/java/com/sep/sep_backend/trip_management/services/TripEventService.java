@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.trip_management.services;
 
 /* back-front relation: TripEventService handles all trip-event business logic.
 Called by TripEventController, which exposes the results to the Angular frontend. */
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 /**
  * Business logic for the events within trips: adding an event (resolving its category), listing a
  * trip's events, deleting an event, and moving an event to another trip. Sits between {@link
- * com.sep.sep_backend.TripManagement.controllers.TripEventController} and the JPA repositories.
+ * com.sep.sep_backend.trip_management.controllers.TripEventController} and the JPA repositories.
  */
 @Service
 public class TripEventService {

@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.trip_management.services;
 
 /* back-front relation: TripService handles all trip business logic.
 Called by TripController, which exposes the results to the Angular frontend. */
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Business logic for trips: listing, fetching, creating, and deleting a trip together with its
- * events. Sits between {@link com.sep.sep_backend.TripManagement.controllers.TripController} and
+ * events. Sits between {@link com.sep.sep_backend.trip_management.controllers.TripController} and
  * the JPA repositories.
  */
 @Service

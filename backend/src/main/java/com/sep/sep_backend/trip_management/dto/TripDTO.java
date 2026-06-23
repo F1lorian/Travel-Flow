@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.dto;
+package com.sep.sep_backend.trip_management.dto;
 
 /* back-front relation: TripDTO is the JSON object the frontend receives for a trip.
 Fields match the Trip interface in trip.service.ts */
