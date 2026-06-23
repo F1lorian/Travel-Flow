@@ -37,7 +37,7 @@ removeFriend(userId: number): Observable<unknown> {
   return this.http.delete(`${this.apiUrl}/${userId}`);}
 
   sendIviteMessage(tripID: number, friendID: number): Observable<unknown> {
-    return this.http.post(`${this.iviteUrl}/${tripID}`,{});
+    return this.http.post(`${this.iviteUrl}/${tripID}/${friendID}`, {});
   }
 }
 

@@ -5,6 +5,8 @@ Fields match the Trip interface in trip.service.ts */
 
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserTrip;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,17 +21,34 @@ public class TripDTO {
   private LocalDate startDate;
   private LocalDate endDate;
   private List<EventDTO> events;
+  private long invitedByUserId;
+  private String invitedByUsername;
+  private boolean invited;
 
   /**
    * Builds a TripDTO from a Trip entity, also converting its events to {@link EventDTO}s so the
    * whole trip (with its events) serializes in one response.
    */
   public static TripDTO from(Trip trip) {
+    return from(trip, null);
+  }
+
+  public static TripDTO from(Trip trip, UserTrip membership) {
     TripDTO dto = new TripDTO();
     dto.id = trip.getId();
     dto.name = trip.getName();
     dto.startDate = trip.getStartDate();
     dto.endDate = trip.getEndDate();
+    dto.invitedByUserId = 0;
+    dto.invitedByUsername = null;
+    dto.invited = false;
+
+    if (membership != null && membership.getInvitedBy() != null) {
+      User invitedBy = membership.getInvitedBy();
+      dto.invitedByUserId = invitedBy.getId();
+      dto.invitedByUsername = invitedBy.getName();
+      dto.invited = true;
+    }
 
     // Guard against a null events list so the JSON is always an array, never null.
     List<Event> tripEvents = trip.getEvents();
@@ -59,5 +78,17 @@ public class TripDTO {
 
   public List<EventDTO> getEvents() {
     return events;
+  }
+
+  public long getInvitedByUserId() {
+    return invitedByUserId;
+  }
+
+  public String getInvitedByUsername() {
+    return invitedByUsername;
+  }
+
+  public boolean isInvited() {
+    return invited;
   }
 }
