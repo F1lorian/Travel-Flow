@@ -10,6 +10,7 @@ import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.repos.UserTripRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -32,17 +33,30 @@ public class TripController {
 
   private final TripService tripService;
   private final UserRepository userRepository;
+  private final UserTripRepository userTripRepository;
 
-  public TripController(TripService tripService, UserRepository userRepository) {
+  public TripController(
+      TripService tripService,
+      UserRepository userRepository,
+      UserTripRepository userTripRepository) {
     this.tripService = tripService;
     this.userRepository = userRepository;
+    this.userTripRepository = userTripRepository;
   }
 
   // GET /api/trips — all trips, each mapped to a DTO so entities aren't serialized directly.
   @GetMapping
   public List<TripDTO> getAllTrips(Authentication authentication) {
     Long userId = getCurrentUserId(authentication);
-    return tripService.getAllTrips(userId).stream().map(TripDTO::from).toList();
+    return tripService.getAllTrips(userId).stream()
+        .map(
+            trip ->
+                TripDTO.from(
+                    trip,
+                    userTripRepository
+                        .findByIdUserIdAndIdTripId(userId, trip.getId())
+                        .orElse(null)))
+        .toList();
   }
 
   // GET /api/trips/{id} — one trip, or 404 if the id doesn't exist.

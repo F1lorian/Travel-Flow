@@ -11,6 +11,7 @@ import { EventSearchComponent } from '../../../EventRecommendation/pages/event-s
 import { EventService as CalendarEventService } from '../../../../event-adding-manual/service/event.service';
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
 import { EventDialog } from '../../../components/event-dialog/event-dialog';
+import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
 
 @Component({
   selector: 'app-trip-detail',
@@ -84,6 +85,16 @@ export class TripDetail implements OnInit {
     });
   }
 
+  openInviteDialog() {
+    const tripId = this.trip()?.id;
+    if (!tripId) return;
+
+    this.dialog.open(InviteDialog, {
+      maxWidth: '480px',
+      width: '90vw',
+      data: { tripId }
+    });
+  }
   openShowDialog(event: Event) {
     const dialogRef = this.dialog.open(EventDialog, {
       maxHeight: '90vh',

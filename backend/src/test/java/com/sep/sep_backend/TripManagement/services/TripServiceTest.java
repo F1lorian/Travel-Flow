@@ -5,9 +5,11 @@ import static org.mockito.Mockito.*;
 
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserTrip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.repos.UserTripRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +28,8 @@ class TripServiceTest {
 
   @Mock private UserRepository userRepository;
 
+  @Mock private UserTripRepository userTripRepository;
+
   @InjectMocks private TripService tripService;
 
   @Test
@@ -38,9 +42,8 @@ class TripServiceTest {
     Trip result = tripService.createTrip("Paris", null, null, 7L);
 
     assertEquals("Paris", result.getName());
-    assertTrue(user.getTrips().contains(trip));
     verify(tripRepository).save(any(Trip.class));
-    verify(userRepository).save(user);
+    verify(userTripRepository).save(any(UserTrip.class));
   }
 
   @Test
