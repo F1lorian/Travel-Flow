@@ -20,7 +20,8 @@ public class TripInviteController {
   @PostMapping("/{tripId}/{friendId}")
   public TripInviteResponseDTO inviteFriendToTrip(
       @PathVariable long tripId, @PathVariable long friendId, Authentication authentication) {
-    return tripInviteService.inviteFriendToTrip(getCurrentUsername(authentication), tripId, friendId);
+    return tripInviteService.inviteFriendToTrip(
+        getCurrentUsername(authentication), tripId, friendId);
   }
 
   private String getCurrentUsername(Authentication authentication) {

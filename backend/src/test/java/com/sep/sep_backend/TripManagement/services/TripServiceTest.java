@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.UserTrip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserTrip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;

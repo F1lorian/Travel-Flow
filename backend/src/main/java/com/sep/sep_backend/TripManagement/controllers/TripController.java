@@ -36,7 +36,9 @@ public class TripController {
   private final UserTripRepository userTripRepository;
 
   public TripController(
-      TripService tripService, UserRepository userRepository, UserTripRepository userTripRepository) {
+      TripService tripService,
+      UserRepository userRepository,
+      UserTripRepository userTripRepository) {
     this.tripService = tripService;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
