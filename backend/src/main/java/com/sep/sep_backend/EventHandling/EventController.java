@@ -139,4 +139,18 @@ public class EventController {
       @RequestParam LocalDateTime start, @RequestParam LocalDateTime end) {
     return ResponseEntity.ok(eventService.conflictCheck(start, end));
   }
+
+  @PostMapping("event/{eventId}/invite/{friendUserId}")
+  public ResponseEntity<Void> inviteFriendToEvent(
+          @PathVariable Long eventId, @PathVariable Long friendUserId) {
+    eventService.addUserToEvent(eventId, friendUserId);
+    return ResponseEntity.ok().build();
+  }
+
+  @DeleteMapping("event/{eventId}/invite/{friendUserId}")
+  public ResponseEntity<Void> removeFriendFromEvent(
+          @PathVariable Long eventId, @PathVariable Long friendUserId) {
+    eventService.removeUserFromEvent(eventId, friendUserId);
+    return ResponseEntity.ok().build();
+  }
 }
