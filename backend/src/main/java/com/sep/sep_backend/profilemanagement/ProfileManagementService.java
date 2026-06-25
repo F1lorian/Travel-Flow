@@ -110,7 +110,8 @@ public class ProfileManagementService {
    * cleared before the user row can be removed: friendships are symmetric (the reverse {@code
    * user_friends} rows are unlinked), the user's trip memberships and expenses have no cascade, and
    * trip memberships where this user was the inviter keep a dangling {@code invited_by_id}. Trips
-   * that have no members left once the user leaves are deleted along with their events and expenses.
+   * that have no members left once the user leaves are deleted along with their events and
+   * expenses.
    */
   @Transactional
   public MessageResponseDTO deleteAccount(String username, DeleteAccountRequestDTO request) {
