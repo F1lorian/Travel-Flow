@@ -27,9 +27,6 @@ public class Event {
   @JoinColumn(name = "categorie_id")
   private Categories categorie;
 
-  @ManyToMany(mappedBy = "events")
-  private List<User> users;
-
   public Event() {}
 
   public Event(String name, LocalDateTime startTime, LocalDateTime endTime, int kosten, Trip trip) {
@@ -100,11 +97,4 @@ public class Event {
     return this.trip == null ? null : this.trip.getId();
   }
 
-  public List<User> getUsers() {
-    return users;
-  }
-
-  public void setUsers(List<User> users) {
-    this.users = users;
-  }
 }

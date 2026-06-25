@@ -1,6 +1,7 @@
 package com.sep.sep_backend.EventHandling;
 
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserEvent;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -142,15 +143,43 @@ public class EventController {
 
   @PostMapping("event/{eventId}/invite/{friendUserId}")
   public ResponseEntity<Void> inviteFriendToEvent(
-          @PathVariable Long eventId, @PathVariable Long friendUserId) {
-    eventService.addUserToEvent(eventId, friendUserId);
+          @PathVariable Long eventId, @PathVariable Long friendUserId, Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    eventService.inviteFriendToEvent(eventId, friendUserId, userId);
     return ResponseEntity.ok().build();
   }
 
-  @DeleteMapping("event/{eventId}/invite/{friendUserId}")
-  public ResponseEntity<Void> removeFriendFromEvent(
-          @PathVariable Long eventId, @PathVariable Long friendUserId) {
-    eventService.removeUserFromEvent(eventId, friendUserId);
+  @PutMapping("event/{eventId}/respond")
+  public ResponseEntity<Void> respondToInvite(
+          @PathVariable Long eventId,
+          @RequestParam UserEvent.InviteStatus status,
+          Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    eventService.respondToInvite(eventId, userId, status);
     return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("event/{eventId}/invites")
+  public ResponseEntity<List<UserEventDTO>> getInvitesSentByUser(
+          @PathVariable Long eventId, Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    List<UserEventDTO> dtos = eventService.getInvitesSentByUser(eventId, userId).stream()
+            .map(UserEventDTO::from)
+            .toList();
+    return ResponseEntity.ok(dtos);
+  }
+
+  @GetMapping("event/{eventId}/participants")
+  public ResponseEntity<List<UserEventDTO>> getParticipants(@PathVariable Long eventId) {
+    List<UserEventDTO> dtos = eventService.getParticipants(eventId).stream()
+            .map(UserEventDTO::from)
+            .toList();
+    return ResponseEntity.ok(dtos);
+  }
+
+  private Long getCurrentUserId(Authentication authentication) {
+    return userRepository.findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
+            .orElseThrow(() -> new IllegalArgumentException("User not found"))
+            .getId();
   }
 }
