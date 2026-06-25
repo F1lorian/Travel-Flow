@@ -8,10 +8,12 @@ import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserEvent;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -41,6 +43,7 @@ public class EventService {
     private final AusgabeService ausgabeService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final UserEventRepository userEventRepository;
 
     @Value("${gemini.api-key}")
     private String geminiApiKey;
@@ -62,12 +65,14 @@ public class EventService {
             TripRepository triprepository,
             AusgabeService ausgabeService,
             UserRepository userRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            UserEventRepository userEventRepository) {
         this.eventRepository = eventRepository;
         this.tripRepository = triprepository;
         this.ausgabeService = ausgabeService;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.userEventRepository = userEventRepository;
     }
 
     /**
@@ -86,13 +91,12 @@ public class EventService {
         Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
         Event savedEvent = eventRepository.save(newEvent);
 
-        // User dem Event zuweisen
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        user.getEvents().add(savedEvent);
-        userRepository.save(user);
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
+        creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
+        userEventRepository.save(creatorEntry);
 
         return mapToResponseDTO(savedEvent);
     }
@@ -213,33 +217,47 @@ public class EventService {
         return result;
     }
 
-    /**
-     * adds a friend to an event
-     * @param eventId
-     * @param friendUserId
-     */
-    public void addUserToEvent(Long eventId, Long friendUserId) {
+    public void inviteFriendToEvent(Long eventId, Long friendUserId, Long requestingUserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+        boolean requesterIsParticipant = userEventRepository.existsByEvent_IdAndUser_Id(eventId, requestingUserId);
+        if (!requesterIsParticipant) {
+            throw new IllegalArgumentException("Only participants can invite friends");
+        }
+
+        if (userEventRepository.existsByEvent_IdAndUser_Id(eventId, friendUserId)) {
+            throw new IllegalArgumentException("User already invited");
+        }
+
         User friend = userRepository.findById(friendUserId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User requestingUser = userRepository.findById(requestingUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (friend.getEvents().stream().noneMatch(e -> e.getId() == eventId)) {
-            friend.getEvents().add(event);
-            userRepository.save(friend);
-        }
+        UserEvent invite = new UserEvent(event, friend, requestingUser);
+        userEventRepository.save(invite);
     }
 
-    /**
-     * removes the friend from the event
-     * @param eventId
-     * @param friendUserId
-     */
-    public void removeUserFromEvent(Long eventId, Long friendUserId) {
-        User friend = userRepository.findById(friendUserId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        friend.getEvents().removeIf(e -> e.getId() == eventId);
-        userRepository.save(friend);
+    public void respondToInvite(Long eventId, Long userId, UserEvent.InviteStatus status) {
+        if (status == UserEvent.InviteStatus.PENDING) {
+            throw new IllegalArgumentException("Cannot set status back to pending");
+        }
+
+        UserEvent userEvent = userEventRepository.findByEvent_IdAndUser_Id(eventId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
+        userEvent.setStatus(status);
+        userEventRepository.save(userEvent);
+    }
+
+    public List<UserEvent> getInvitesSentByUser(Long eventId, Long requestingUserId) {
+        return userEventRepository.findByEvent_Id(eventId).stream()
+                .filter(ue -> ue.getCreator().getId() == requestingUserId)
+                .toList();
+    }
+
+    public List<UserEvent> getParticipants(Long eventId) {
+        return userEventRepository.findByEvent_Id(eventId);
     }
 
     /**
