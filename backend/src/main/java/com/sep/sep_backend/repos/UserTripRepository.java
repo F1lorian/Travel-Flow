@@ -4,6 +4,7 @@ import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.Enitys.UserTrip;
 import com.sep.sep_backend.Enitys.UserTripId;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,8 @@ public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> 
   Optional<UserTrip> findByIdUserIdAndIdTripId(Long userId, Long tripId);
 
   Optional<UserTrip> findByUserAndTrip(User user, Trip trip);
+
+  List<UserTrip> findByInvitedBy(User invitedBy);
+
+  boolean existsByTrip(Trip trip);
 }

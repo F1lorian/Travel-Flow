@@ -33,6 +33,10 @@ export class AccountManagementService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { username, password });
   }
 
+  loginWithGoogle(idToken: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/oauth/google`, { idToken });
+  }
+
   verifyEmail(email: string, code: string): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.apiUrl}/verify-email`, { email, code });
   }

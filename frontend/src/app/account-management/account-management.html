@@ -32,6 +32,10 @@
       <input name="loginPassword" placeholder="Password" type="password" [(ngModel)]="password" required />
 
       <button class="primary-action" type="submit">Log in</button>
+
+      <div class="oauth-divider"><span>or</span></div>
+      <div #googleButton class="google-button"></div>
+
       <button class="text-action" type="button" (click)="setMode('forgot')">Forgotten password?</button>
       <button class="outline-action" type="button" (click)="setMode('register')">Create new account</button>
     </form>
