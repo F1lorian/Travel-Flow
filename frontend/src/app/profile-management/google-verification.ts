@@ -6,8 +6,20 @@ const GOOGLE_CLIENT_ID =
   (globalThis as { __APP_CONFIG__?: { googleClientId?: string } }).__APP_CONFIG__?.googleClientId ??
   '';
 
-// `google` is loaded globally by the Google Identity Services script in index.html.
-declare const google: { accounts?: { id?: any } } | undefined;
+// Minimal shape of the `google.accounts.id` API used here, loaded globally by the Google Identity
+// Services script in index.html.
+interface GoogleAccountsId {
+  initialize(config: {
+    client_id: string;
+    callback: (response: { credential: string }) => void;
+  }): void;
+  renderButton(
+    parent: HTMLElement,
+    options: { theme: string; size: string; width: number; text: string }
+  ): void;
+}
+
+declare const google: { accounts?: { id?: GoogleAccountsId } } | undefined;
 
 /** Number of milliseconds to wait before retrying when the GIS script has not loaded yet. */
 const GIS_RETRY_MS = 200;

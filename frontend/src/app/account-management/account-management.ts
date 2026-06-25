@@ -10,8 +10,20 @@ type AccountMode = 'login' | 'register' | 'verify' | 'forgot' | 'reset' | 'forgo
 const GOOGLE_CLIENT_ID =
   (globalThis as { __APP_CONFIG__?: { googleClientId?: string } }).__APP_CONFIG__?.googleClientId ?? '';
 
-// Loaded globally by the Google Identity Services script in index.html.
-declare const google: { accounts?: { id?: any } } | undefined;
+// Minimal shape of the `google.accounts.id` API used here, loaded globally by the Google Identity
+// Services script in index.html.
+interface GoogleAccountsId {
+  initialize(config: {
+    client_id: string;
+    callback: (response: { credential: string }) => void;
+  }): void;
+  renderButton(
+    parent: HTMLElement,
+    options: { theme: string; size: string; width: number; text: string }
+  ): void;
+}
+
+declare const google: { accounts?: { id?: GoogleAccountsId } } | undefined;
 
 @Component({
   selector: 'app-account-management',
