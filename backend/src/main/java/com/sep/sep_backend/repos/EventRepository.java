@@ -14,13 +14,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
   List<Event> findByStartTimeBeforeAndEndTimeAfter(LocalDateTime endTime, LocalDateTime startTime);
 
-  @Query(
-"""
-    SELECT DISTINCT e FROM Event e
-    LEFT JOIN e.trip t
-    LEFT JOIN t.users tu
-    LEFT JOIN e.users eu
-    WHERE tu.id = :userId OR eu.id = :userId
-""")
-  List<Event> findAllByUserId(@Param("userId") Long userId);
 }

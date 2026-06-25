@@ -15,6 +15,7 @@ import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.io.ByteArrayInputStream;
@@ -35,6 +36,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class EventServiceTest {
 
   @Mock private EventRepository eventRepository;
+
+  @Mock private UserEventRepository userEventRepository;
 
   @Mock private TripRepository tripRepository;
 
@@ -234,7 +237,7 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, trip);
     event.setId(42L);
 
-    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
     List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
@@ -242,7 +245,7 @@ class EventServiceTest {
     assertThat(result.getFirst().getId()).isEqualTo("42");
     assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
     assertThat(result.getFirst().getStart()).isEqualTo(start);
-    verify(eventRepository).findAllByUserId(7L);
+    verify(userEventRepository).findAllByUserId(7L);
   }
 
   @Test
@@ -252,13 +255,13 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, null);
     event.setId(42L);
 
-    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
     List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getTripId()).isNull();
-    verify(eventRepository).findAllByUserId(7L);
+    verify(userEventRepository).findAllByUserId(7L);
   }
 
   @Test
