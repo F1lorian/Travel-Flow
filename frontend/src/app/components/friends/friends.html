@@ -24,48 +24,50 @@
         Search
       </button>
     </div>
-  </section>
 
-  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
-    <h2 class="mb-4 text-xl font-semibold">Results</h2>
+    @if (hasSearched) {
+      <div class="mt-6 border-t border-slate-200 pt-6">
+        <h2 class="mb-4 text-xl font-semibold">Results</h2>
 
-    @if (searchResults.length === 0) {
-      <p class="text-slate-500">No users found.</p>
-    } @else {
-      <ul class="divide-y divide-slate-200">
-        @for (user of searchResults; track user.id) {
-          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p class="font-semibold text-slate-900">
-                {{ user.firstName }} {{ user.surname }}
-              </p>
-              <p class="text-sm text-slate-500">
-                &#64;{{ user.username }}
-              </p>
-            </div>
+        @if (searchResults.length === 0) {
+          <p class="text-slate-500">No users found.</p>
+        } @else {
+          <ul class="divide-y divide-slate-200">
+            @for (user of searchResults; track user.id) {
+              <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="font-semibold text-slate-900">
+                    {{ user.firstName }} {{ user.surname }}
+                  </p>
+                  <p class="text-sm text-slate-500">
+                    &#64;{{ user.username }}
+                  </p>
+                </div>
 
-            @if (user.connected) {
-              <button
-                type="button"
-                disabled
-                class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2
-                         font-semibold text-slate-500"
-              >
-                Already connected
-              </button>
-            } @else {
-              <button
-                type="button"
-                (click)="addFriend(user.id)"
-                class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
-                         transition hover:bg-slate-700 active:scale-[0.99]"
-              >
-                Add to friends
-              </button>
+                @if (user.connected) {
+                  <button
+                    type="button"
+                    disabled
+                    class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2
+                             font-semibold text-slate-500"
+                  >
+                    Already connected
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="addFriend(user.id)"
+                    class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
+                             transition hover:bg-slate-700 active:scale-[0.99]"
+                  >
+                    Add to friends
+                  </button>
+                }
+              </li>
             }
-          </li>
+          </ul>
         }
-      </ul>
+      </div>
     }
   </section>
 

@@ -16,6 +16,7 @@ export class Friends implements OnInit {
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
   searchName = '';
+  hasSearched = false;
 
   ngOnInit() {
     this.friendsService.getFriends().subscribe((data) => {
@@ -31,9 +32,11 @@ export class Friends implements OnInit {
     const name = this.searchName.trim();
     if (!name) {
       this.searchResults = [];
+      this.hasSearched = false;
       return;
     }
 
+    this.hasSearched = true;
     this.friendsService.searchUsers(name).subscribe((data) => {
       this.searchResults = data;
     },
