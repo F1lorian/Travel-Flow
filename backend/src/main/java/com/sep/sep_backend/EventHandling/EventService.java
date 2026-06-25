@@ -171,12 +171,13 @@ public class EventService {
         }
         Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
         Event savedEvent = eventRepository.save(newEvent);
-        User user =
-                userRepository
-                        .findById(UserID)
-                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        user.getEvents().add(newEvent);
-        userRepository.save(user);
+
+        User creator = userRepository.findById(UserID)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
+        creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
+        userEventRepository.save(creatorEntry);
 
         return mapToResponseDTO(savedEvent);
     }
