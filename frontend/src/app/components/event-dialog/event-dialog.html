@@ -52,7 +52,7 @@
               <p class="text-xs text-gray-400">&#64;{{ participant.username }}</p>
             </div>
           </div>
-          <span
+          <!--<span
             class="text-xs font-semibold px-2 py-1 rounded-full"
             [class.bg-green-100]="participant.status === 'ACCEPTED'"
             [class.text-green-700]="participant.status === 'ACCEPTED'"
@@ -61,7 +61,7 @@
             [class.bg-red-100]="participant.status === 'DECLINED'"
             [class.text-red-700]="participant.status === 'DECLINED'">
           {{ participant.status }}
-        </span>
+        </span>-->
         </div>
       }
       @if (participants.length === 0) {
