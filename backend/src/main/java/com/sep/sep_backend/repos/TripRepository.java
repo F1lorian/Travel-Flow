@@ -12,7 +12,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
   @Query(
 """
     SELECT DISTINCT t FROM Trip t
-    JOIN t.users u
+    JOIN t.userTrips ut
+    JOIN ut.user u
     WHERE u.id = :userId
 """)
   List<Trip> findAllByUserId(@Param("userId") Long userId);

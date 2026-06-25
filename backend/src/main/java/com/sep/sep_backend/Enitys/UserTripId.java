@@ -1,12 +1,16 @@
 package com.sep.sep_backend.Enitys;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
 public class UserTripId implements Serializable {
+  @Column(name = "user_id")
   private Long userId;
+
+  @Column(name = "trip_id")
   private Long tripId;
 
   public UserTripId() {}

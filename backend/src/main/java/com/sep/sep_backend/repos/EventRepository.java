@@ -1,6 +1,7 @@
 package com.sep.sep_backend.repos;
 
 import com.sep.sep_backend.Enitys.Event;
+import com.sep.sep_backend.Enitys.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,13 +13,19 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
   List<Event> findByStartTimeBetween(LocalDateTime dateTimeAfter, LocalDateTime dateTimeBefore);
 
+  List<Event> findByUsersContainingAndStartTimeBetween(
+      User user, LocalDateTime dateTimeAfter, LocalDateTime dateTimeBefore);
+
+  List<Event> findByUsersContainingAndTrip_Id(User user, Long tripId);
+
   List<Event> findByStartTimeBeforeAndEndTimeAfter(LocalDateTime endTime, LocalDateTime startTime);
 
   @Query(
 """
     SELECT DISTINCT e FROM Event e
     LEFT JOIN e.trip t
-    LEFT JOIN t.users tu
+    LEFT JOIN t.userTrips ut
+    LEFT JOIN ut.user tu
     LEFT JOIN e.users eu
     WHERE tu.id = :userId OR eu.id = :userId
 """)

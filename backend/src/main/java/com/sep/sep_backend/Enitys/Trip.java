@@ -13,12 +13,6 @@ public class Trip {
   @Column(nullable = false)
   private String name;
 
-  @Column(nullable = false, columnDefinition = "double precision default 0")
-  private double budget = 0;
-
-  @Column(nullable = false, columnDefinition = "double precision default 0")
-  private double warningRange = 0;
-
   @OneToMany(mappedBy = "trip")
   private List<Event> events;
 
@@ -29,16 +23,8 @@ public class Trip {
   @OneToMany(mappedBy = "trip")
   private List<Ausgabe> ausgaben;
 
-  @ManyToMany(mappedBy = "trips")
-  private List<User> users;
-
-  public List<User> getUsers() {
-    return users;
-  }
-
-  public void setUsers(List<User> users) {
-    this.users = users;
-  }
+  @OneToMany(mappedBy = "trip")
+  private List<UserTrip> userTrips;
 
   public Trip() {}
 
@@ -91,20 +77,12 @@ public class Trip {
     this.ausgaben = ausgaben;
   }
 
-  public double getBudget() {
-    return this.budget;
+  public List<UserTrip> getUserTrips() {
+    return userTrips;
   }
 
-  public void setBudget(double budget) {
-    this.budget = budget;
-  }
-
-  public double getWarningRange() {
-    return this.warningRange;
-  }
-
-  public void setWarningRange(double warningRange) {
-    this.warningRange = warningRange;
+  public void setUserTrips(List<UserTrip> userTrips) {
+    this.userTrips = userTrips;
   }
 
   public LocalDate getStartDate() {

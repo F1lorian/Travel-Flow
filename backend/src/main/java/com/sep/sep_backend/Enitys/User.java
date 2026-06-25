@@ -40,12 +40,8 @@ public class User {
 
   private LocalDateTime verificationCodeExpiresAt;
 
-  @ManyToMany
-  @JoinTable(
-      name = "user_trips",
-      joinColumns = @JoinColumn(name = "user_id"),
-      inverseJoinColumns = @JoinColumn(name = "trip_id"))
-  private List<Trip> trips;
+  @OneToMany(mappedBy = "user")
+  private List<UserTrip> userTrips;
 
   @ManyToMany
   @JoinTable(
@@ -60,6 +56,9 @@ public class User {
       joinColumns = @JoinColumn(name = "user_id"),
       inverseJoinColumns = @JoinColumn(name = "friend_id"))
   private Set<User> friends = new HashSet<>();
+
+  @OneToMany(mappedBy = "user")
+  private List<Ausgabe> ausgaben;
 
   public User() {}
 
@@ -166,12 +165,12 @@ public class User {
     this.verificationCodeExpiresAt = verificationCodeExpiresAt;
   }
 
-  public List<Trip> getTrips() {
-    return trips;
+  public List<UserTrip> getUserTrips() {
+    return userTrips;
   }
 
-  public void setTrips(List<Trip> trips) {
-    this.trips = trips;
+  public void setUserTrips(List<UserTrip> userTrips) {
+    this.userTrips = userTrips;
   }
 
   public List<Event> getEvents() {
@@ -188,5 +187,13 @@ public class User {
 
   public void setFriends(Set<User> friends) {
     this.friends = friends;
+  }
+
+  public List<Ausgabe> getAusgaben() {
+    return ausgaben;
+  }
+
+  public void setAusgaben(List<Ausgabe> ausgaben) {
+    this.ausgaben = ausgaben;
   }
 }

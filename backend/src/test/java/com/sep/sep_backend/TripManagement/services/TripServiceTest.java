@@ -10,7 +10,6 @@ import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -93,7 +92,6 @@ class TripServiceTest {
   private User userWithTrips(long id) {
     User user = new User();
     user.setId(id);
-    user.setTrips(new ArrayList<>());
     return user;
   }
 }
