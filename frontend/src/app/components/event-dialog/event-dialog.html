@@ -39,20 +39,32 @@
     <div class="border-t border-gray-200 px-6 py-4">
       <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
         <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
-        Attending friends · {{friends.length}}
+        Attending friends · {{ participants.length }}
       </p>
-      @for (friend of friends; track friend.id) {
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
-            {{ friend.firstName | slice:0:1 }}{{ friend.surname | slice:0:1 }}
+      @for (participant of participants; track participant.userId) {
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
+              {{ participant.firstname | slice:0:1 }}{{ participant.surname | slice:0:1 }}
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-slate-800">{{ participant.firstname }} {{ participant.surname }}</p>
+              <p class="text-xs text-gray-400">&#64;{{ participant.username }}</p>
+            </div>
           </div>
-          <div>
-            <p class="text-sm font-semibold text-slate-800">{{ friend.firstName }} {{ friend.surname }}</p>
-            <p class="text-xs text-gray-400">&#64;{{ friend.username }}</p>
-          </div>
+          <span
+            class="text-xs font-semibold px-2 py-1 rounded-full"
+            [class.bg-green-100]="participant.status === 'ACCEPTED'"
+            [class.text-green-700]="participant.status === 'ACCEPTED'"
+            [class.bg-amber-100]="participant.status === 'PENDING'"
+            [class.text-amber-700]="participant.status === 'PENDING'"
+            [class.bg-red-100]="participant.status === 'DECLINED'"
+            [class.text-red-700]="participant.status === 'DECLINED'">
+          {{ participant.status }}
+        </span>
         </div>
       }
-      @if (friends.length === 0) {
+      @if (participants.length === 0) {
         <p class="text-sm text-gray-400">No friends are currently attending</p>
       }
     </div>

@@ -13,6 +13,8 @@ import {MatIcon} from '@angular/material/icon';
 import {EventService} from '../../../event-adding-manual/service/event.service';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import {Friend, FriendsService} from '../../services/friends.service';
+import { UserEventDTO } from '../../../event-adding-manual/models/UserEventDTO';
+import {forkJoin} from 'rxjs';
 
 interface EventDialogData {
   mode?: 'create' | 'edit' | 'show';
@@ -54,11 +56,11 @@ export class EventDialog implements OnInit {
   dialog = inject(MatDialog);
   trips: Trip[] = [];
   friends: Friend[] = [];
-  attendingFriends: Friend[] = [];
   allDay = false;
   errorMessage = "";
   inviteDropdownOpen = false;
   invitations: Friend[] = [];
+  participants: UserEventDTO[] = [];
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
@@ -78,6 +80,10 @@ export class EventDialog implements OnInit {
   ngOnInit() {
     this.loadTrips();
     this.loadFriends();
+
+    if (this.mode === 'show' && this.data.id) {
+      this.loadParticipants();
+    }
   }
 
   /**
@@ -146,12 +152,24 @@ export class EventDialog implements OnInit {
       start: this.start,
       end: this.end,
     }).subscribe({
-      next: (response) =>
-      //const invitedFriends = this.invitations.map(friend =>
-        //this.eventService.inviteFriendToEvent(response.id, friend.id));
-        this.dialogRef.close({ action: 'created', event: response }),
-      error: (err) => {this.dialogRef.close({ action: 'error', message: err?.error || 'Event konnte nicht erstellt werden.' });
-      }
+      next: (response) => {
+      if (this.invitations.length === 0) {
+      this.dialogRef.close({ action: 'created', event: response });
+      return;
+    }
+
+    const inviteCalls = this.invitations.map(friend =>
+      this.eventService.inviteFriendToEvent(response.id, friend.id)
+    );
+
+    forkJoin(inviteCalls).subscribe({
+      next: () => this.dialogRef.close({ action: 'created', event: response }),
+      error: () => this.dialogRef.close({ action: 'created', event: response })
+    });
+    },
+    error: (err) => {
+      this.dialogRef.close({ action: 'error', message: err?.error || 'Event konnte nicht erstellt werden.' });
+    }
     });
   }
 
@@ -167,7 +185,21 @@ export class EventDialog implements OnInit {
       start: this.start,
       end: this.end,
     }).subscribe({
-      next: (response) => this.dialogRef.close({ action: 'saved', event: response }),
+      next: (response) => {
+        if (this.invitations.length === 0) {
+          this.dialogRef.close({ action: 'saved', event: response });
+          return;
+        }
+
+        const inviteCalls = this.invitations.map(friend =>
+          this.eventService.inviteFriendToEvent(this.data.id!, friend.id)
+        );
+
+        forkJoin(inviteCalls).subscribe({
+          next: () => this.dialogRef.close({ action: 'saved', event: response }),
+          error: () => this.dialogRef.close({ action: 'saved', event: response })
+        });
+      },
       error: () => this.showError()
     });
   }
@@ -224,6 +256,12 @@ export class EventDialog implements OnInit {
         this.friends = friends;
       }
     })
+  }
+
+  loadParticipants() {
+    this.eventService.getParticipants(this.data.id!).subscribe({
+      next: (participants) => this.participants = participants
+    });
   }
 
   showError(err?: { error?: string }) {

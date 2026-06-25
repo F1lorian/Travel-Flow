@@ -187,7 +187,7 @@ public class EventService {
      * @return list of calendar event DTOs
      */
     public List<EventCalendarDTO> getAllEventsFromDb(Long userId) {
-        return eventRepository.findAllByUserId(userId).stream()
+        return userEventRepository.findAllByUserId(userId).stream()
                 .map(
                         event ->
                                 new EventCalendarDTO(
