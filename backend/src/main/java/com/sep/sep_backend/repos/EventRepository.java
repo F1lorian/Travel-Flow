@@ -13,22 +13,25 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
   List<Event> findByStartTimeBetween(LocalDateTime dateTimeAfter, LocalDateTime dateTimeBefore);
 
-  @Query("""
+  @Query(
+"""
     SELECT DISTINCT e FROM Event e
     JOIN UserEvent ue ON ue.event.id = e.id
     WHERE ue.user = :user AND e.startTime BETWEEN :dateTimeAfter AND :dateTimeBefore
 """)
   List<Event> findByUsersContainingAndStartTimeBetween(
-          @Param("user") User user,
-          @Param("dateTimeAfter") LocalDateTime dateTimeAfter,
-          @Param("dateTimeBefore") LocalDateTime dateTimeBefore);
+      @Param("user") User user,
+      @Param("dateTimeAfter") LocalDateTime dateTimeAfter,
+      @Param("dateTimeBefore") LocalDateTime dateTimeBefore);
 
-  @Query("""
+  @Query(
+"""
     SELECT DISTINCT e FROM Event e
     JOIN UserEvent ue ON ue.event.id = e.id
     WHERE ue.user = :user AND e.trip.id = :tripId
 """)
-  List<Event> findByUsersContainingAndTrip_Id(@Param("user") User user, @Param("tripId") Long tripId);
+  List<Event> findByUsersContainingAndTrip_Id(
+      @Param("user") User user, @Param("tripId") Long tripId);
 
   List<Event> findByStartTimeBeforeAndEndTimeAfter(LocalDateTime endTime, LocalDateTime startTime);
 }

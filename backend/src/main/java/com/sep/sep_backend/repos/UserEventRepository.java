@@ -21,7 +21,9 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
 """
     SELECT DISTINCT e FROM Event e
     LEFT JOIN UserEvent ue ON ue.event.id = e.id
-    WHERE ue.user.id = :userId
+    LEFT JOIN e.trip t
+    LEFT JOIN t.userTrips ut
+    WHERE ue.user.id = :userId OR ut.user.id = :userId
 """)
   List<Event> findAllByUserId(@Param("userId") Long userId);
 }
