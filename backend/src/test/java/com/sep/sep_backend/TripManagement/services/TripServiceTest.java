@@ -6,14 +6,17 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.Enitys.UserTrip;
+import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +31,10 @@ class TripServiceTest {
   @Mock private UserRepository userRepository;
 
   @Mock private UserTripRepository userTripRepository;
+
+  @Mock private UserEventRepository userEventRepository;
+
+  @Mock private AusgabeRepository ausgabeRepository;
 
   @InjectMocks private TripService tripService;
 
@@ -87,6 +94,39 @@ class TripServiceTest {
     Optional<Trip> result = tripService.getTrip(99L);
 
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void deleteTrip_deletesRelatedDataBeforeTrip() {
+    when(tripRepository.existsById(1L)).thenReturn(true);
+
+    tripService.deleteTrip(1L);
+
+    InOrder inOrder =
+        inOrder(
+            userEventRepository,
+            eventRepository,
+            ausgabeRepository,
+            userTripRepository,
+            tripRepository);
+    inOrder.verify(userEventRepository).deleteByEvent_Trip_Id(1L);
+    inOrder.verify(eventRepository).deleteByTrip_Id(1L);
+    inOrder.verify(ausgabeRepository).deleteByTrip_Id(1L);
+    inOrder.verify(userTripRepository).deleteByIdTripId(1L);
+    inOrder.verify(tripRepository).deleteById(1L);
+  }
+
+  @Test
+  void deleteTrip_throwsWhenTripNotFound() {
+    when(tripRepository.existsById(99L)).thenReturn(false);
+
+    assertThrows(IllegalArgumentException.class, () -> tripService.deleteTrip(99L));
+
+    verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
+    verify(eventRepository, never()).deleteByTrip_Id(any());
+    verify(ausgabeRepository, never()).deleteByTrip_Id(any());
+    verify(userTripRepository, never()).deleteByIdTripId(any());
+    verify(tripRepository, never()).deleteById(any());
   }
 
   private User userWithTrips(long id) {
