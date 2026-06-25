@@ -8,10 +8,12 @@ import com.google.genai.types.GenerateContentResponse;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserEvent;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -37,6 +39,7 @@ public class EventService {
   private final AusgabeService ausgabeService;
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
+  private final UserEventRepository userEventRepository;
 
   @Value("${gemini.api-key}")
   private String geminiApiKey;
@@ -58,18 +61,21 @@ public class EventService {
       TripRepository triprepository,
       AusgabeService ausgabeService,
       UserRepository userRepository,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      UserEventRepository userEventRepository) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
     this.userRepository = userRepository;
     this.objectMapper = objectMapper;
+    this.userEventRepository = userEventRepository;
   }
 
   /**
    * Saves a manually created event for the trip referenced by the request.
    *
    * @param dto request data containing event values and the trip identifier
+   * @param userId is the id of the creating user
    * @return response data of the saved event
    */
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto, Long userId) {
@@ -82,13 +88,14 @@ public class EventService {
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
 
-    // User dem Event zuweisen
-    User user =
+    User creator =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    user.getEvents().add(savedEvent);
-    userRepository.save(user);
+
+    UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
+    creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
+    userEventRepository.save(creatorEntry);
 
     return mapToResponseDTO(savedEvent);
   }
@@ -150,6 +157,7 @@ public class EventService {
    *
    * @param dto parsed imported event values
    * @param tripId optional identifier of the trip the event belongs to
+   * @param UserID is the id of the creating user
    * @return response data of the saved event
    */
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId, Long UserID) {
@@ -163,12 +171,15 @@ public class EventService {
     }
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     Event savedEvent = eventRepository.save(newEvent);
-    User user =
+
+    User creator =
         userRepository
             .findById(UserID)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    user.getEvents().add(newEvent);
-    userRepository.save(user);
+
+    UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
+    creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
+    userEventRepository.save(creatorEntry);
 
     return mapToResponseDTO(savedEvent);
   }
@@ -176,10 +187,11 @@ public class EventService {
   /**
    * Returns all stored events in the format used by the calendar view.
    *
+   * @param userId is the id of the requesting user
    * @return list of calendar event DTOs
    */
   public List<EventCalendarDTO> getAllEventsFromDb(Long userId) {
-    return eventRepository.findAllByUserId(userId).stream()
+    return userEventRepository.findAllByUserId(userId).stream()
         .map(
             event ->
                 new EventCalendarDTO(
@@ -207,6 +219,77 @@ public class EventService {
       result.add(dto);
     }
     return result;
+  }
+
+  /**
+   * sends an invitation to an event to a friend
+   *
+   * @param eventId
+   * @param friendUserId
+   * @param requestingUserId
+   */
+  public void inviteFriendToEvent(Long eventId, Long friendUserId, Long requestingUserId) {
+    Event event =
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+
+    boolean requesterIsParticipant =
+        userEventRepository.existsByEvent_IdAndUser_Id(eventId, requestingUserId);
+    if (!requesterIsParticipant) {
+      throw new IllegalArgumentException("Only participants can invite friends");
+    }
+
+    if (userEventRepository.existsByEvent_IdAndUser_Id(eventId, friendUserId)) {
+      throw new IllegalArgumentException("User already invited");
+    }
+
+    User friend =
+        userRepository
+            .findById(friendUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    User requestingUser =
+        userRepository
+            .findById(requestingUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    UserEvent invite = new UserEvent(event, friend, requestingUser);
+    userEventRepository.save(invite);
+  }
+
+  /**
+   * responds to the invitation
+   *
+   * @param eventId
+   * @param userId
+   * @param status can be PENDING, ACCEPTED or DECLINED
+   */
+  public void respondToInvite(Long eventId, Long userId, UserEvent.InviteStatus status) {
+    if (status == UserEvent.InviteStatus.PENDING) {
+      throw new IllegalArgumentException("Cannot set status back to pending");
+    }
+
+    UserEvent userEvent =
+        userEventRepository
+            .findByEvent_IdAndUser_Id(eventId, userId)
+            .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
+    userEvent.setStatus(status);
+    userEventRepository.save(userEvent);
+  }
+
+  /**
+   * @param eventId
+   * @param requestingUserId
+   * @return gives a list of every invitation sent by a user for a single event
+   */
+  public List<UserEvent> getInvitesSentByUser(Long eventId, Long requestingUserId) {
+    return userEventRepository.findByEvent_Id(eventId).stream()
+        .filter(ue -> ue.getCreator().getId() == requestingUserId)
+        .toList();
+  }
+
+  public List<UserEvent> getParticipants(Long eventId) {
+    return userEventRepository.findByEvent_Id(eventId);
   }
 
   /**

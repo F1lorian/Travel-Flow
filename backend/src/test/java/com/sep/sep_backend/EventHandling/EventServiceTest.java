@@ -11,10 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserEvent;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.io.ByteArrayInputStream;
@@ -35,6 +37,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class EventServiceTest {
 
   @Mock private EventRepository eventRepository;
+
+  @Mock private UserEventRepository userEventRepository;
 
   @Mock private TripRepository tripRepository;
 
@@ -86,12 +90,17 @@ class EventServiceTest {
     verify(eventRepository).save(eventCaptor.capture());
 
     Event savedEvent = eventCaptor.getValue();
+    assertThat(savedEvent.getName()).isEqualTo("Museum");
     assertThat(savedEvent.getTrip()).isNull();
     assertThat(savedEvent.getTripId()).isNull();
     assertThat(result.getTripId()).isNull();
-    assertThat(user.getEvents()).contains(savedEvent);
-    verify(tripRepository, never()).findById(any());
-    verify(userRepository).save(user);
+
+    ArgumentCaptor<UserEvent> userEventCaptor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(userEventCaptor.capture());
+    assertThat(userEventCaptor.getValue().getEvent()).isSameAs(savedEvent);
+    assertThat(userEventCaptor.getValue().getUser()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getCreator()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getStatus()).isEqualTo(UserEvent.InviteStatus.ACCEPTED);
   }
 
   @Test
@@ -175,8 +184,12 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isSameAs(trip);
     assertThat(result.getName()).isEqualTo("Konzert");
     assertThat(result.getKosten()).isEqualTo(49);
-    assertThat(user.getEvents()).contains(savedEvent);
-    verify(userRepository).save(user);
+
+    ArgumentCaptor<UserEvent> userEventCaptor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(userEventCaptor.capture());
+    assertThat(userEventCaptor.getValue().getEvent()).isSameAs(savedEvent);
+    assertThat(userEventCaptor.getValue().getUser()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getStatus()).isEqualTo(UserEvent.InviteStatus.ACCEPTED);
   }
 
   @Test
@@ -196,8 +209,12 @@ class EventServiceTest {
 
     assertThat(eventCaptor.getValue().getName()).isEqualTo("Unbekanntes Event");
     assertThat(result.getName()).isEqualTo("Unbekanntes Event");
-    assertThat(user.getEvents()).contains(eventCaptor.getValue());
-    verify(userRepository).save(user);
+
+    ArgumentCaptor<UserEvent> userEventCaptor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(userEventCaptor.capture());
+    assertThat(userEventCaptor.getValue().getEvent()).isSameAs(eventCaptor.getValue());
+    assertThat(userEventCaptor.getValue().getUser()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getStatus()).isEqualTo(UserEvent.InviteStatus.ACCEPTED);
   }
 
   @Test
@@ -221,9 +238,13 @@ class EventServiceTest {
     assertThat(savedEvent.getTrip()).isNull();
     assertThat(savedEvent.getTripId()).isNull();
     assertThat(result.getTripId()).isNull();
-    assertThat(user.getEvents()).contains(savedEvent);
-    verify(tripRepository, never()).findById(any());
-    verify(userRepository).save(user);
+
+    ArgumentCaptor<UserEvent> userEventCaptor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(userEventCaptor.capture());
+    assertThat(userEventCaptor.getValue().getEvent()).isSameAs(savedEvent);
+    assertThat(userEventCaptor.getValue().getUser()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getCreator()).isSameAs(user);
+    assertThat(userEventCaptor.getValue().getStatus()).isEqualTo(UserEvent.InviteStatus.ACCEPTED);
   }
 
   @Test
@@ -234,7 +255,7 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, trip);
     event.setId(42L);
 
-    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
     List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
@@ -242,7 +263,7 @@ class EventServiceTest {
     assertThat(result.getFirst().getId()).isEqualTo("42");
     assertThat(result.getFirst().getTitle()).isEqualTo("Museum");
     assertThat(result.getFirst().getStart()).isEqualTo(start);
-    verify(eventRepository).findAllByUserId(7L);
+    verify(userEventRepository).findAllByUserId(7L);
   }
 
   @Test
@@ -252,13 +273,13 @@ class EventServiceTest {
     Event event = new Event("Museum", start, end, 25, null);
     event.setId(42L);
 
-    when(eventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(event));
 
     List<EventCalendarDTO> result = eventService.getAllEventsFromDb(7L);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getTripId()).isNull();
-    verify(eventRepository).findAllByUserId(7L);
+    verify(userEventRepository).findAllByUserId(7L);
   }
 
   @Test
@@ -460,7 +481,12 @@ class EventServiceTest {
 
   private EventService serviceWithRealObjectMapper() {
     return new EventService(
-        eventRepository, tripRepository, ausgabeService, userRepository, new ObjectMapper());
+        eventRepository,
+        tripRepository,
+        ausgabeService,
+        userRepository,
+        new ObjectMapper(),
+        userEventRepository);
   }
 
   private User userWithEvents(long id) {
