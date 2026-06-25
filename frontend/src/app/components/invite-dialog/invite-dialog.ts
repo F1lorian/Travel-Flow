@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {Friend, FriendsService} from '../../services/friends.service';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -13,7 +13,7 @@ interface InviteDialogData {
   templateUrl: './invite-dialog.html',
   styleUrl: './invite-dialog.css',
 })
-export class InviteDialog {
+export class InviteDialog implements OnInit {
   private readonly friendsService = inject(FriendsService);
   friends: Friend[] = [];
   selectedFriendId: number | null = null;
