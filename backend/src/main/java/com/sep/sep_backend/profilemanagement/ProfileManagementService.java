@@ -1,11 +1,19 @@
 package com.sep.sep_backend.profilemanagement;
 
+import com.sep.sep_backend.Enitys.Event;
+import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.Enitys.UserTrip;
 import com.sep.sep_backend.accountmanagement.GoogleTokenVerifier;
 import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
+import com.sep.sep_backend.repos.AusgabeRepository;
+import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.repos.UserTripRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +22,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /** Handles the logged-in user's own profile: viewing privacy details and changing the password. */
@@ -25,6 +34,10 @@ public class ProfileManagementService {
   private static final int VERIFICATION_MINUTES = 15;
 
   private final UserRepository userRepository;
+  private final UserTripRepository userTripRepository;
+  private final AusgabeRepository ausgabeRepository;
+  private final TripRepository tripRepository;
+  private final EventRepository eventRepository;
   private final JavaMailSender mailSender;
   private final PasswordEncoder passwordEncoder;
   private final GoogleTokenVerifier googleTokenVerifier;
@@ -33,11 +46,19 @@ public class ProfileManagementService {
 
   public ProfileManagementService(
       UserRepository userRepository,
+      UserTripRepository userTripRepository,
+      AusgabeRepository ausgabeRepository,
+      TripRepository tripRepository,
+      EventRepository eventRepository,
       JavaMailSender mailSender,
       PasswordEncoder passwordEncoder,
       GoogleTokenVerifier googleTokenVerifier,
       @Value("${spring.mail.username:}") String mailUsername) {
     this.userRepository = userRepository;
+    this.userTripRepository = userTripRepository;
+    this.ausgabeRepository = ausgabeRepository;
+    this.tripRepository = tripRepository;
+    this.eventRepository = eventRepository;
     this.mailSender = mailSender;
     this.passwordEncoder = passwordEncoder;
     this.googleTokenVerifier = googleTokenVerifier;
@@ -85,9 +106,13 @@ public class ProfileManagementService {
 
   /**
    * Permanently deletes the logged-in user's account after confirming ownership with an e-mail code
-   * or a matching Google login. Friendships are symmetric, so the account is first unlinked from
-   * every friend to clear the reverse {@code user_friends} rows before the user row is removed.
+   * or a matching Google login. Rows in other tables still reference the account, so they must be
+   * cleared before the user row can be removed: friendships are symmetric (the reverse {@code
+   * user_friends} rows are unlinked), the user's trip memberships and expenses have no cascade, and
+   * trip memberships where this user was the inviter keep a dangling {@code invited_by_id}. Trips
+   * that have no members left once the user leaves are deleted along with their events and expenses.
    */
+  @Transactional
   public MessageResponseDTO deleteAccount(String username, DeleteAccountRequestDTO request) {
     User user = findByUsername(username);
     verifyEmailOwnership(user, request.code(), request.googleIdToken());
@@ -98,8 +123,45 @@ public class ProfileManagementService {
     }
     user.getFriends().clear();
 
+    // Clear the inviter reference on other members' trips so deleting the user leaves no dangling
+    // invited_by_id, then drop the user's own trip memberships and expenses (neither cascades).
+    for (UserTrip invited : userTripRepository.findByInvitedBy(user)) {
+      invited.setInvitedBy(null);
+      userTripRepository.save(invited);
+    }
+    List<Trip> memberTrips = user.getUserTrips().stream().map(UserTrip::getTrip).toList();
+    userTripRepository.deleteAll(user.getUserTrips());
+    ausgabeRepository.deleteAll(user.getAusgaben());
+
+    // Any trip the user just left with no members remaining is orphaned: delete it together with
+    // its events and expenses (none of which cascade from the trip row).
+    for (Trip trip : memberTrips) {
+      if (!userTripRepository.existsByTrip(trip)) {
+        deleteTripWithContents(trip);
+      }
+    }
+
     userRepository.delete(user);
     return new MessageResponseDTO("Account deleted successfully");
+  }
+
+  /**
+   * Removes an orphaned trip and everything that points at it. Events are unlinked from their
+   * participants first because {@code user_events} is owned by the user side, so deleting an event
+   * would otherwise leave dangling join rows.
+   */
+  private void deleteTripWithContents(Trip trip) {
+    List<Event> events = eventRepository.findByTrip_Id(trip.getId());
+    for (Event event : events) {
+      if (event.getUsers() != null) {
+        for (User participant : event.getUsers()) {
+          participant.getEvents().removeIf(existing -> existing.getId() == event.getId());
+        }
+      }
+    }
+    eventRepository.deleteAll(events);
+    ausgabeRepository.deleteAll(ausgabeRepository.findByTrip(trip));
+    tripRepository.delete(trip);
   }
 
   /**
