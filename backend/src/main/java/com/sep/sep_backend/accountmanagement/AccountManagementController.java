@@ -24,6 +24,11 @@ public class AccountManagementController {
     return accountManagementService.login(request);
   }
 
+  @PostMapping("/oauth/google")
+  public AuthResponseDTO loginWithGoogle(@RequestBody GoogleLoginRequestDTO request) {
+    return accountManagementService.loginWithGoogle(request);
+  }
+
   @PostMapping("/verify-email")
   public MessageResponseDTO verifyEmail(@RequestBody VerifyEmailRequestDTO request) {
     return accountManagementService.verifyEmail(request);

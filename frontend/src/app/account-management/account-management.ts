@@ -1,9 +1,17 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, effect, inject, NgZone, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccountManagementService } from './account-management.service';
 
 type AccountMode = 'login' | 'register' | 'verify' | 'forgot' | 'reset' | 'forgot-email' | 'forgot-code' | 'reset-email';
+
+// Google OAuth Web client id, supplied at runtime via public/config.js
+// (regenerated from the GOOGLE_OAUTH_CLIENT_ID env var in Docker, see .env).
+const GOOGLE_CLIENT_ID =
+  (globalThis as { __APP_CONFIG__?: { googleClientId?: string } }).__APP_CONFIG__?.googleClientId ?? '';
+
+// Loaded globally by the Google Identity Services script in index.html.
+declare const google: { accounts?: { id?: any } } | undefined;
 
 @Component({
   selector: 'app-account-management',
@@ -15,6 +23,10 @@ type AccountMode = 'login' | 'register' | 'verify' | 'forgot' | 'reset' | 'forgo
 export class AccountManagement {
   private readonly accountService = inject(AccountManagementService);
   private readonly router = inject(Router);
+  private readonly zone = inject(NgZone);
+
+  private readonly googleButton = viewChild<ElementRef<HTMLElement>>('googleButton');
+  private googleInitialized = false;
 
   mode = signal<AccountMode>('login');
   message = signal('');
@@ -32,6 +44,57 @@ export class AccountManagement {
   newPassword = '';
   repeatNewPassword = '';
   resetCode = '';
+
+  constructor() {
+    // Render the Google button whenever the login form (and its container) is on screen.
+    effect(() => {
+      const container = this.googleButton();
+      if (this.mode() === 'login' && container) {
+        this.renderGoogleButton(container.nativeElement);
+      }
+    });
+  }
+
+  private renderGoogleButton(container: HTMLElement): void {
+    if (typeof google === 'undefined' || !google?.accounts?.id) {
+      // GSI script not loaded yet; retry shortly.
+      setTimeout(() => this.renderGoogleButton(container), 200);
+      return;
+    }
+    if (!this.googleInitialized) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response: { credential: string }) => this.handleGoogleCredential(response)
+      });
+      this.googleInitialized = true;
+    }
+    container.innerHTML = '';
+    google.accounts.id.renderButton(container, {
+      theme: 'outline',
+      size: 'large',
+      width: 280,
+      text: 'signin_with'
+    });
+  }
+
+  private handleGoogleCredential(response: { credential: string }): void {
+    // The GSI callback fires outside Angular's zone, so re-enter it before updating state.
+    this.zone.run(() => {
+      this.accountService.loginWithGoogle(response.credential).subscribe({
+        next: (res) => {
+          this.loggedInUser.set(res.username);
+          localStorage.setItem('sepUser', res.username);
+          if (res.token) {
+            localStorage.setItem('sepToken', res.token);
+          }
+          this.message.set(res.message);
+          this.error.set('');
+          this.router.navigateByUrl('/calendar');
+        },
+        error: (res) => this.showError(res)
+      });
+    });
+  }
 
   setMode(mode: AccountMode): void {
     this.mode.set(mode);

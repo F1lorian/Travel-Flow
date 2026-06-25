@@ -26,6 +26,7 @@ public class AccountManagementService {
   private final JavaMailSender mailSender;
   private final JwtService jwtService;
   private final PasswordEncoder passwordEncoder;
+  private final GoogleTokenVerifier googleTokenVerifier;
   private final String mailUsername;
   private final SecureRandom secureRandom = new SecureRandom();
 
@@ -34,11 +35,13 @@ public class AccountManagementService {
       JavaMailSender mailSender,
       JwtService jwtService,
       PasswordEncoder passwordEncoder,
+      GoogleTokenVerifier googleTokenVerifier,
       @Value("${spring.mail.username:}") String mailUsername) {
     this.userRepository = userRepository;
     this.mailSender = mailSender;
     this.jwtService = jwtService;
     this.passwordEncoder = passwordEncoder;
+    this.googleTokenVerifier = googleTokenVerifier;
     this.mailUsername = mailUsername;
   }
 
@@ -94,6 +97,59 @@ public class AccountManagementService {
     }
 
     return new AuthResponseDTO("Login successful", user.getName(), jwtService.createToken(user));
+  }
+
+  public AuthResponseDTO loginWithGoogle(GoogleLoginRequestDTO request) {
+    String idToken = requireText(request.idToken(), "Google credential is required");
+    GoogleTokenVerifier.GoogleUserInfo googleUser = googleTokenVerifier.verify(idToken);
+
+    String email = requireText(googleUser.email(), "Google account has no email").toLowerCase();
+    if (!googleUser.emailVerified()) {
+      throw new IllegalArgumentException("Google account email is not verified");
+    }
+
+    User user =
+        userRepository
+            .findByEmailIgnoreCase(email)
+            .orElseGet(() -> createGoogleUser(email, googleUser));
+
+    return new AuthResponseDTO("Login successful", user.getName(), jwtService.createToken(user));
+  }
+
+  private User createGoogleUser(String email, GoogleTokenVerifier.GoogleUserInfo googleUser) {
+    User user = new User();
+    user.setEmail(email);
+    user.setName(generateUniqueUsername(email));
+    // OAuth accounts never sign in with a password; store an unusable random hash so the
+    // not-null constraint is satisfied without exposing a guessable secret.
+    user.setPasswordHash(passwordEncoder.encode(randomSecret()));
+    user.setSecurityAnswerHash(passwordEncoder.encode(randomSecret()));
+    user.setFirstName(googleUser.firstName());
+    user.setSurname(googleUser.surname());
+    user.setProvider("GOOGLE");
+    user.setEmailVerified(true);
+    return userRepository.save(user);
+  }
+
+  private String generateUniqueUsername(String email) {
+    String base = email.substring(0, email.indexOf('@')).replaceAll("[^A-Za-z0-9_]", "");
+    if (base.isEmpty() || !Character.isLetter(base.charAt(0))) {
+      base = "user" + base;
+    }
+    if (base.length() < 3) {
+      base = base + "user";
+    }
+    String candidate = base;
+    while (userRepository.existsByNameIgnoreCase(candidate)) {
+      candidate = base + (1000 + secureRandom.nextInt(9000));
+    }
+    return candidate;
+  }
+
+  private String randomSecret() {
+    byte[] bytes = new byte[24];
+    secureRandom.nextBytes(bytes);
+    return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
   }
 
   public MessageResponseDTO verifyEmail(VerifyEmailRequestDTO request) {

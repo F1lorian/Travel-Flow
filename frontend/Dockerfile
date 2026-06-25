@@ -18,6 +18,10 @@ FROM nginx:alpine
 COPY --from=build /app/dist/sep/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Regenerate runtime config (config.js) from env vars on container start
+COPY docker/40-app-config.sh /docker-entrypoint.d/40-app-config.sh
+RUN chmod +x /docker-entrypoint.d/40-app-config.sh
+
 # Expose port 80
 EXPOSE 80
 
