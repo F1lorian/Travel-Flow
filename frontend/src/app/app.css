@@ -1,42 +1,100 @@
-.app-bar {
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+/* Sidebar navigation that replaces the previous top bar */
+.side-bar {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  height: 56px;
+  bottom: 0;
+  width: 220px;
   background: #1976d2;
+  color: white;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  flex-direction: column;
+  padding: 20px 16px;
+  box-sizing: border-box;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.18);
+}
+
+.side-bar-header {
+  margin-bottom: 24px;
+}
+
+.side-bar-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.side-bar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
 }
 
 .nav-toggle {
-  padding: 8px 16px;
+  display: block;
+  padding: 12px 14px;
   background: rgba(255, 255, 255, 0.15);
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: 500;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .nav-toggle:hover {
   background: rgba(255, 255, 255, 0.25);
-}
-
-.content {
-  padding-top: 72px;
-}
-
-.content.no-nav {
-  padding-top: 0;
+  transform: translateX(2px);
 }
 
 .logout-button {
   border: 0;
   cursor: pointer;
   font: inherit;
+  text-align: left;
+  margin-top: auto;
+}
+
+/* Main page content is shifted right so it does not overlap the sidebar */
+.content {
+  min-height: 100vh;
+  margin-left: 220px;
+  padding: 32px;
+  box-sizing: border-box;
+  background: #f4f6f8;
+}
+
+/* Pages without navigation, for example login/account page */
+.content.no-nav {
+  margin-left: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Basic responsiveness for smaller screens */
+@media (max-width: 700px) {
+  .side-bar {
+    width: 180px;
+    padding: 16px 12px;
+  }
+
+  .side-bar-header h2 {
+    font-size: 18px;
+  }
+
+  .nav-toggle {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .content {
+    margin-left: 180px;
+    padding: 20px;
+  }
 }

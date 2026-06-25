@@ -1,12 +1,22 @@
 @if (showNavigation) {
-  <header class="app-bar">
-    <a class="nav-toggle" routerLink="/calendar">Calendar</a>
-    <a class="nav-toggle" routerLink="/trips">Trips</a>
-    <a class="nav-toggle" routerLink="/overview">Overview</a>
-    <a class="nav-toggle" routerLink="/friends">Friends</a>
-    <button class="nav-toggle logout-button" type="button" (click)="logout()">Log out</button>
-  </header>
+  <aside class="side-bar">
+    <div class="side-bar-header">
+      <h2>Travel Hub</h2>
+    </div>
+
+    <nav class="side-bar-nav">
+      <a class="nav-toggle" routerLink="/calendar">Calendar</a>
+      <a class="nav-toggle" routerLink="/trips">Trips</a>
+      <a class="nav-toggle" routerLink="/overview">Overview</a>
+      <a class="nav-toggle" routerLink="/friends">Friends</a>
+
+      <button class="nav-toggle logout-button" type="button" (click)="logout()">
+        Log out
+      </button>
+    </nav>
+  </aside>
 }
-<div class="content" [class.no-nav]="!showNavigation">
+
+<main class="content" [class.no-nav]="!showNavigation">
   <router-outlet />
-</div>
+</main>
