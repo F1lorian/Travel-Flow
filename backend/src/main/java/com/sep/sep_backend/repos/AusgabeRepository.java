@@ -13,6 +13,8 @@ public interface AusgabeRepository extends JpaRepository<Ausgabe, Long> {
 
   List<Ausgabe> findByTrip(Trip trip);
 
+  void deleteByTrip_Id(Long tripId);
+
   List<Ausgabe> findByUserAndDateBetween(User user, LocalDate start, LocalDate end);
 
   List<Ausgabe> findByUserAndTrip(User user, Trip trip);

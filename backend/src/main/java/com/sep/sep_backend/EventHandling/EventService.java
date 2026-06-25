@@ -29,6 +29,7 @@ import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
@@ -105,11 +106,13 @@ public class EventService {
    *
    * @param EventID identifier of the event to delete
    */
+  @Transactional
   public void DeleteEventFromDB(Long EventID) {
     if (!eventRepository.existsById(EventID)) {
       throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
     }
 
+    userEventRepository.deleteByEvent_Id(EventID);
     eventRepository.deleteById(EventID);
   }
 

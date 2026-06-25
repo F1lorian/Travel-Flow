@@ -3,12 +3,13 @@ package com.sep.sep_backend.TripManagement.services;
 /* back-front relation: TripService handles all trip business logic.
 Called by TripController, which exposes the results to the Angular frontend. */
 
-import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.Enitys.UserTrip;
+import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import java.time.LocalDate;
@@ -29,16 +30,22 @@ public class TripService {
   private final EventRepository eventRepository;
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
+  private final UserEventRepository userEventRepository;
+  private final AusgabeRepository ausgabeRepository;
 
   public TripService(
       TripRepository tripRepository,
       EventRepository eventRepository,
       UserRepository userRepository,
-      UserTripRepository userTripRepository) {
+      UserTripRepository userTripRepository,
+      UserEventRepository userEventRepository,
+      AusgabeRepository ausgabeRepository) {
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
+    this.userEventRepository = userEventRepository;
+    this.ausgabeRepository = ausgabeRepository;
   }
 
   public List<Trip> getAllTrips(Long userId) {
@@ -78,8 +85,11 @@ public class TripService {
     if (!tripRepository.existsById(id)) {
       throw new IllegalArgumentException("Trip not found: " + id);
     }
-    List<Event> events = eventRepository.findByTrip_Id(id);
-    eventRepository.deleteAll(events);
+
+    userEventRepository.deleteByEvent_Trip_Id(id);
+    eventRepository.deleteByTrip_Id(id);
+    ausgabeRepository.deleteByTrip_Id(id);
+    userTripRepository.deleteByIdTripId(id);
     tripRepository.deleteById(id);
   }
 }

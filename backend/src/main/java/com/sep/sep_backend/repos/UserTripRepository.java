@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> {
   boolean existsByIdUserIdAndIdTripId(Long userId, Long tripId);
 
+  void deleteByIdTripId(Long tripId);
+
   Optional<UserTrip> findByIdUserIdAndIdTripId(Long userId, Long tripId);
 
   Optional<UserTrip> findByUserAndTrip(User user, Trip trip);
