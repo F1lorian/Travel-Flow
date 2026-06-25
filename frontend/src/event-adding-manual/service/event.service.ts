@@ -100,16 +100,30 @@ export class EventService {
     });
   }
 
+  /**
+   * invites a friend to an event
+   * @param eventId
+   * @param friendUserId
+   */
   inviteFriendToEvent(eventId: string, friendUserId: number): Observable<void> {
     return this.http.post<void>(`${this.inviteFriendEndpoint}/${eventId}/invite/${friendUserId}`, {});
   }
 
+  /**
+   * sends the response to an invitation
+   * @param eventId
+   * @param status can be PENDING, ACCEPTED or DECLINED
+   */
   respondToInvite(eventId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<void> {
     return this.http.put<void>(`${this.inviteFriendEndpoint}/${eventId}/respond`, {}, {
       params: { status }
     });
   }
 
+  /**
+   * returns a list of all the invites sent by a user for a single event
+   * @param eventId
+   */
   getInvitesSentByUser(eventId: string): Observable<UserEventDTO[]> {
     return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/invites`);
   }

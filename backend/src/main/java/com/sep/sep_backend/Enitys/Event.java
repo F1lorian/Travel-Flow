@@ -2,7 +2,6 @@ package com.sep.sep_backend.Enitys;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 public class Event {
@@ -96,5 +95,4 @@ public class Event {
   public Long getTripId() {
     return this.trip == null ? null : this.trip.getId();
   }
-
 }
