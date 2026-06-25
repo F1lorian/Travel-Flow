@@ -463,7 +463,12 @@ class EventServiceTest {
 
   private EventService serviceWithRealObjectMapper() {
     return new EventService(
-        eventRepository, tripRepository, ausgabeService, userRepository, new ObjectMapper());
+        eventRepository,
+        tripRepository,
+        ausgabeService,
+        userRepository,
+        new ObjectMapper(),
+        userEventRepository);
   }
 
   private User userWithEvents(long id) {
