@@ -139,8 +139,7 @@ public class AusgabenControllerTest {
     when(ausgabeService.ausgabenlisteTrip("London", "maxmuster")).thenReturn(expected);
 
     // tatsaechliches Ergebnis
-    List<AusgabeResponseDTO> result =
-        ausgabeController.ausgabenListeTrip("London", authentication);
+    List<AusgabeResponseDTO> result = ausgabeController.ausgabenListeTrip("London", authentication);
 
     // pruefen ob das Service-Ergebnis zurueckgegeben wird
     assertThat(result).isEqualTo(expected);

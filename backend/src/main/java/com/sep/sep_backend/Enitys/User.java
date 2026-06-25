@@ -3,7 +3,6 @@ package com.sep.sep_backend.Enitys;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,7 +59,6 @@ public class User {
 
   @OneToMany(mappedBy = "user")
   private List<Ausgabe> ausgaben;
-
 
   public User() {}
 
@@ -191,7 +189,11 @@ public class User {
     this.friends = friends;
   }
 
-  public List<Ausgabe> getAusgaben() { return  ausgaben; }
+  public List<Ausgabe> getAusgaben() {
+    return ausgaben;
+  }
 
-  public void setAusgaben(List<Ausgabe> ausgaben) { this.ausgaben = ausgaben; }
+  public void setAusgaben(List<Ausgabe> ausgaben) {
+    this.ausgaben = ausgaben;
+  }
 }

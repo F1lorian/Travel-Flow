@@ -62,14 +62,16 @@ public class UserTrip {
 
   public User getInvitedBy() {
     return invitedBy;
-    }
+  }
+
   public double getBudget() {
     return budget;
   }
 
   public void setInvitedBy(User invitedBy) {
     this.invitedBy = invitedBy;
-    }
+  }
+
   public void setBudget(double budget) {
     this.budget = budget;
   }

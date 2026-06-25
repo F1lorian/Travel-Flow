@@ -28,6 +28,13 @@ public class AusgabeController {
   private AusgabeService ausgabeService;
   private TripRepository tripRepository;
 
+  /**
+   * Creates a controller for expense endpoints.
+   *
+   * @param ausgabeRepo repository for direct expense access
+   * @param ausgabeService service containing expense business logic
+   * @param tripRepository repository used to resolve trip names from incoming requests
+   */
   @Autowired
   public AusgabeController(
       AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
@@ -45,7 +52,8 @@ public class AusgabeController {
    * <p>Returns: - 400 if no trip name was provided - 404 if the trip does not exist
    */
   @PostMapping("/ausgabe")
-  public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO dto, Authentication authentication) {
+  public void ausgabeHinzufuegen(
+      @RequestBody AusgabeRequestDTO dto, Authentication authentication) {
     if (dto.getTrip() == null
         || dto.getTrip().getName() == null
         || dto.getTrip().getName().isBlank()) {
@@ -64,6 +72,13 @@ public class AusgabeController {
     ausgabeService.ausgabeHinzufuegen(dto, getCurrentUsername(authentication));
   }
 
+  /**
+   * Extracts the current username from the Spring Security authentication.
+   *
+   * @param authentication current request authentication
+   * @return authenticated username
+   * @throws ResponseStatusException if no authenticated user is available
+   */
   private String getCurrentUsername(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");
@@ -141,9 +156,7 @@ public class AusgabeController {
    */
   @PutMapping("/budget")
   public double budgetAktualisieren(
-      @RequestParam String tripname,
-      @RequestParam double budget,
-      Authentication authentication) {
+      @RequestParam String tripname, @RequestParam double budget, Authentication authentication) {
     if (budget < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget must not be negative");
     }

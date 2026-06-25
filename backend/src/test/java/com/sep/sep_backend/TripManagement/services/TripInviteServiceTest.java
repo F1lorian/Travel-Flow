@@ -11,7 +11,6 @@ import com.sep.sep_backend.TripManagement.dto.TripInviteResponseDTO;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
-import java.util.ArrayList;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -32,7 +31,6 @@ class TripInviteServiceTest {
     User currentUser = user(1L);
     User friend = user(2L);
     currentUser.getFriends().add(friend);
-    currentUser.getTrips().add(trip);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
@@ -53,7 +51,6 @@ class TripInviteServiceTest {
     Trip trip = trip(3L);
     User currentUser = user(1L);
     User otherUser = user(2L);
-    currentUser.getTrips().add(trip);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
@@ -69,7 +66,6 @@ class TripInviteServiceTest {
   private User user(long id) {
     User user = new User();
     user.setId(id);
-    user.setTrips(new ArrayList<>());
     return user;
   }
 

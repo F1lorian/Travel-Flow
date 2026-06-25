@@ -50,12 +50,13 @@ public class AusgabenServiceTest {
     requestedTrip.setName("Berlin");
     Categories category = new Categories("Freizeit");
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
-    UserTrip userTrip = new UserTrip(user, requestedTrip);
+    UserTrip userTrip = new UserTrip(user, requestedTrip, null);
 
     when(categoriesRepository.findByName("Freizeit")).thenReturn(Optional.of(category));
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
-    when(userTripRepository.findByUserAndTrip(user, requestedTrip)).thenReturn(Optional.of(userTrip));
+    when(userTripRepository.findByUserAndTrip(user, requestedTrip))
+        .thenReturn(Optional.of(userTrip));
 
     // du fuegst eine Ausgabe hinzu
     AusgabeRequestDTO ausgabeDTO =
@@ -88,7 +89,11 @@ public class AusgabenServiceTest {
     UserRepository userRepository = mock(UserRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
 
     // du "speicherst" eine Ausgabe und holst sie dir
     Trip trip = new Trip();
@@ -108,7 +113,8 @@ public class AusgabenServiceTest {
         .thenReturn(List.of());
 
     List<AusgabeResponseDTO> result =
-        ausgabeService.ausgabenliste(LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 10), "maxmuster");
+        ausgabeService.ausgabenliste(
+            LocalDate.of(2026, 5, 1), LocalDate.of(2026, 5, 10), "maxmuster");
 
     // pruefen ob die zurueckgegebene Liste, den richtigen Inhalt hat
     assertThat(result).hasSize(1);
@@ -127,7 +133,11 @@ public class AusgabenServiceTest {
     UserRepository userRepository = mock(UserRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
 
     // "speicherst" 2 Ausgaben in derselben Kategorie
     Trip trip1 = new Trip();
@@ -172,7 +182,11 @@ public class AusgabenServiceTest {
     UserRepository userRepository = mock(UserRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
 
     Trip trip = new Trip("London");
     Ausgabe y =
@@ -205,7 +219,11 @@ public class AusgabenServiceTest {
     UserRepository userRepository = mock(UserRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
 
     Trip trip = new Trip("London");
     trip.setId(1);
@@ -230,8 +248,7 @@ public class AusgabenServiceTest {
         .thenReturn(List.of(event));
 
     // fuehrst die Methode aus
-    List<KategorieSummeDTO> result =
-        ausgabeService.ausgabenProKategorieTrip("London", "maxmuster");
+    List<KategorieSummeDTO> result = ausgabeService.ausgabenProKategorieTrip("London", "maxmuster");
 
     // pruefst ob die Kosten pro Kategorie zusammengerechnet wurden
     assertThat(result).hasSize(2);
@@ -259,7 +276,11 @@ public class AusgabenServiceTest {
     UserRepository userRepository = mock(UserRepository.class);
     AusgabeService ausgabeService =
         new AusgabeService(
-            ausgabeRepository, tripRepository, eventRepository, categoriesRepository, userRepository);
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
 
     Trip trip = new Trip("London");
     trip.setId(1);
@@ -316,7 +337,7 @@ public class AusgabenServiceTest {
             25,
             trip);
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
-    UserTrip userTrip = new UserTrip(user, trip);
+    UserTrip userTrip = new UserTrip(user, trip, null);
     userTrip.setBudget(300);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
@@ -353,7 +374,7 @@ public class AusgabenServiceTest {
 
     Trip trip = new Trip("London");
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
-    UserTrip userTrip = new UserTrip(user, trip);
+    UserTrip userTrip = new UserTrip(user, trip, null);
     userTrip.setWarningRange(50);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
@@ -385,7 +406,7 @@ public class AusgabenServiceTest {
 
     Trip trip = new Trip("London");
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
-    UserTrip userTrip = new UserTrip(user, trip);
+    UserTrip userTrip = new UserTrip(user, trip, null);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
