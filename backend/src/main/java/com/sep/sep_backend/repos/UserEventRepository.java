@@ -11,6 +11,10 @@ import org.springframework.data.repository.query.Param;
 public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
   List<UserEvent> findByEvent_Id(Long eventId);
 
+  void deleteByEvent_Id(Long eventId);
+
+  void deleteByEvent_Trip_Id(Long tripId);
+
   List<UserEvent> findByUser_Id(Long userId);
 
   Optional<UserEvent> findByEvent_IdAndUser_Id(Long eventId, Long userId);

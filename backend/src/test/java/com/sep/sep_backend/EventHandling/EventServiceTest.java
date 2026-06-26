@@ -3,6 +3,7 @@ package com.sep.sep_backend.EventHandling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -332,7 +334,9 @@ class EventServiceTest {
 
     eventService.DeleteEventFromDB(42L);
 
-    verify(eventRepository).deleteById(42L);
+    InOrder inOrder = inOrder(userEventRepository, eventRepository);
+    inOrder.verify(userEventRepository).deleteByEvent_Id(42L);
+    inOrder.verify(eventRepository).deleteById(42L);
   }
 
   @Test
@@ -344,6 +348,7 @@ class EventServiceTest {
         .hasMessage("Event mit ID 42 wurde nicht gefunden");
 
     verify(eventRepository, never()).deleteById(any());
+    verify(userEventRepository, never()).deleteByEvent_Id(any());
   }
 
   @Test

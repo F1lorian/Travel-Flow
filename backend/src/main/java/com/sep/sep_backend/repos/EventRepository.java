@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 public interface EventRepository extends JpaRepository<Event, Long> {
   List<Event> findByTrip_Id(Long tripId);
 
+  void deleteByTrip_Id(Long tripId);
+
   List<Event> findByStartTimeBetween(LocalDateTime dateTimeAfter, LocalDateTime dateTimeBefore);
 
   @Query(
