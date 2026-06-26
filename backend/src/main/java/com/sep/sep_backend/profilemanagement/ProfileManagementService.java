@@ -9,6 +9,7 @@ import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import java.security.SecureRandom;
@@ -38,6 +39,7 @@ public class ProfileManagementService {
   private final AusgabeRepository ausgabeRepository;
   private final TripRepository tripRepository;
   private final EventRepository eventRepository;
+  private final UserEventRepository userEventRepository;
   private final JavaMailSender mailSender;
   private final PasswordEncoder passwordEncoder;
   private final GoogleTokenVerifier googleTokenVerifier;
@@ -50,6 +52,7 @@ public class ProfileManagementService {
       AusgabeRepository ausgabeRepository,
       TripRepository tripRepository,
       EventRepository eventRepository,
+      UserEventRepository userEventRepository,
       JavaMailSender mailSender,
       PasswordEncoder passwordEncoder,
       GoogleTokenVerifier googleTokenVerifier,
@@ -59,6 +62,7 @@ public class ProfileManagementService {
     this.ausgabeRepository = ausgabeRepository;
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
+    this.userEventRepository = userEventRepository;
     this.mailSender = mailSender;
     this.passwordEncoder = passwordEncoder;
     this.googleTokenVerifier = googleTokenVerifier;
@@ -153,13 +157,7 @@ public class ProfileManagementService {
    */
   private void deleteTripWithContents(Trip trip) {
     List<Event> events = eventRepository.findByTrip_Id(trip.getId());
-    for (Event event : events) {
-      if (event.getUsers() != null) {
-        for (User participant : event.getUsers()) {
-          participant.getEvents().removeIf(existing -> existing.getId() == event.getId());
-        }
-      }
-    }
+    userEventRepository.deleteByEvent_Trip_Id(trip.getId());
     eventRepository.deleteAll(events);
     ausgabeRepository.deleteAll(ausgabeRepository.findByTrip(trip));
     tripRepository.delete(trip);
