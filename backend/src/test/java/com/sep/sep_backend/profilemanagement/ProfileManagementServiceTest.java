@@ -14,6 +14,7 @@ import com.sep.sep_backend.accountmanagement.GoogleTokenVerifier;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ class ProfileManagementServiceTest {
   @Mock private AusgabeRepository ausgabeRepository;
   @Mock private TripRepository tripRepository;
   @Mock private EventRepository eventRepository;
+  @Mock private UserEventRepository userEventRepository;
   @Mock private JavaMailSender mailSender;
   @Mock private GoogleTokenVerifier googleTokenVerifier;
 
@@ -52,6 +54,7 @@ class ProfileManagementServiceTest {
             ausgabeRepository,
             tripRepository,
             eventRepository,
+            userEventRepository,
             mailSender,
             ENCODER,
             googleTokenVerifier,
