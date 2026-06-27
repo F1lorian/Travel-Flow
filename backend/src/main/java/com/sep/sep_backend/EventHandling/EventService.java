@@ -214,8 +214,9 @@ public class EventService {
    * @param eventEnd end date and time of the event being checked
    * @return response data for all conflicting events
    */
-  public List<EventResponseDTO> conflictCheck(LocalDateTime eventStart, LocalDateTime eventEnd) {
-    List<Event> events = eventRepository.findByStartTimeBeforeAndEndTimeAfter(eventEnd, eventStart);
+  public List<EventResponseDTO> conflictCheck(
+      LocalDateTime eventStart, LocalDateTime eventEnd, Long userId) {
+    List<Event> events = eventRepository.findConflictingEventsForUser(eventStart, eventEnd, userId);
     List<EventResponseDTO> result = new ArrayList<>();
     for (Event event : events) {
       EventResponseDTO dto = mapToResponseDTO(event);

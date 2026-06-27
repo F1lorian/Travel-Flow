@@ -52,7 +52,7 @@ class EventControllerTest {
   void eventControllerHatDenConflictEndpoint() throws NoSuchMethodException {
     Method method =
         EventController.class.getDeclaredMethod(
-            "getConflictEvents", LocalDateTime.class, LocalDateTime.class);
+            "getConflictEvents", LocalDateTime.class, LocalDateTime.class, Authentication.class);
 
     GetMapping getMapping = method.getAnnotation(GetMapping.class);
     assertThat(getMapping.value()).containsExactly("event/conflict");
@@ -126,6 +126,8 @@ class EventControllerTest {
     EventService eventService = mock(EventService.class);
     UserRepository userRepository = mock(UserRepository.class);
     EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     LocalDateTime start = LocalDateTime.of(2026, 6, 1, 20, 0);
     LocalDateTime end = LocalDateTime.of(2026, 6, 1, 22, 0);
     List<EventResponseDTO> conflicts =
@@ -138,13 +140,16 @@ class EventControllerTest {
                 LocalDateTime.of(2026, 6, 1, 21, 0),
                 null));
 
-    when(eventService.conflictCheck(start, end)).thenReturn(conflicts);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.conflictCheck(start, end, 7L)).thenReturn(conflicts);
 
-    ResponseEntity<List<EventResponseDTO>> response = eventController.getConflictEvents(start, end);
+    ResponseEntity<List<EventResponseDTO>> response =
+        eventController.getConflictEvents(start, end, authentication);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(conflicts);
-    verify(eventService).conflictCheck(start, end);
+    verify(eventService).conflictCheck(start, end, 7L);
   }
 
   @Test

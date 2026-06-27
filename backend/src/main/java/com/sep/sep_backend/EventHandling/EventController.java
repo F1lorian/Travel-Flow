@@ -137,8 +137,11 @@ public class EventController {
    */
   @GetMapping("event/conflict")
   public ResponseEntity<List<EventResponseDTO>> getConflictEvents(
-      @RequestParam LocalDateTime start, @RequestParam LocalDateTime end) {
-    return ResponseEntity.ok(eventService.conflictCheck(start, end));
+      @RequestParam LocalDateTime start,
+      @RequestParam LocalDateTime end,
+      Authentication authentication) {
+    return ResponseEntity.ok(
+        eventService.conflictCheck(start, end, getCurrentUserId(authentication)));
   }
 
   /**

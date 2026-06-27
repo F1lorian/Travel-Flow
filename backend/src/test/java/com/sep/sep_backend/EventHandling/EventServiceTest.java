@@ -299,10 +299,10 @@ class EventServiceTest {
             trip);
     event.setId(42L);
 
-    when(eventRepository.findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart))
+    when(eventRepository.findConflictingEventsForUser(requestedStart, requestedEnd, 7L))
         .thenReturn(List.of(event));
 
-    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd);
+    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd, 7L);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getId()).isEqualTo("42");
@@ -311,7 +311,7 @@ class EventServiceTest {
     assertThat(result.getFirst().getStart()).isEqualTo(event.getStartTime());
     assertThat(result.getFirst().getEnd()).isEqualTo(event.getEndTime());
     assertThat(result.getFirst().getTripId()).isEqualTo(7L);
-    verify(eventRepository).findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart);
+    verify(eventRepository).findConflictingEventsForUser(requestedStart, requestedEnd, 7L);
   }
 
   @Test
@@ -319,13 +319,13 @@ class EventServiceTest {
     LocalDateTime requestedStart = LocalDateTime.of(2026, 6, 1, 20, 0);
     LocalDateTime requestedEnd = LocalDateTime.of(2026, 6, 1, 22, 0);
 
-    when(eventRepository.findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart))
+    when(eventRepository.findConflictingEventsForUser(requestedStart, requestedEnd, 7L))
         .thenReturn(List.of());
 
-    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd);
+    List<EventResponseDTO> result = eventService.conflictCheck(requestedStart, requestedEnd, 7L);
 
     assertThat(result).isEmpty();
-    verify(eventRepository).findByStartTimeBeforeAndEndTimeAfter(requestedEnd, requestedStart);
+    verify(eventRepository).findConflictingEventsForUser(requestedStart, requestedEnd, 7L);
   }
 
   @Test
