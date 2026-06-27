@@ -35,5 +35,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
   List<Event> findByUsersContainingAndTrip_Id(
       @Param("user") User user, @Param("tripId") Long tripId);
 
-  List<Event> findByStartTimeBeforeAndEndTimeAfter(LocalDateTime endTime, LocalDateTime startTime);
+  @Query("""
+      SELECT DISTINCT e FROM Event e
+      JOIN UserEvent ue ON ue.event.id = e.id
+      WHERE ue.user.id = :userId
+        AND ue.status IN ('ACCEPTED', 'PENDING')
+        AND e.startTime < :endTime
+        AND e.endTime > :startTime
+  """)
+  List<Event> findConflictingEventsForUser(
+      @Param("startTime") LocalDateTime startTime,
+      @Param("endTime") LocalDateTime endTime,
+      @Param("userId") Long userId);
 }
