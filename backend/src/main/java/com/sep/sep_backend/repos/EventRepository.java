@@ -35,7 +35,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
   List<Event> findByUsersContainingAndTrip_Id(
       @Param("user") User user, @Param("tripId") Long tripId);
 
-  @Query("""
+  @Query(
+      """
       SELECT DISTINCT e FROM Event e
       JOIN UserEvent ue ON ue.event.id = e.id
       WHERE ue.user.id = :userId
