@@ -1,7 +1,7 @@
 @if (showNavigation) {
   <aside class="side-bar">
     <div class="side-bar-header">
-      <h2>Travel Hub</h2>
+      <h2>Travel Flow</h2>
     </div>
 
     <nav class="side-bar-nav">
@@ -9,15 +9,15 @@
       <a class="nav-toggle" routerLink="/trips">Trips</a>
       <a class="nav-toggle" routerLink="/overview">Overview</a>
       <a class="nav-toggle" routerLink="/friends">Friends</a>
-
-      <button class="nav-toggle logout-button" type="button" (click)="logout()">
-        Log out
-      </button>
     </nav>
   </aside>
 
   <div class="profile-actions">
     <app-profile-menu />
+
+    <button class="profile-logout-button" type="button" (click)="logout()">
+      Log out
+    </button>
   </div>
 }
 
