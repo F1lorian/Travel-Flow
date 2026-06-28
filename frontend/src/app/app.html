@@ -1,14 +1,28 @@
 @if (showNavigation) {
-  <aside class="side-bar">
+  <button
+    class="menu-button"
+    type="button"
+    (click)="toggleSidebar()"
+    [attr.aria-expanded]="sidebarOpen()"
+  >
+    ☰ Menu
+  </button>
+
+  @if (sidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+  }
+
+  <aside class="side-bar" [class.open]="sidebarOpen()">
     <div class="side-bar-header">
       <h2>Travel Flow</h2>
     </div>
 
     <nav class="side-bar-nav">
-      <a class="nav-toggle" routerLink="/calendar">Calendar</a>
-      <a class="nav-toggle" routerLink="/trips">Trips</a>
-      <a class="nav-toggle" routerLink="/overview">Overview</a>
-      <a class="nav-toggle" routerLink="/friends">Friends</a>
+      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Home</a>
+      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Calendar</a>
+      <a class="nav-toggle" routerLink="/trips" (click)="closeSidebar()">Trips</a>
+      <a class="nav-toggle" routerLink="/overview" (click)="closeSidebar()">Overview</a>
+      <a class="nav-toggle" routerLink="/friends" (click)="closeSidebar()">Friends</a>
     </nav>
   </aside>
 
