@@ -325,25 +325,29 @@ export class CalendarComponent implements OnInit {
     this.tripService.getAllTrips().subscribe({
       next: trips => {
 
-        const mappedTrips = trips.map(trip => ({
-          id: `trip-${trip.id}`,
+        const mappedTrips = trips.map(trip => {
+          const tripClass = trip.invited ? 'invited-trip-event' : 'trip-event';
 
-          title: trip.name,
+          return {
+            id: `trip-${trip.id}`,
 
-          start: trip.startDate,
-          end: trip.endDate,
+            title: trip.name,
 
-          editable: false,
-          startEditable: false,
-          durationEditable: false,
+            start: trip.startDate,
+            end: trip.endDate,
 
-          classNames: ['trip-event'],
+            editable: false,
+            startEditable: false,
+            durationEditable: false,
 
-          extendedProps: {
-            type: 'trip',
-            tripId: trip.id
-          }
-        }));
+            classNames: [tripClass],
+
+            extendedProps: {
+              type: 'trip',
+              tripId: trip.id
+            }
+          };
+        });
 
         this.calendarEvents = [
           ...this.calendarEvents,
