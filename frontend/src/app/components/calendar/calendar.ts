@@ -19,6 +19,8 @@ import {EventTransferDialog} from '../event-transfer-dialog/event-transfer-dialo
 import {TripService} from '../../TripManagement/services/trip.service';
 import { Router } from '@angular/router';
 import {MessageDialog} from '../message-dialog/message-dialog';
+import {Friend, FriendsService} from '../../services/friends.service';
+import {forkJoin} from 'rxjs';
 
 
 @Component({
@@ -36,7 +38,9 @@ export class CalendarComponent implements OnInit {
   tripService = inject(TripService);
   calendarEvents: EventInput[] = [];
   router = inject(Router);
+  friendService = inject(FriendsService);
   private readonly dialog = inject(MatDialog);
+  private Friends: Friend[] = [];
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
@@ -274,23 +278,32 @@ export class CalendarComponent implements OnInit {
    */
   loadEvents() {
 
-    this.eventService.getEvents().subscribe({
-      next: events => {
+    forkJoin({
+      friends: this.friendService.getFriends(),
+      events: this.eventService.getEvents()
+    }).subscribe({
+      next: ({friends, events}) => {
+        this.Friends = friends;
 
-        const mappedEvents = events.map(event => ({
-          id: event.id,
-          title: event.title,
-          start: event.start,
-          end: event.end,
+        const mappedEvents = events.map(event => {
+          const isFriendEvent = this.Friends.some(friend => friend.id === event.creatorId);
+          const eventClass = isFriendEvent ? 'friend-calendar-event' : 'calendar-event';
 
-          classNames: ['calendar-event'],
+          return {
+            id: event.id,
+            title: event.title,
+            start: event.start,
+            end: event.end,
 
-          extendedProps: {
-            type: 'event',
-            kosten: event.kosten,
-            tripId: event.tripId
-          }
-        }));
+            classNames: [eventClass],
+
+            extendedProps: {
+              type: 'event',
+              kosten: event.kosten,
+              tripId: event.tripId
+            }
+          };
+        });
 
         this.calendarEvents = [
           ...this.calendarEvents,

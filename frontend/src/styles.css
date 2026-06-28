@@ -69,3 +69,29 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   opacity: 0.9;
   transform: translateY(-1px);
 }
+
+.fc-event.friend-calendar-event {
+  background: #16a34a !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.friend-calendar-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+fc-event.calendar-event-inited{
+  background: #07390e !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.trip-event-inited {
+  background: #12f1d7 !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
