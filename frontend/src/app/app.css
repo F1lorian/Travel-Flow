@@ -97,9 +97,9 @@
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
-  background: #0f172a;
+  background: #1976d2;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
 .profile-actions app-profile-menu {
@@ -111,7 +111,7 @@
   cursor: pointer;
   font: inherit;
   padding: 10px 14px;
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   border-radius: 8px;
   font-weight: 600;
@@ -119,7 +119,7 @@
 }
 
 .profile-logout-button:hover {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Main page content. Padding top leaves space for menu/profile actions. */
