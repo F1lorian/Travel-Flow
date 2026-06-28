@@ -29,6 +29,10 @@
   inset: 0;
   z-index: 1050;
   background: rgba(15, 23, 42, 0.35);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: default;
 }
 
 /* Sidebar drawer */

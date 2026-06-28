@@ -9,7 +9,12 @@
   </button>
 
   @if (sidebarOpen()) {
-    <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+    <button
+      class="sidebar-backdrop"
+      type="button"
+      aria-label="Close sidebar"
+      (click)="closeSidebar()"
+    ></button>
   }
 
   <aside class="side-bar" [class.open]="sidebarOpen()">
