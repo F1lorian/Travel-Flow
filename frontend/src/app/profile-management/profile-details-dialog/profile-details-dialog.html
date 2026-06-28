@@ -1,0 +1,33 @@
+<div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
+  <h2 class="mb-4 text-3xl font-bold tracking-tight text-slate-900">Privacy details</h2>
+
+  @if (error()) {
+    <p class="mb-4 text-base font-semibold text-red-600">{{ error() }}</p>
+  }
+
+  @if (profile(); as p) {
+    <dl class="divide-y divide-slate-200">
+      <div class="flex justify-between py-3">
+        <dt class="font-semibold text-slate-500">Name</dt>
+        <dd class="text-slate-900">{{ p.firstName }} {{ p.surname }}</dd>
+      </div>
+      <div class="flex justify-between py-3">
+        <dt class="font-semibold text-slate-500">Username</dt>
+        <dd class="text-slate-900">{{ p.username }}</dd>
+      </div>
+      <div class="flex justify-between py-3">
+        <dt class="font-semibold text-slate-500">Email address</dt>
+        <dd class="text-slate-900">{{ p.email }}</dd>
+      </div>
+    </dl>
+  } @else if (!error()) {
+    <p class="text-base text-slate-500">Loading…</p>
+  }
+
+  <button
+    (click)="close()"
+    class="mt-6 rounded-lg border border-slate-300 bg-white px-5 py-3
+         font-semibold text-slate-700 transition hover:bg-slate-100">
+    Close
+  </button>
+</div>

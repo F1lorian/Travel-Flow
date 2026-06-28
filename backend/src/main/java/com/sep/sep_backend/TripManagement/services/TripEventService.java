@@ -8,9 +8,11 @@ import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Business logic for the events within trips: adding an event (resolving its category), listing a
@@ -23,14 +25,17 @@ public class TripEventService {
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
   private final CategoryService categoryService;
+  private final UserEventRepository userEventRepository;
 
   public TripEventService(
       EventRepository eventRepository,
       TripRepository tripRepository,
-      CategoryService categoryService) {
+      CategoryService categoryService,
+      UserEventRepository userEventRepository) {
     this.eventRepository = eventRepository;
     this.tripRepository = tripRepository;
     this.categoryService = categoryService;
+    this.userEventRepository = userEventRepository;
   }
 
   /**
@@ -74,11 +79,13 @@ public class TripEventService {
   }
 
   // Deletes an event by id, or throws if it doesn't exist.
+  @Transactional
   public void deleteEvent(Long eventId) {
     Event event =
         eventRepository
             .findById(eventId)
             .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+    userEventRepository.deleteByEvent_Id(eventId);
     eventRepository.delete(event);
   }
 

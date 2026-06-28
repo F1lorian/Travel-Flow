@@ -1,0 +1,23 @@
+<div class="invite-dialog">
+  <h2>Invite friend to trip</h2>
+
+  <label for="friend">Friend</label>
+
+  <select id="friend" [(ngModel)]="selectedFriendId">
+    <option [ngValue]="null">Choose a friend</option>
+
+    @for (friend of friends; track friend.id) {
+      <option [ngValue]="friend.id">
+        {{ friend.firstName }}
+      </option>
+    }
+  </select>
+
+  <button
+    type="button"
+    [disabled]="selectedFriendId === null"
+    (click)="inviteSelectedFriend()"
+  >
+    Invite to trip
+  </button>
+</div>

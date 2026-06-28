@@ -12,6 +12,9 @@ export interface Trip {
   startDate?: string;
   endDate?: string;
   events: Event[];
+  invitedByUserId: number;
+  invitedByUsername?: string;
+  invited: boolean;
 }
 
 export interface Event {

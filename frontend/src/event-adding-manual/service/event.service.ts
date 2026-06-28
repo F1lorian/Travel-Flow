@@ -7,6 +7,7 @@ import {CalendarEventImport} from '../models/CalendarEventImport';
 import {EditEventRequest} from '../models/EditEventRequest';
 import {EditEventResponse} from '../models/EditEventResponse';
 import { ParsedEvent } from '../models/ParsedEvent';
+import { UserEventDTO } from '../models/UserEventDTO';
 
 
 @Injectable({
@@ -18,6 +19,7 @@ export class EventService {
   private readonly pullEvents = '/api/event/pull/all_events';
   private readonly editEvents = '/api/event/edit';
   private readonly deleteEvents = '/api/event/delete';
+  private readonly inviteFriendEndpoint = '/api/event';
 
   /**
    * sends the newly created event to the backend and returns the saved event
@@ -96,6 +98,38 @@ export class EventService {
     return this.http.get<AddEventResponse[]>('/api/event/conflict', {
       params: { start, end }
     });
+  }
+
+  /**
+   * invites a friend to an event
+   * @param eventId
+   * @param friendUserId
+   */
+  inviteFriendToEvent(eventId: string, friendUserId: number): Observable<void> {
+    return this.http.post<void>(`${this.inviteFriendEndpoint}/${eventId}/invite/${friendUserId}`, {});
+  }
+
+  /**
+   * sends the response to an invitation
+   * @param eventId
+   * @param status can be PENDING, ACCEPTED or DECLINED
+   */
+  respondToInvite(eventId: string, status: 'ACCEPTED' | 'DECLINED'): Observable<void> {
+    return this.http.put<void>(`${this.inviteFriendEndpoint}/${eventId}/respond`, {}, {
+      params: { status }
+    });
+  }
+
+  /**
+   * returns a list of all the invites sent by a user for a single event
+   * @param eventId
+   */
+  getInvitesSentByUser(eventId: string): Observable<UserEventDTO[]> {
+    return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/invites`);
+  }
+
+  getParticipants(eventId: string): Observable<UserEventDTO[]> {
+    return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/participants`);
   }
 
 

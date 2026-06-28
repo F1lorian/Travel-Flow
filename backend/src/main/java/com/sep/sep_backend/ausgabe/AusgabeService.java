@@ -1,13 +1,7 @@
 package com.sep.sep_backend.ausgabe;
 
-import com.sep.sep_backend.Enitys.Ausgabe;
-import com.sep.sep_backend.Enitys.Categories;
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.repos.AusgabeRepository;
-import com.sep.sep_backend.repos.CategoriesRepository;
-import com.sep.sep_backend.repos.EventRepository;
-import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.Enitys.*;
+import com.sep.sep_backend.repos.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,36 +19,86 @@ public class AusgabeService {
   TripRepository tripRepository;
   EventRepository eventRepository;
   CategoriesRepository categoriesRepository;
+  UserRepository userRepository;
+  UserTripRepository userTripRepository;
 
+  /**
+   * Creates an expense service with all repositories needed for user-specific spending operations.
+   */
   @Autowired
   public AusgabeService(
       AusgabeRepository repo,
       TripRepository tripRepository,
       EventRepository eventRepository,
-      CategoriesRepository categoriesRepository) {
+      CategoriesRepository categoriesRepository,
+      UserRepository userRepository,
+      UserTripRepository userTripRepository) {
     this.repo = repo;
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.categoriesRepository = categoriesRepository;
+    this.userRepository = userRepository;
+    this.userTripRepository = userTripRepository;
   }
 
-  // Ausgabe hinzufuegen
-  public void ausgabeHinzufuegen(AusgabeRequestDTO dto) {
+  /** Creates an expense service for tests that do not need user-trip memberships. */
+  public AusgabeService(
+      AusgabeRepository repo,
+      TripRepository tripRepository,
+      EventRepository eventRepository,
+      CategoriesRepository categoriesRepository,
+      UserRepository userRepository) {
+    this(repo, tripRepository, eventRepository, categoriesRepository, userRepository, null);
+  }
+
+  /** Creates an expense service for tests that do not need authenticated users. */
+  public AusgabeService(
+      AusgabeRepository repo,
+      TripRepository tripRepository,
+      EventRepository eventRepository,
+      CategoriesRepository categoriesRepository) {
+    this(repo, tripRepository, eventRepository, categoriesRepository, null, null);
+  }
+
+  /**
+   * Adds a new expense for the current user to one of the user's trips.
+   *
+   * @param dto request data containing cost, trip, date, and category
+   * @param username authenticated user's name or email
+   * @throws ResponseStatusException if the category does not exist or the user is not part of the
+   *     selected trip
+   */
+  public void ausgabeHinzufuegen(AusgabeRequestDTO dto, String username) {
+    User user = this.getCurrentUserOrThrow(username);
     Categories category =
         categoriesRepository
             .findByName(dto.getKategorie())
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found"));
 
-    Ausgabe ausgabe = new Ausgabe(dto.getKosten(), dto.getTrip(), dto.getDate(), category);
+    Trip trip = dto.getTrip();
+    if (userTripRepository.findByUserAndTrip(user, trip).isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip not found");
+    }
+    Ausgabe ausgabe = new Ausgabe(dto.getKosten(), trip, dto.getDate(), category);
+    ausgabe.setUser(user);
     repo.save(ausgabe);
   }
 
-  // die Methode gibt eine Liste von Ausgaben in dem gewählten Interval
-  public List<AusgabeResponseDTO> ausgabenliste(LocalDate start, LocalDate end) {
-    List<Ausgabe> ausgaben = repo.findByDateBetween(start, end);
+  /**
+   * Returns the current user's expenses and event costs within the selected date interval.
+   *
+   * @param start first date of the interval
+   * @param end last date of the interval
+   * @param username authenticated user's name or email
+   * @return combined list of expenses and event costs
+   */
+  public List<AusgabeResponseDTO> ausgabenliste(LocalDate start, LocalDate end, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    List<Ausgabe> ausgaben = repo.findByUserAndDateBetween(user, start, end);
     List<Event> events =
-        eventRepository.findByStartTimeBetween(start.atStartOfDay(), end.atStartOfDay());
+        eventRepository.findByUsersContainingAndStartTimeBetween(
+            user, start.atStartOfDay(), end.atStartOfDay());
     List<AusgabeResponseDTO> ausgabenDTOs = new ArrayList<>();
     for (int i = 0; i < ausgaben.size(); i++) {
       Ausgabe x = ausgaben.get(i);
@@ -72,11 +116,21 @@ public class AusgabeService {
     return ausgabenDTOs;
   }
 
-  // eine Darstellung von Kategorie und ihre Gesamtkosten in dem gewählten Interval
-  public List<KategorieSummeDTO> ausgabenProKategorie(LocalDate start, LocalDate end) {
-    List<Ausgabe> ausgaben = repo.findByDateBetween(start, end);
+  /**
+   * Sums the current user's expenses and event costs by category for a date interval.
+   *
+   * @param start first date of the interval
+   * @param end last date of the interval
+   * @param username authenticated user's name or email
+   * @return category totals for the selected interval
+   */
+  public List<KategorieSummeDTO> ausgabenProKategorie(
+      LocalDate start, LocalDate end, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    List<Ausgabe> ausgaben = repo.findByUserAndDateBetween(user, start, end);
     List<Event> events =
-        eventRepository.findByStartTimeBetween(start.atStartOfDay(), end.atStartOfDay());
+        eventRepository.findByUsersContainingAndStartTimeBetween(
+            user, start.atStartOfDay(), end.atStartOfDay());
 
     Map<String, Double> summen = new HashMap<>();
 
@@ -104,14 +158,22 @@ public class AusgabeService {
     return result;
   }
 
-  // Methode liefert Liste von Ausgaben von diesem Trip
-  public List<AusgabeResponseDTO> ausgabenlisteTrip(String tripname) {
+  /**
+   * Returns the current user's expenses and event costs for a specific trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return combined list of trip expenses and event costs, or {@code null} if the trip does not
+   *     exist
+   */
+  public List<AusgabeResponseDTO> ausgabenlisteTrip(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
     Trip trip = tripRepository.findByName(tripname);
     if (trip == null) {
       return null;
     }
-    List<Ausgabe> ausgaben = repo.findByTrip(trip);
-    List<Event> events = eventRepository.findByTrip_Id(trip.getId());
+    List<Ausgabe> ausgaben = repo.findByUserAndTrip(user, trip);
+    List<Event> events = eventRepository.findByUsersContainingAndTrip_Id(user, trip.getId());
     List<AusgabeResponseDTO> ausgabenDTOs = new ArrayList<>();
     for (Ausgabe ausgabe : ausgaben) {
       AusgabeResponseDTO dto =
@@ -128,15 +190,22 @@ public class AusgabeService {
     return ausgabenDTOs;
   }
 
-  // eine Darstellung von Kategorie und ihre Gesamtkosten fuer ein bestimmten Trip
-  public List<KategorieSummeDTO> ausgabenProKategorieTrip(String tripname) {
+  /**
+   * Sums the current user's expenses and event costs by category for a specific trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return category totals for the trip, or {@code null} if the trip does not exist
+   */
+  public List<KategorieSummeDTO> ausgabenProKategorieTrip(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
     Trip trip = tripRepository.findByName(tripname);
     if (trip == null) {
       return null;
     }
 
-    List<Ausgabe> ausgaben = repo.findByTrip(trip);
-    List<Event> events = eventRepository.findByTrip_Id(trip.getId());
+    List<Ausgabe> ausgaben = repo.findByUserAndTrip(user, trip);
+    List<Event> events = eventRepository.findByUsersContainingAndTrip_Id(user, trip.getId());
 
     Map<String, Double> summen = new HashMap<>();
 
@@ -164,15 +233,22 @@ public class AusgabeService {
     return result;
   }
 
-  // die methode gibt die gesamtausgaben pro trip zurueck
-  public double gesamtausgabenTrip(String tripname) {
+  /**
+   * Calculates the current user's total expenses and event costs for a trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return total spending for the trip, or {@code -1} if the trip does not exist
+   */
+  public double gesamtausgabenTrip(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
     Trip trip = tripRepository.findByName(tripname);
     if (trip == null) {
       return -1;
     }
     double summe = 0;
-    List<Ausgabe> ausgaben = repo.findByTrip(trip);
-    List<Event> events = eventRepository.findByTrip_Id(trip.getId());
+    List<Ausgabe> ausgaben = repo.findByUserAndTrip(user, trip);
+    List<Event> events = eventRepository.findByUsersContainingAndTrip_Id(user, trip.getId());
     for (Ausgabe ausgabe : ausgaben) {
       summe = summe + ausgabe.getKosten();
     }
@@ -182,21 +258,130 @@ public class AusgabeService {
     return summe;
   }
 
-  // die methode rechnet fuer einen trip: budget - gesamtausgaben
-  // falls kein trip mit dem namen gefunden wurde, dann wird -1 zurueckgegeben
-  // falls kein budget gesetzt wurde, dann wird -2 zurueckgegeben
-  public double verfuegbarTrip(String tripname) {
+  /**
+   * Calculates the current user's remaining budget for a trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return budget minus total spending, {@code -1} if the trip does not exist, or {@code -2} if no
+   *     budget is set
+   */
+  public double verfuegbarTrip(String tripname, String username) {
     Trip trip = tripRepository.findByName(tripname);
     if (trip == null) {
       return -1;
     }
-    double ausgaben = gesamtausgabenTrip(trip.getName());
-    double budget = trip.getBudget();
+    double ausgaben = gesamtausgabenTrip(trip.getName(), username);
+    double budget = budget(trip.getName(), username);
 
     if (budget == 0) {
       return -2;
     }
 
     return budget - ausgaben;
+  }
+
+  /**
+   * Returns the current user's budget for a trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return the configured budget, {@code 0} if none is set, or {@code -1} if the trip does not
+   *     exist
+   */
+  public double budget(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    return userTripRepository.findByUserAndTrip(user, trip).map(UserTrip::getBudget).orElse(0.0);
+  }
+
+  /**
+   * Updates the current user's budget for a trip.
+   *
+   * @param tripname name of the trip
+   * @param budget new budget value
+   * @param username authenticated user's name or email
+   * @return updated budget, or {@code -1} if the trip does not exist
+   * @throws ResponseStatusException if the user is not part of the selected trip
+   */
+  public double budgetAktualisieren(String tripname, double budget, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    UserTrip userTrip =
+        userTripRepository
+            .findByUserAndTrip(user, trip)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+    userTrip.setBudget(budget);
+    userTripRepository.save(userTrip);
+
+    return userTrip.getBudget();
+  }
+
+  /**
+   * Returns the current user's warning range for a trip.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return the configured warning range, {@code 0} if none is set, or {@code -1} if the trip does
+   *     not exist
+   */
+  public double warningRange(String tripname, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    return userTripRepository
+        .findByUserAndTrip(user, trip)
+        .map(UserTrip::getWarningRange)
+        .orElse(0.0);
+  }
+
+  /**
+   * Updates the current user's warning range for a trip.
+   *
+   * @param tripname name of the trip
+   * @param warningRange new remaining-budget warning threshold
+   * @param username authenticated user's name or email
+   * @return updated warning range, or {@code -1} if the trip does not exist
+   * @throws ResponseStatusException if the user is not part of the selected trip
+   */
+  public double warningRangeAktualisieren(String tripname, double warningRange, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return -1;
+    }
+
+    UserTrip userTrip =
+        userTripRepository
+            .findByUserAndTrip(user, trip)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+    userTrip.setWarningRange(warningRange);
+    userTripRepository.save(userTrip);
+
+    return userTrip.getWarningRange();
+  }
+
+  /**
+   * Loads the authenticated user by username or email.
+   *
+   * @param username authenticated user's name or email
+   * @return matching user entity
+   * @throws ResponseStatusException if no user can be found
+   */
+  private User getCurrentUserOrThrow(String username) {
+    return userRepository
+        .findByNameIgnoreCaseOrEmailIgnoreCase(username, username)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
   }
 }

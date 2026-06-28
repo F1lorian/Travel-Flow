@@ -8,6 +8,7 @@ import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.Enitys.User;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.repos.UserTripRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,8 @@ class TripControllerTest {
   @MockitoBean private TripService tripService;
 
   @MockitoBean private UserRepository userRepository;
+
+  @MockitoBean private UserTripRepository userTripRepository;
 
   @Test
   void getAllTrips_returnsOkWithTripList() throws Exception {

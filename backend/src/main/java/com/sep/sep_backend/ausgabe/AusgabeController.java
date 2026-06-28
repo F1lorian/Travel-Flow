@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,6 +28,13 @@ public class AusgabeController {
   private AusgabeService ausgabeService;
   private TripRepository tripRepository;
 
+  /**
+   * Creates a controller for expense endpoints.
+   *
+   * @param ausgabeRepo repository for direct expense access
+   * @param ausgabeService service containing expense business logic
+   * @param tripRepository repository used to resolve trip names from incoming requests
+   */
   @Autowired
   public AusgabeController(
       AusgabeRepository ausgabeRepo, AusgabeService ausgabeService, TripRepository tripRepository) {
@@ -44,7 +52,8 @@ public class AusgabeController {
    * <p>Returns: - 400 if no trip name was provided - 404 if the trip does not exist
    */
   @PostMapping("/ausgabe")
-  public void ausgabeHinzufuegen(@RequestBody AusgabeRequestDTO dto) {
+  public void ausgabeHinzufuegen(
+      @RequestBody AusgabeRequestDTO dto, Authentication authentication) {
     if (dto.getTrip() == null
         || dto.getTrip().getName() == null
         || dto.getTrip().getName().isBlank()) {
@@ -60,7 +69,22 @@ public class AusgabeController {
     // Replace the lightweight trip object from the request with the persisted entity.
     dto.setTrip(trip);
 
-    ausgabeService.ausgabeHinzufuegen(dto);
+    ausgabeService.ausgabeHinzufuegen(dto, getCurrentUsername(authentication));
+  }
+
+  /**
+   * Extracts the current username from the Spring Security authentication.
+   *
+   * @param authentication current request authentication
+   * @return authenticated username
+   * @throws ResponseStatusException if no authenticated user is available
+   */
+  private String getCurrentUsername(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");
+    }
+
+    return authentication.getName();
   }
 
   /**
@@ -68,8 +92,8 @@ public class AusgabeController {
    */
   @GetMapping("/ausgabenliste")
   public List<AusgabeResponseDTO> ausgabenliste(
-      @RequestParam LocalDate start, @RequestParam LocalDate end) {
-    return ausgabeService.ausgabenliste(start, end);
+      @RequestParam LocalDate start, @RequestParam LocalDate end, Authentication authentication) {
+    return ausgabeService.ausgabenliste(start, end, getCurrentUsername(authentication));
   }
 
   /**
@@ -78,14 +102,16 @@ public class AusgabeController {
    */
   @GetMapping("/proKategorie")
   public List<KategorieSummeDTO> ausgabenProKategorie(
-      @RequestParam LocalDate start, @RequestParam LocalDate end) {
-    return ausgabeService.ausgabenProKategorie(start, end);
+      @RequestParam LocalDate start, @RequestParam LocalDate end, Authentication authentication) {
+    return ausgabeService.ausgabenProKategorie(start, end, getCurrentUsername(authentication));
   }
 
   /** Returns all expenses for one specific trip. Used by the trip-specific spending overview. */
   @GetMapping("/ausgabenlisteTrip")
-  public List<AusgabeResponseDTO> ausgabenListeTrip(@RequestParam String tripname) {
-    List<AusgabeResponseDTO> result = ausgabeService.ausgabenlisteTrip(tripname);
+  public List<AusgabeResponseDTO> ausgabenListeTrip(
+      @RequestParam String tripname, Authentication authentication) {
+    List<AusgabeResponseDTO> result =
+        ausgabeService.ausgabenlisteTrip(tripname, getCurrentUsername(authentication));
 
     if (result == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
@@ -99,8 +125,10 @@ public class AusgabeController {
    * category table on the trip spending overview page.
    */
   @GetMapping("/proKategorieTrip")
-  public List<KategorieSummeDTO> ausgabenProKategorieTrip(@RequestParam String tripname) {
-    List<KategorieSummeDTO> result = ausgabeService.ausgabenProKategorieTrip(tripname);
+  public List<KategorieSummeDTO> ausgabenProKategorieTrip(
+      @RequestParam String tripname, Authentication authentication) {
+    List<KategorieSummeDTO> result =
+        ausgabeService.ausgabenProKategorieTrip(tripname, getCurrentUsername(authentication));
 
     if (result == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
@@ -111,14 +139,14 @@ public class AusgabeController {
 
   /** Returns the custom budget limit of a trip. */
   @GetMapping("/budget")
-  public double budget(@RequestParam String tripname) {
-    Trip trip = tripRepository.findByName(tripname);
+  public double budget(@RequestParam String tripname, Authentication authentication) {
+    double result = ausgabeService.budget(tripname, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    return trip.getBudget();
+    return result;
   }
 
   /**
@@ -127,21 +155,20 @@ public class AusgabeController {
    * <p>The budget must not be negative. Returns the updated budget value.
    */
   @PutMapping("/budget")
-  public double budgetAktualisieren(@RequestParam String tripname, @RequestParam double budget) {
+  public double budgetAktualisieren(
+      @RequestParam String tripname, @RequestParam double budget, Authentication authentication) {
     if (budget < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget must not be negative");
     }
 
-    Trip trip = tripRepository.findByName(tripname);
+    double result =
+        ausgabeService.budgetAktualisieren(tripname, budget, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    trip.setBudget(budget);
-    tripRepository.save(trip);
-
-    return trip.getBudget();
+    return result;
   }
 
   /**
@@ -151,14 +178,14 @@ public class AusgabeController {
    * 100 means the user is warned if 100 € or less remain.
    */
   @GetMapping("/warningRange")
-  public double warningRange(@RequestParam String tripname) {
-    Trip trip = tripRepository.findByName(tripname);
+  public double warningRange(@RequestParam String tripname, Authentication authentication) {
+    double result = ausgabeService.warningRange(tripname, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    return trip.getWarningRange();
+    return result;
   }
 
   /**
@@ -168,22 +195,23 @@ public class AusgabeController {
    */
   @PutMapping("/warningRange")
   public double warningRangeAktualisieren(
-      @RequestParam String tripname, @RequestParam double warningRange) {
+      @RequestParam String tripname,
+      @RequestParam double warningRange,
+      Authentication authentication) {
     if (warningRange < 0) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Warning range must not be negative");
     }
 
-    Trip trip = tripRepository.findByName(tripname);
+    double result =
+        ausgabeService.warningRangeAktualisieren(
+            tripname, warningRange, getCurrentUsername(authentication));
 
-    if (trip == null) {
+    if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
     }
 
-    trip.setWarningRange(warningRange);
-    tripRepository.save(trip);
-
-    return trip.getWarningRange();
+    return result;
   }
 
   /**
@@ -192,8 +220,8 @@ public class AusgabeController {
    * <p>The service returns a negative value if the trip was not found.
    */
   @GetMapping("/gesamtausgabenTrip")
-  public double gesamtausgabenTrip(@RequestParam String tripname) {
-    double result = ausgabeService.gesamtausgabenTrip(tripname);
+  public double gesamtausgabenTrip(@RequestParam String tripname, Authentication authentication) {
+    double result = ausgabeService.gesamtausgabenTrip(tripname, getCurrentUsername(authentication));
 
     if (result < 0) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
@@ -209,8 +237,8 @@ public class AusgabeController {
    * could be calculated; the frontend receives 0 instead
    */
   @GetMapping("/verfuegbar")
-  public double verfuegbar(@RequestParam String tripname) {
-    double result = ausgabeService.verfuegbarTrip(tripname);
+  public double verfuegbar(@RequestParam String tripname, Authentication authentication) {
+    double result = ausgabeService.verfuegbarTrip(tripname, getCurrentUsername(authentication));
 
     if (result == -1) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");

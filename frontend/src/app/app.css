@@ -61,6 +61,14 @@
   margin-top: auto;
 }
 
+/* Profile menu stays outside the sidebar on the top right */
+.profile-actions {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 1100;
+}
+
 /* Main page content is shifted right so it does not overlap the sidebar */
 .content {
   min-height: 100vh;
@@ -96,5 +104,10 @@
   .content {
     margin-left: 180px;
     padding: 20px;
+  }
+
+  .profile-actions {
+    top: 12px;
+    right: 12px;
   }
 }

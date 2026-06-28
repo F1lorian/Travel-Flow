@@ -7,11 +7,13 @@ import com.sep.sep_backend.Enitys.Event;
 import com.sep.sep_backend.Enitys.Trip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +24,10 @@ class TripEventServiceTest {
   @Mock private EventRepository eventRepository;
 
   @Mock private TripRepository tripRepository;
+
+  @Mock private CategoryService categoryService;
+
+  @Mock private UserEventRepository userEventRepository;
 
   @InjectMocks private TripEventService eventService;
 
@@ -70,5 +76,27 @@ class TripEventServiceTest {
 
     assertEquals(1, result.size());
     assertEquals("Dinner", result.get(0).getName());
+  }
+
+  @Test
+  void deleteEvent_deletesUserEventLinksBeforeEvent() {
+    Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, new Trip("Paris"));
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+
+    eventService.deleteEvent(42L);
+
+    InOrder inOrder = inOrder(userEventRepository, eventRepository);
+    inOrder.verify(userEventRepository).deleteByEvent_Id(42L);
+    inOrder.verify(eventRepository).delete(event);
+  }
+
+  @Test
+  void deleteEvent_throwsWhenEventNotFound() {
+    when(eventRepository.findById(42L)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class, () -> eventService.deleteEvent(42L));
+
+    verify(userEventRepository, never()).deleteByEvent_Id(any());
+    verify(eventRepository, never()).delete(any(Event.class));
   }
 }

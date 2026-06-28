@@ -232,3 +232,28 @@ input::placeholder {
     font-size: 18px;
   }
 }
+
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.oauth-divider::before,
+.oauth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.oauth-divider span {
+  padding: 0 12px;
+}
+
+.google-button {
+  display: flex;
+  justify-content: center;
+}
