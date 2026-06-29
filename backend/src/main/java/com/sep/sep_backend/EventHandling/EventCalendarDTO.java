@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class EventCalendarDTO {
   private String id;
   private String title;
-  private int kosten;
+  private double kosten;
   private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
@@ -25,7 +25,7 @@ public class EventCalendarDTO {
    * @param tripId identifier of the trip the event belongs to
    */
   public EventCalendarDTO(
-      String id, String title, int kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
+      String id, String title, double kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
     this.id = id;
     this.title = title;
     this.start = start;
@@ -111,7 +111,7 @@ public class EventCalendarDTO {
    *
    * @return event costs
    */
-  public int getKosten() {
+  public double getKosten() {
     return this.kosten;
   }
 
@@ -120,7 +120,7 @@ public class EventCalendarDTO {
    *
    * @param kosten event costs
    */
-  public void setKosten(int kosten) {
+  public void setKosten(double kosten) {
     this.kosten = kosten;
   }
 
