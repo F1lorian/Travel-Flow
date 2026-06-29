@@ -6,12 +6,16 @@ Eine webbasierte Reise- und Kalenderverwaltungsplattform mit Angular und Spring 
 
 # Features
 
+* Erstellung von Accounts
+* Anmeldung per Google
 * Kalenderverwaltung
 * Tripverwaltung
 * Eventverwaltung
 * Import & Export von Events
 * Finanzverwaltung für Kosten & Ausgaben
 * Empfehlungen & Suche von Events
+* Hinzufügen von Freunden
+* Koordination von Events und Trips mit Freunden
 
 
 ---
@@ -66,7 +70,15 @@ cd backend
 Backend läuft unter:
 
 ```txt
-http://localhost:8080
+http://localhost:8082
+```
+
+---
+## Datenbank
+
+läuft mit PostgreSQL über:
+```txt
+postgresql://localhost:5433/sep
 ```
 
 ---
