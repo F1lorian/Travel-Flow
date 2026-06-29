@@ -52,6 +52,10 @@ export async function mockTrips(page: Page, trips: unknown[] = []): Promise<void
   await mockJson(page, '**/api/trips', trips);
 }
 
+export async function mockFriends(page: Page, friends: unknown[] = []): Promise<void> {
+  await mockJson(page, '**/api/friends', friends);
+}
+
 export async function mockCalendarEvents(page: Page, events: unknown[] = []): Promise<void> {
   await mockJson(page, '**/api/event/pull/all_events', events);
 }

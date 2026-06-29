@@ -58,6 +58,18 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   transform: translateY(-1px);
 }
 
+.fc-event.invited-trip-event {
+  background: #9333ea !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.invited-trip-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 .fc-event.calendar-event {
   background: #2563eb !important;
   border: none !important;
@@ -68,4 +80,23 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .fc-event.calendar-event:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+}
+
+.fc-event.friend-calendar-event {
+  background: #16a34a !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
+}
+
+.fc-event.friend-calendar-event:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.fc-event.trip-event-inited {
+  background: #12f1d7 !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer;
 }

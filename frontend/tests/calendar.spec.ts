@@ -1,8 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { authenticate, mockCalendarEvents, mockConflictEvents, mockJson, mockTrips } from './helpers';
+import {
+  authenticate,
+  mockCalendarEvents,
+  mockConflictEvents,
+  mockFriends,
+  mockJson,
+  mockTrips,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
+  await mockFriends(page);
   await mockTrips(page);
   await mockCalendarEvents(page);
 });
@@ -46,4 +54,41 @@ test('Event wird über Dialog erstellt', async ({ page }) => {
   await page.getByRole('button', { name: 'Create' }).click();
 
   await expect(page.getByText('Mein Test Event')).toBeVisible();
+});
+
+test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
+  await mockFriends(page, [{ id: 2, username: 'bob', firstName: 'Bob', surname: 'Friend' }]);
+  await mockCalendarEvents(page, [
+    {
+      id: '1',
+      title: 'Friend Event',
+      start: '2026-06-15T10:00:00',
+      end: '2026-06-15T11:00:00',
+      kosten: 20,
+      creatorId: 2,
+    },
+  ]);
+
+  await page.goto('/calendar');
+
+  await expect(page.locator('.fc-event.friend-calendar-event')).toContainText('Friend Event');
+});
+
+test('Eingeladener Trip bekommt eigene CSS-Klasse', async ({ page }) => {
+  await mockTrips(page, [
+    {
+      id: 7,
+      name: 'Invited Trip',
+      startDate: '2026-06-15',
+      endDate: '2026-06-16',
+      events: [],
+      invitedByUserId: 2,
+      invitedByUsername: 'bob',
+      invited: true,
+    },
+  ]);
+
+  await page.goto('/calendar');
+
+  await expect(page.locator('.fc-event.invited-trip-event')).toContainText('Invited Trip');
 });

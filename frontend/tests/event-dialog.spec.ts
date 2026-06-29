@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { authenticate, mockCalendarEvents, mockTrips } from './helpers';
+import { authenticate, mockCalendarEvents, mockFriends, mockTrips } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
+  await mockFriends(page);
   await mockTrips(page);
 });
 
