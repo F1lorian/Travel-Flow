@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 /** Request data transfer object for manually creating or editing an event. */
 public class EventRequestDTO {
   private String name;
-  private int kosten;
+  private double kosten;
   private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
@@ -23,7 +23,7 @@ public class EventRequestDTO {
    * @param end end date and time of the event
    */
   public EventRequestDTO(
-      String name, int kosten, Long tripId, LocalDateTime start, LocalDateTime end) {
+      String name, double kosten, Long tripId, LocalDateTime start, LocalDateTime end) {
     this.name = name;
     this.kosten = kosten;
     this.tripId = tripId;
@@ -38,7 +38,7 @@ public class EventRequestDTO {
    * @param kosten costs assigned to the event
    * @param tripId identifier of the trip the event belongs to
    */
-  public EventRequestDTO(String name, int kosten, Long tripId) {
+  public EventRequestDTO(String name, double kosten, Long tripId) {
     this(name, kosten, tripId, null, null);
   }
 
@@ -65,7 +65,7 @@ public class EventRequestDTO {
    *
    * @return event costs
    */
-  public int getKosten() {
+  public double getKosten() {
     return kosten;
   }
 
@@ -74,7 +74,7 @@ public class EventRequestDTO {
    *
    * @param kosten event costs
    */
-  public void setKosten(int kosten) {
+  public void setKosten(double kosten) {
     this.kosten = kosten;
   }
 

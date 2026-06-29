@@ -278,5 +278,11 @@ export class EventDialog implements OnInit {
     this.invitations = this.invitations.filter(f => f.id !== friend.id);
   }
 
+  normalizeKosten(): void {
+    if (typeof this.kosten === 'string') {
+      const parsed = parseFloat((this.kosten as string).replace(',', '.'));
+      this.kosten = isNaN(parsed) ? undefined : parsed;
+    }
+  }
 
 }

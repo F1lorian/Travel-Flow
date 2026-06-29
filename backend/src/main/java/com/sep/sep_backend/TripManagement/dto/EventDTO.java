@@ -16,7 +16,7 @@ public class EventDTO {
   private String name;
   private LocalDateTime startTime;
   private LocalDateTime endTime;
-  private int kosten; // cost in EUR (German "Kosten"); 0 = free
+  private double kosten; // cost in EUR (German "Kosten"); 0 = free
   private long tripId;
   private String categoryName;
 
@@ -54,7 +54,7 @@ public class EventDTO {
     return endTime;
   }
 
-  public int getKosten() {
+  public double getKosten() {
     return kosten;
   }
 

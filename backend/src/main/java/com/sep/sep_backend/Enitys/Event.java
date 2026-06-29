@@ -16,7 +16,7 @@ public class Event {
 
   private LocalDateTime endTime;
 
-  private int kosten;
+  private double kosten;
 
   @ManyToOne
   @JoinColumn(name = "trip_id")
@@ -28,7 +28,8 @@ public class Event {
 
   public Event() {}
 
-  public Event(String name, LocalDateTime startTime, LocalDateTime endTime, int kosten, Trip trip) {
+  public Event(
+      String name, LocalDateTime startTime, LocalDateTime endTime, double kosten, Trip trip) {
     this.name = name;
     this.startTime = startTime;
     this.endTime = endTime;
@@ -68,11 +69,11 @@ public class Event {
     this.endTime = endTime;
   }
 
-  public int getKosten() {
+  public double getKosten() {
     return kosten;
   }
 
-  public void setKosten(int kosten) {
+  public void setKosten(double kosten) {
     this.kosten = kosten;
   }
 

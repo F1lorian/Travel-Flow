@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class EventResponseDTO {
   private String id;
   private String name;
-  private int kosten;
+  private double kosten;
   private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
@@ -22,7 +22,7 @@ public class EventResponseDTO {
    * @param start start date and time of the event
    * @param end end date and time of the event
    */
-  public EventResponseDTO(String name, int kosten, LocalDateTime start, LocalDateTime end) {
+  public EventResponseDTO(String name, double kosten, LocalDateTime start, LocalDateTime end) {
     this(null, name, kosten, start, end, null);
   }
 
@@ -37,7 +37,7 @@ public class EventResponseDTO {
    * @param tripId identifier of the trip the event belongs to
    */
   public EventResponseDTO(
-      String id, String name, int kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
+      String id, String name, double kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
     this.id = id;
     this.name = name;
     this.kosten = kosten;
@@ -87,7 +87,7 @@ public class EventResponseDTO {
    *
    * @return event costs
    */
-  public int getKosten() {
+  public double getKosten() {
     return kosten;
   }
 
@@ -96,7 +96,7 @@ public class EventResponseDTO {
    *
    * @param kosten event costs
    */
-  public void setKosten(int kosten) {
+  public void setKosten(double kosten) {
     this.kosten = kosten;
   }
 
