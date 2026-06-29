@@ -1,42 +1,181 @@
-.app-bar {
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+/* Small menu button instead of a permanent top bar */
+.menu-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1300;
+  border: 0;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: #1976d2;
+  color: white;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+.menu-button:hover {
+  background: #125ca4;
+}
+
+/* Dark overlay when the sidebar drawer is open */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.35);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: default;
+}
+
+/* Sidebar drawer */
+.side-bar {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  height: 56px;
+  bottom: 0;
+  width: 240px;
   background: #1976d2;
+  color: white;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  padding: 72px 16px 20px;
+  box-sizing: border-box;
+  z-index: 1200;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.22);
+
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.side-bar.open {
+  transform: translateX(0);
+}
+
+.side-bar-header {
+  margin-bottom: 24px;
+}
+
+.side-bar-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.side-bar-nav {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  padding: 0 16px;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .nav-toggle {
-  padding: 8px 16px;
+  display: block;
+  padding: 12px 14px;
   background: rgba(255, 255, 255, 0.15);
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: 500;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .nav-toggle:hover {
   background: rgba(255, 255, 255, 0.25);
+  transform: translateX(2px);
 }
 
-.content {
-  padding-top: 72px;
+/* Profile menu and logout stay visible on the top right */
+.profile-actions {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #1976d2;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
-.content.no-nav {
-  padding-top: 0;
+.profile-actions app-profile-menu {
+  color: white;
 }
 
-.logout-button {
+.profile-logout-button {
   border: 0;
   cursor: pointer;
   font: inherit;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.profile-logout-button:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Main page content. Padding top leaves space for menu/profile actions. */
+.content {
+  min-height: 100vh;
+  padding: 84px 32px 32px;
+  box-sizing: border-box;
+  background: #f4f6f8;
+}
+
+/* Pages without navigation, for example login/account page */
+.content.no-nav {
+  padding: 0;
+  background: transparent;
+}
+
+/* Basic responsiveness for smaller screens */
+@media (max-width: 700px) {
+  .menu-button {
+    top: 12px;
+    left: 12px;
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .side-bar {
+    width: 220px;
+    padding: 64px 12px 16px;
+  }
+
+  .side-bar-header h2 {
+    font-size: 18px;
+  }
+
+  .nav-toggle {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .profile-actions {
+    top: 12px;
+    right: 12px;
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  .profile-logout-button {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .content {
+    padding: 76px 20px 20px;
+  }
 }

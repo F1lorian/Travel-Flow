@@ -1,13 +1,45 @@
 @if (showNavigation) {
-  <header class="app-bar">
-    <a class="nav-toggle" routerLink="/calendar">Calendar</a>
-    <a class="nav-toggle" routerLink="/trips">Trips</a>
-    <a class="nav-toggle" routerLink="/overview">Overview</a>
-    <a class="nav-toggle" routerLink="/friends">Friends</a>
+  <button
+    class="menu-button"
+    type="button"
+    (click)="toggleSidebar()"
+    [attr.aria-expanded]="sidebarOpen()"
+  >
+    ☰ Menu
+  </button>
+
+  @if (sidebarOpen()) {
+    <button
+      class="sidebar-backdrop"
+      type="button"
+      aria-label="Close sidebar"
+      (click)="closeSidebar()"
+    ></button>
+  }
+
+  <aside class="side-bar" [class.open]="sidebarOpen()">
+    <div class="side-bar-header">
+      <h2>Travel Flow</h2>
+    </div>
+
+    <nav class="side-bar-nav">
+      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Home</a>
+      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Calendar</a>
+      <a class="nav-toggle" routerLink="/trips" (click)="closeSidebar()">Trips</a>
+      <a class="nav-toggle" routerLink="/overview" (click)="closeSidebar()">Overview</a>
+      <a class="nav-toggle" routerLink="/friends" (click)="closeSidebar()">Friends</a>
+    </nav>
+  </aside>
+
+  <div class="profile-actions">
     <app-profile-menu />
-    <button class="nav-toggle logout-button" type="button" (click)="logout()">Log out</button>
-  </header>
+
+    <button class="profile-logout-button" type="button" (click)="logout()">
+      Log out
+    </button>
+  </div>
 }
-<div class="content" [class.no-nav]="!showNavigation">
+
+<main class="content" [class.no-nav]="!showNavigation">
   <router-outlet />
-</div>
+</main>

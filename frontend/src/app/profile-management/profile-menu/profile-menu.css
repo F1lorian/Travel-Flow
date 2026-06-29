@@ -1,7 +1,42 @@
 :host {
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
 }
 
+/* Profile icon button in the top right action area */
 .profile-trigger {
+  width: 44px;
+  height: 40px;
+  padding: 0 !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 0;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+  line-height: 1;
+}
+
+.profile-trigger:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Center the Material icon inside the button */
+.profile-trigger mat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 24px;
+
+  margin: 0;
 }
