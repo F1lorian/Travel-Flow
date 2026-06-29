@@ -28,7 +28,8 @@ public class Event {
 
   public Event() {}
 
-  public Event(String name, LocalDateTime startTime, LocalDateTime endTime, double kosten, Trip trip) {
+  public Event(
+      String name, LocalDateTime startTime, LocalDateTime endTime, double kosten, Trip trip) {
     this.name = name;
     this.startTime = startTime;
     this.endTime = endTime;
