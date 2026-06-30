@@ -1,4 +1,4 @@
-package com.sep.sep_backend.EventRecommendation.dto;
+package com.sep.sep_backend.eventRecommendation.dto;
 
 /**
  * One recommended event returned to the frontend. Matches the JSON shape the formatting prompt asks
