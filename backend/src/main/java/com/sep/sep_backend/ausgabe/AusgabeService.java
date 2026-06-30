@@ -1,6 +1,6 @@
 package com.sep.sep_backend.ausgabe;
 
-import com.sep.sep_backend.Enitys.*;
+import com.sep.sep_backend.entities.*;
 import com.sep.sep_backend.repos.*;
 import java.time.LocalDate;
 import java.util.ArrayList;

@@ -1,6 +1,6 @@
 package com.sep.sep_backend.accountmanagement;
 
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.repos.UserRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;

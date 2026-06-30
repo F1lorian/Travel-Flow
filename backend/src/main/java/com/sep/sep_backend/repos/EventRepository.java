@@ -1,7 +1,7 @@
 package com.sep.sep_backend.repos;
 
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
