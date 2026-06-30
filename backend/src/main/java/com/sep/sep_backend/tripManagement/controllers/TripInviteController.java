@@ -1,7 +1,7 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.tripManagement.controllers;
 
-import com.sep.sep_backend.TripManagement.dto.TripInviteResponseDTO;
-import com.sep.sep_backend.TripManagement.services.TripInviteService;
+import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
+import com.sep.sep_backend.tripManagement.services.TripInviteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;

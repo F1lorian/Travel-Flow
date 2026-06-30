@@ -1,11 +1,11 @@
 package com.sep.sep_backend.profilemanagement;
 
+import com.sep.sep_backend.accountmanagement.GoogleTokenVerifier;
+import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
-import com.sep.sep_backend.accountmanagement.GoogleTokenVerifier;
-import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;

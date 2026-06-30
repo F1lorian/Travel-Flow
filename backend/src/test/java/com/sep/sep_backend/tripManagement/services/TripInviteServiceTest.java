@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.tripManagement.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,10 +7,10 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
-import com.sep.sep_backend.TripManagement.dto.TripInviteResponseDTO;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

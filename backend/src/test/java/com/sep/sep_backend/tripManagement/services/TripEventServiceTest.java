@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.tripManagement.services;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

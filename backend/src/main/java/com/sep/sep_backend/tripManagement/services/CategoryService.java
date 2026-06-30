@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.services;
+package com.sep.sep_backend.tripManagement.services;
 
 import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.repos.CategoriesRepository;

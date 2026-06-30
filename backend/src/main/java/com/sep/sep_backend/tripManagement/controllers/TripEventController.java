@@ -1,12 +1,12 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.tripManagement.controllers;
 
 /* back-front relation: REST endpoints for events within a trip.
 GET  /api/trips/{tripId}/events  → frontend trip-detail page (loads events list)
 POST /api/trips/{tripId}/events  → frontend add-event form */
 
 import com.sep.sep_backend.entities.Event;
-import com.sep.sep_backend.TripManagement.dto.EventDTO;
-import com.sep.sep_backend.TripManagement.services.TripEventService;
+import com.sep.sep_backend.tripManagement.dto.EventDTO;
+import com.sep.sep_backend.tripManagement.services.TripEventService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.ResponseEntity;

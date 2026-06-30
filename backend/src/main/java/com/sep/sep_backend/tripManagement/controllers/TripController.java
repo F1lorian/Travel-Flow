@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.tripManagement.controllers;
 
 /* back-front relation: REST endpoints for trips.
 GET /api/trips         → frontend trip-list page (loads all trips)
@@ -7,10 +7,10 @@ POST /api/trips        → frontend create-trip form */
 
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
-import com.sep.sep_backend.TripManagement.dto.TripDTO;
-import com.sep.sep_backend.TripManagement.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import com.sep.sep_backend.tripManagement.dto.TripDTO;
+import com.sep.sep_backend.tripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

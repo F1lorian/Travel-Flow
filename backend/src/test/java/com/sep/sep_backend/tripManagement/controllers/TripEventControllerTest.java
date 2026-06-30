@@ -1,4 +1,4 @@
-package com.sep.sep_backend.TripManagement.controllers;
+package com.sep.sep_backend.tripManagement.controllers;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
-import com.sep.sep_backend.TripManagement.services.TripEventService;
+import com.sep.sep_backend.tripManagement.services.TripEventService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
