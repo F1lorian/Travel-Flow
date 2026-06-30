@@ -1,11 +1,11 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.eventHandling;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.repos.UserRepository;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

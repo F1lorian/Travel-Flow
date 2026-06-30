@@ -1,4 +1,4 @@
-package com.sep.sep_backend.Enitys;
+package com.sep.sep_backend.entities;
 
 import jakarta.persistence.*;
 import java.util.List;

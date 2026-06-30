@@ -3,7 +3,7 @@ package com.sep.sep_backend.TripManagement.dto;
 /* back-front relation: EventDTO is the JSON object the frontend receives for an event.
 Fields match the Event interface in trip.service.ts */
 
-import com.sep.sep_backend.Enitys.Event;
+import com.sep.sep_backend.entities.Event;
 import java.time.LocalDateTime;
 
 /**

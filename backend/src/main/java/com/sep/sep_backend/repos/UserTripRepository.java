@@ -1,9 +1,9 @@
 package com.sep.sep_backend.repos;
 
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
-import com.sep.sep_backend.Enitys.UserTrip;
-import com.sep.sep_backend.Enitys.UserTripId;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.entities.UserTripId;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

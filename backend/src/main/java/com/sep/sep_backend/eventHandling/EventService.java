@@ -1,14 +1,14 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.eventHandling;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
-import com.sep.sep_backend.Enitys.UserEvent;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;

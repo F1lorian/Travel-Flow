@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import com.sep.sep_backend.Enitys.Categories;
-import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.entities.Categories;
+import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.ausgabe.*;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.TripRepository;

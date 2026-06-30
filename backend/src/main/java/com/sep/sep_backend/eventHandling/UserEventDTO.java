@@ -1,6 +1,6 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.eventHandling;
 
-import com.sep.sep_backend.Enitys.UserEvent;
+import com.sep.sep_backend.entities.UserEvent;
 
 public class UserEventDTO {
   private Long userId;

@@ -1,6 +1,6 @@
 package com.sep.sep_backend.TripManagement.dto;
 
-import com.sep.sep_backend.Enitys.Categories;
+import com.sep.sep_backend.entities.Categories;
 
 /**
  * API response shape for a category — only the {@code id} and {@code name} the frontend actually

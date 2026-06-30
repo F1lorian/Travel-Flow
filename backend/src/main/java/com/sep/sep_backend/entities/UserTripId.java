@@ -1,4 +1,4 @@
-package com.sep.sep_backend.Enitys;
+package com.sep.sep_backend.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

@@ -4,8 +4,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;

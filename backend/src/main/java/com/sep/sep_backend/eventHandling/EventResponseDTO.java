@@ -1,4 +1,4 @@
-package com.sep.sep_backend.EventHandling;
+package com.sep.sep_backend.eventHandling;
 
 import java.time.LocalDateTime;
 

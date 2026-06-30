@@ -5,8 +5,8 @@ GET /api/trips         → frontend trip-list page (loads all trips)
 GET /api/trips/{id}    → frontend trip-detail page (loads one trip)
 POST /api/trips        → frontend create-trip form */
 
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.TripManagement.dto.TripDTO;
 import com.sep.sep_backend.TripManagement.services.TripService;
 import com.sep.sep_backend.repos.UserRepository;

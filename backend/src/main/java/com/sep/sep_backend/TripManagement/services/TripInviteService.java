@@ -1,8 +1,8 @@
 package com.sep.sep_backend.TripManagement.services;
 
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
-import com.sep.sep_backend.Enitys.UserTrip;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.TripManagement.dto.TripInviteResponseDTO;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;

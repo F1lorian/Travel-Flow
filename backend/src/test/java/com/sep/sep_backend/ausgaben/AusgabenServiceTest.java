@@ -3,12 +3,12 @@ package com.sep.sep_backend.ausgaben;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import com.sep.sep_backend.Enitys.Ausgabe;
-import com.sep.sep_backend.Enitys.Categories;
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
-import com.sep.sep_backend.Enitys.User;
-import com.sep.sep_backend.Enitys.UserTrip;
+import com.sep.sep_backend.entities.Ausgabe;
+import com.sep.sep_backend.entities.Categories;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.ausgabe.AusgabeRequestDTO;
 import com.sep.sep_backend.ausgabe.AusgabeResponseDTO;
 import com.sep.sep_backend.ausgabe.AusgabeService;

@@ -1,6 +1,6 @@
 package com.sep.sep_backend.accountmanagement;
 
-import com.sep.sep_backend.Enitys.User;
+import com.sep.sep_backend.entities.User;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;

@@ -3,8 +3,8 @@ package com.sep.sep_backend.TripManagement.services;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.sep.sep_backend.Enitys.Event;
-import com.sep.sep_backend.Enitys.Trip;
+import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
