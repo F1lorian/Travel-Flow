@@ -1,0 +1,135 @@
+<section class="gmail-import">
+  <header class="gmail-import__header">
+    <h1>Gmail Import</h1>
+    <p class="gmail-import__subtitle">
+      Connect your Gmail account and turn booking, reservation and invitation emails into
+      calendar events.
+    </p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="gmail-import__banner gmail-import__banner--error" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+  @if (successMessage()) {
+    <div class="gmail-import__banner gmail-import__banner--success" role="status">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- Step 1: connection -->
+  <div class="gmail-import__card">
+    @if (connected()) {
+      <p class="gmail-import__status">
+        Connected as <strong>{{ emailAddress() || 'your Gmail account' }}</strong>
+      </p>
+      <div class="gmail-import__actions">
+        <button type="button" class="btn btn--primary" (click)="scanEmails()" [disabled]="isBusy()">
+          {{ isBusy() ? 'Working…' : 'Scan recent emails' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="disconnectGmail()" [disabled]="isBusy()">
+          Disconnect
+        </button>
+      </div>
+    } @else {
+      <p class="gmail-import__status">No Gmail account connected yet.</p>
+      <button type="button" class="btn btn--primary" (click)="connectGmail()" [disabled]="isBusy()">
+        Connect Gmail
+      </button>
+    }
+  </div>
+
+  <!-- Step 2: extracted events list -->
+  @if (connected() && hasScanned()) {
+    <div class="gmail-import__card">
+      <h2>Found events</h2>
+      @if (candidates().length === 0) {
+        <p class="gmail-import__empty">
+          No events were found in your recent emails. Try again after receiving a booking or
+          invitation email.
+        </p>
+      } @else {
+        <ul class="gmail-import__list">
+          @for (event of candidates(); track event.sourceMessageId) {
+            <li class="gmail-import__list-item">
+              <div class="gmail-import__list-info">
+                <span class="gmail-import__list-title">{{ event.title || 'Untitled event' }}</span>
+                <span class="gmail-import__list-meta">
+                  {{ event.date || 'No date' }}
+                  @if (event.startTime) { · {{ event.startTime }} }
+                  @if (event.location) { · {{ event.location }} }
+                </span>
+              </div>
+              <button type="button" class="btn btn--small" (click)="reviewEvent(event)">
+                Review
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <!-- Step 3: confirmation / edit form -->
+  @if (selected()) {
+    <div class="gmail-import__card">
+      <h2>Review &amp; edit</h2>
+      <p class="gmail-import__hint">
+        Check the details below. Nothing is saved until you click "Create Event".
+      </p>
+
+      <form class="gmail-import__form" (ngSubmit)="createEvent()">
+        <label class="gmail-import__field">
+          <span>Title</span>
+          <input type="text" name="title" [(ngModel)]="form.title" />
+        </label>
+
+        <label class="gmail-import__field">
+          <span>Description</span>
+          <textarea name="description" rows="3" [(ngModel)]="form.description"></textarea>
+        </label>
+
+        <div class="gmail-import__row">
+          <label class="gmail-import__field">
+            <span>Date</span>
+            <input type="date" name="date" [(ngModel)]="form.date" required />
+          </label>
+          <label class="gmail-import__field">
+            <span>Start time</span>
+            <input type="time" name="startTime" [(ngModel)]="form.startTime" />
+          </label>
+          <label class="gmail-import__field">
+            <span>End time</span>
+            <input type="time" name="endTime" [(ngModel)]="form.endTime" />
+          </label>
+        </div>
+
+        <div class="gmail-import__row">
+          <label class="gmail-import__field">
+            <span>Location</span>
+            <input type="text" name="location" [(ngModel)]="form.location" />
+          </label>
+          <label class="gmail-import__field">
+            <span>Time zone</span>
+            <input
+              type="text"
+              name="timeZone"
+              placeholder="e.g. Europe/Berlin"
+              [(ngModel)]="form.timeZone"
+            />
+          </label>
+        </div>
+
+        <div class="gmail-import__actions">
+          <button type="submit" class="btn btn--primary" [disabled]="isBusy()">
+            {{ isBusy() ? 'Creating…' : 'Create Event' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="cancelReview()" [disabled]="isBusy()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</section>

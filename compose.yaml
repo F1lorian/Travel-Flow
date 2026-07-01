@@ -19,6 +19,10 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-0ede0s968df42p8h5fkr8fajod9gju5k.apps.googleusercontent.com}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:4200/gmail-import}
+      GMAIL_IMPORT_MAX_MESSAGES: ${GMAIL_IMPORT_MAX_MESSAGES:-20}
+      GMAIL_TOKEN_ENCRYPTION_SECRET: ${GMAIL_TOKEN_ENCRYPTION_SECRET:-sep-development-token-secret-change-me}
     depends_on:
       - db
 

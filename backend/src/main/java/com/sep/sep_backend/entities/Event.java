@@ -18,6 +18,19 @@ public class Event {
 
   private double kosten;
 
+  /** Optional free-text description, e.g. filled from an imported email. */
+  @Column(length = 4096)
+  private String description;
+
+  /** Optional human-readable location (venue, address, gate, ...). */
+  private String location;
+
+  /** Optional IANA time zone the event times refer to (e.g. Europe/Berlin). */
+  private String timeZone;
+
+  /** Optional organizer/host name, when known. */
+  private String organizer;
+
   @ManyToOne
   @JoinColumn(name = "trip_id")
   private Trip trip;
@@ -95,5 +108,37 @@ public class Event {
 
   public Long getTripId() {
     return this.trip == null ? null : this.trip.getId();
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public void setLocation(String location) {
+    this.location = location;
+  }
+
+  public String getTimeZone() {
+    return timeZone;
+  }
+
+  public void setTimeZone(String timeZone) {
+    this.timeZone = timeZone;
+  }
+
+  public String getOrganizer() {
+    return organizer;
+  }
+
+  public void setOrganizer(String organizer) {
+    this.organizer = organizer;
   }
 }
