@@ -9,11 +9,15 @@ import { CategorySummaryItem, ExpenseService } from '../../services/expense.serv
 import { Router, RouterLink } from '@angular/router';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { Trip, TripService } from '../../TripManagement/services/trip.service';
+import { MatDialog } from '@angular/material/dialog';
+import { EventDialog } from '../event-dialog/event-dialog';
+import { MatIcon } from '@angular/material/icon';
+import { ConfirmationDialog } from '../confirmation-dialog/confirmation-dialog';
 
 @Component({
   selector: 'app-spending-overview',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterLink, NgApexchartsModule],
+  imports: [FormsModule, CommonModule, RouterLink, NgApexchartsModule, MatIcon],
   templateUrl: './spending-overview.component.html',
   styleUrls: ['./spending-overview.component.css']
 })
@@ -53,7 +57,8 @@ export class SpendingOverviewComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private tripService: TripService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   /**
@@ -166,5 +171,70 @@ export class SpendingOverviewComponent implements OnInit {
     }
 
     this.router.navigate(['/trip-spending-overview', tripId]);
+  }
+
+  deleteExpense(expense: any): void {
+    if (expense.sourceType === 'EVENT') {
+      this.openLinkedEventPrompt(expense);
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmationDialog, {
+      data: {
+        title: 'Delete expense',
+        message: 'This expense will be removed permanently.',
+        confirmLabel: 'Delete expense',
+        danger: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.expenseService.deleteExpense(expense.id).subscribe({
+        next: () => this.loadExpenses(),
+        error: (error) => {
+          console.error('Error while deleting the expense:', error);
+        }
+      });
+    });
+  }
+
+  private openLinkedEventPrompt(expense: any): void {
+    const promptRef = this.dialog.open(ConfirmationDialog, {
+      data: {
+        title: 'Edit linked event',
+        message: 'This expense is linked to an event. To remove it from spending, edit the event and set the cost to 0, or delete the event.',
+        confirmLabel: 'Edit event'
+      }
+    });
+
+    promptRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      const dialogRef = this.dialog.open(EventDialog, {
+        maxHeight: '90vh',
+        height: 'auto',
+        data: {
+          mode: 'edit',
+          id: String(expense.id),
+          title: expense.eventName,
+          kosten: expense.kosten,
+          tripId: expense.tripId,
+          start: expense.start?.substring(0, 16),
+          end: expense.end?.substring(0, 16),
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result?.action === 'saved' || result?.action === 'deleted') {
+          this.loadExpenses();
+        }
+      });
+    });
   }
 }

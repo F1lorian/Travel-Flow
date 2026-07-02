@@ -72,6 +72,12 @@ public class AusgabeController {
     ausgabeService.ausgabeHinzufuegen(dto, getCurrentUsername(authentication));
   }
 
+  /** Deletes a manually created expense owned by the current user. */
+  @DeleteMapping("/ausgabe/{id}")
+  public void ausgabeLoeschen(@PathVariable Long id, Authentication authentication) {
+    ausgabeService.ausgabeLoeschen(id, getCurrentUsername(authentication));
+  }
+
   /**
    * Extracts the current username from the Spring Security authentication.
    *

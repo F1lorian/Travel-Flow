@@ -1,0 +1,30 @@
+<div class="w-[460px] max-w-[calc(100vw-32px)] rounded-xl bg-white p-8 shadow-xl ring-1 ring-slate-200">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold tracking-tight text-slate-900">
+      {{ data.title }}
+    </h2>
+    <p class="mt-2 text-sm leading-6 text-slate-600">
+      {{ data.message }}
+    </p>
+  </div>
+
+  <div class="flex justify-end gap-2">
+    <button
+      type="button"
+      (click)="cancel()"
+      class="rounded-lg border border-slate-300 bg-white px-5 py-3
+         font-semibold text-slate-700
+         transition hover:bg-slate-100">
+      {{ data.cancelLabel || 'Cancel' }}
+    </button>
+
+    <button
+      type="button"
+      (click)="confirm()"
+      [class]="data.danger
+        ? 'rounded-lg bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 active:scale-[0.99]'
+        : 'rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-700 active:scale-[0.99]'">
+      {{ data.confirmLabel }}
+    </button>
+  </div>
+</div>

@@ -7,10 +7,16 @@ import { Observable, map } from 'rxjs';
  * The field names match the backend DTOs.
  */
 export interface Expense {
+  id: number;
   kosten: number;
   trip: string;
   date: string;
   kategorie: string;
+  sourceType: 'EXPENSE' | 'EVENT';
+  eventName?: string;
+  tripId?: number;
+  start?: string;
+  end?: string;
 }
 
 /**
@@ -50,6 +56,13 @@ export class ExpenseService {
     kategorie: string;
   }): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/ausgabe`, expense);
+  }
+
+  /**
+   * Deletes a manually created expense.
+   */
+  deleteExpense(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/ausgabe/${id}`);
   }
 
   /**

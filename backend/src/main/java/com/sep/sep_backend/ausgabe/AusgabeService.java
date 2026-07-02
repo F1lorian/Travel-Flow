@@ -103,15 +103,13 @@ public class AusgabeService {
     for (int i = 0; i < ausgaben.size(); i++) {
       Ausgabe x = ausgaben.get(i);
       AusgabeResponseDTO y =
-          new AusgabeResponseDTO(x.getKosten(), x.getTrip(), x.getDate(), x.getKategorie());
+          new AusgabeResponseDTO(
+              x.getId(), x.getKosten(), x.getTrip(), x.getDate(), x.getKategorie());
       ausgabenDTOs.add(y);
     }
     for (int i = 0; i < events.size(); i++) {
       Event x = events.get(i);
-      AusgabeResponseDTO y =
-          new AusgabeResponseDTO(
-              x.getKosten(), x.getTrip(), x.getStartTime().toLocalDate(), x.getCategorie());
-      ausgabenDTOs.add(y);
+      ausgabenDTOs.add(new AusgabeResponseDTO(x));
     }
     return ausgabenDTOs;
   }
@@ -178,16 +176,34 @@ public class AusgabeService {
     for (Ausgabe ausgabe : ausgaben) {
       AusgabeResponseDTO dto =
           new AusgabeResponseDTO(
-              ausgabe.getKosten(), trip, ausgabe.getDate(), ausgabe.getKategorie());
+              ausgabe.getId(),
+              ausgabe.getKosten(),
+              trip,
+              ausgabe.getDate(),
+              ausgabe.getKategorie());
       ausgabenDTOs.add(dto);
     }
     for (Event event : events) {
-      AusgabeResponseDTO dto =
-          new AusgabeResponseDTO(
-              event.getKosten(), trip, event.getStartTime().toLocalDate(), event.getCategorie());
-      ausgabenDTOs.add(dto);
+      ausgabenDTOs.add(new AusgabeResponseDTO(event));
     }
     return ausgabenDTOs;
+  }
+
+  /**
+   * Deletes a manually created expense owned by the current user.
+   *
+   * @param id expense identifier
+   * @param username authenticated user's name or email
+   * @throws ResponseStatusException if the expense does not exist for the current user
+   */
+  public void ausgabeLoeschen(Long id, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Ausgabe ausgabe =
+        repo.findByIdAndUser(id, user)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
+
+    repo.delete(ausgabe);
   }
 
   /**

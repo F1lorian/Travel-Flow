@@ -96,6 +96,31 @@ select:focus {
   background: #1f5fd5;
 }
 
+.delete-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0;
+  background: #ffffff;
+  color: #b91c1c;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+}
+
+.delete-button mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -114,6 +139,11 @@ select:focus {
   font-size: 0.85rem;
   font-weight: 600;
   background: #f9fafb;
+}
+
+.data-table .icon-column {
+  width: 52px;
+  text-align: center;
 }
 
 .empty {

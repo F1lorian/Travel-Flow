@@ -95,6 +95,7 @@
         <th>Trip</th>
         <th>Date</th>
         <th>Category</th>
+        <th class="icon-column" aria-label="Actions"></th>
       </tr>
       </thead>
       <tbody>
@@ -103,6 +104,17 @@
         <td>{{ expense.trip }}</td>
         <td>{{ expense.date }}</td>
         <td>{{ getCategoryLabel(expense.kategorie) }}</td>
+        <td class="icon-column">
+          <button
+            class="delete-button"
+            type="button"
+            (click)="deleteExpense(expense)"
+            title="Delete expense"
+            aria-label="Delete expense"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
       </tr>
       </tbody>
     </table>
