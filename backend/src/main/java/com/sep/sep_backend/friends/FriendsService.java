@@ -1,6 +1,8 @@
 package com.sep.sep_backend.friends;
 
+import com.sep.sep_backend.entities.FriendRequest;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -11,9 +13,13 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class FriendsService {
   private final UserRepository userRepository;
+  private final FriendRequestRepository friendRequestRepository;
+  private final FriendRequestNotificationService notificationService;
 
-  public FriendsService(UserRepository userRepository) {
+  public FriendsService(UserRepository userRepository,  FriendRequestRepository friendRequestRepository, FriendRequestNotificationService notificationService) {
     this.userRepository = userRepository;
+    this.friendRequestRepository = friendRequestRepository;
+    this.notificationService = notificationService;
   }
 
   public List<FriendDTO> getFriends(String currentUsername) {
@@ -35,23 +41,119 @@ public class FriendsService {
   }
 
   @Transactional
-  public FriendDTO addFriend(String currentUsername, long friendId) {
+  public FriendRequestDTO sendFriendRequest(String currentUsername, long receiverId) {
+    User sender = getCurrentUserOrThrow(currentUsername);
+    User receiver = getUserOrThrow(receiverId);
+
+    if (sender.getId() == receiver.getId()) {
+      throw new ResponseStatusException(
+              HttpStatus.BAD_REQUEST, "Users cannot send a friend request to themselves");
+    }
+
+    if (isConnected(sender, receiver)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Users are already friends");
+    }
+
+    friendRequestRepository
+            .findBySenderAndReceiverAndStatus(sender, receiver, FriendRequestStatus.PENDING)
+            .ifPresent(r -> {
+              throw new ResponseStatusException(HttpStatus.CONFLICT, "Friend request already sent");
+            });
+
+    // Falls der Empfänger dem Sender bereits eine offene Anfrage geschickt hat,
+    // nehmen wir diese direkt an, statt eine zweite Anfrage anzulegen.
+    var reverseRequest =
+            friendRequestRepository.findBySenderAndReceiverAndStatus(
+                    receiver, sender, FriendRequestStatus.PENDING);
+
+    if (reverseRequest.isPresent()) {
+      FriendRequestDTO dto = acceptInternal(reverseRequest.get());
+      notificationService.notifyRequestAnswered(dto);
+      return dto;
+    }
+
+    FriendRequest request = new FriendRequest(sender, receiver);
+    friendRequestRepository.save(request);
+
+    FriendRequestDTO dto = toFriendRequestDTO(request);
+    notificationService.notifyNewRequest(dto);
+    return dto;
+  }
+
+  @Transactional
+  public FriendRequestDTO acceptFriendRequest(String currentUsername, long requestId) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
-    User friend = getUserOrThrow(friendId);
 
-    if (currentUser.getId() == friend.getId()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Users cannot add themselves");
+    FriendRequest request =
+            friendRequestRepository
+                    .findByIdAndReceiver(requestId, currentUser)
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+
+    if (request.getStatus() != FriendRequestStatus.PENDING) {
+      throw new ResponseStatusException(
+              HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
-    if (!isConnected(currentUser, friend)) {
-      currentUser.getFriends().add(friend);
-      friend.getFriends().add(currentUser);
+    FriendRequestDTO dto = acceptInternal(request);
+    notificationService.notifyRequestAnswered(dto);
+    return dto;
+  }
 
-      userRepository.save(currentUser);
-      userRepository.save(friend);
+  @Transactional
+  public FriendRequestDTO declineFriendRequest(String currentUsername, long requestId) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
+
+    FriendRequest request =
+            friendRequestRepository
+                    .findByIdAndReceiver(requestId, currentUser)
+                    .orElseThrow(
+                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+
+    if (request.getStatus() != FriendRequestStatus.PENDING) {
+      throw new ResponseStatusException(
+              HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
-    return toFriendDTO(friend, true);
+    request.setStatus(FriendRequestStatus.DECLINED);
+    friendRequestRepository.save(request);
+
+    FriendRequestDTO dto = toFriendRequestDTO(request);
+    notificationService.notifyRequestAnswered(dto);
+    return dto;
+  }
+
+  public List<FriendRequestDTO> getIncomingRequests(String currentUsername) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
+    return friendRequestRepository
+            .findByReceiverAndStatus(currentUser, FriendRequestStatus.PENDING)
+            .stream()
+            .map(this::toFriendRequestDTO)
+            .toList();
+  }
+
+  public List<FriendRequestDTO> getOutgoingRequests(String currentUsername) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
+    return friendRequestRepository
+            .findBySenderAndStatus(currentUser, FriendRequestStatus.PENDING)
+            .stream()
+            .map(this::toFriendRequestDTO)
+            .toList();
+  }
+
+  private FriendRequestDTO acceptInternal(FriendRequest request) {
+    User sender = request.getSender();
+    User receiver = request.getReceiver();
+
+    sender.getFriends().add(receiver);
+    receiver.getFriends().add(sender);
+    userRepository.save(sender);
+    userRepository.save(receiver);
+
+    request.setStatus(FriendRequestStatus.ACCEPTED);
+    friendRequestRepository.save(request);
+
+    return toFriendRequestDTO(request);
   }
 
   @Transactional
@@ -86,5 +188,15 @@ public class FriendsService {
   private FriendDTO toFriendDTO(User user, boolean connected) {
     return new FriendDTO(
         user.getId(), user.getName(), user.getFirstName(), user.getSurname(), connected);
+  }
+
+  private FriendRequestDTO toFriendRequestDTO(FriendRequest request) {
+    return new FriendRequestDTO(
+            request.getId(),
+            request.getSender().getId(),
+            request.getSender().getName(),
+            request.getReceiver().getId(),
+            request.getReceiver().getName(),
+            request.getStatus());
   }
 }

@@ -1,6 +1,8 @@
-import {Component, inject, OnInit} from '@angular/core';
-import {Friend, FriendSearchResult, FriendsService} from '../../services/friends.service';
+import {Component, inject, OnInit, OnDestroy} from '@angular/core';
+import {Friend, FriendSearchResult, FriendsService, FriendRequestDTO} from '../../services/friends.service';
 import {FormsModule} from '@angular/forms';
+import {WebSocketService} from '../../services/websocket.service';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-friends',
@@ -10,22 +12,57 @@ import {FormsModule} from '@angular/forms';
   styleUrls: ['./friends.css'],
 })
 
-export class Friends implements OnInit {
+export class Friends implements OnInit, OnDestroy {
   private readonly friendsService = inject(FriendsService);
+  private readonly webSocketService = inject(WebSocketService);
 
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
+  incomingRequests: FriendRequestDTO[] = [];
   searchName = '';
   hasSearched = false;
 
+  private subscriptions = new Subscription();
+
   ngOnInit() {
-    this.friendsService.getFriends().subscribe((data) => {
-        this.friends = data;
-      },
-      (error) => {
-        console.error('Error while loading friends:', error);
-      }
-    )
+    this.loadFriends();
+    this.loadIncomingRequests();
+
+    // Live-Updates über WebSocket
+    this.subscriptions.add(
+      this.webSocketService.newFriendRequest$.subscribe((request) => {
+        this.incomingRequests = [...this.incomingRequests, request];
+      })
+    );
+
+    this.subscriptions.add(
+      this.webSocketService.friendRequestAnswered$.subscribe((request) => {
+        // eigene ausgehende Anfrage wurde beantwortet -> Freundesliste neu laden
+        if (request.status === 'ACCEPTED') {
+          this.loadFriends();
+        }
+        // aus eigener incoming-Liste entfernen, falls betroffen (z. B. bei Multi-Device)
+        this.incomingRequests = this.incomingRequests.filter((r) => r.id !== request.id);
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
+  }
+
+  private loadFriends(): void {
+    this.friendsService.getFriends().subscribe({
+      next: (data) => (this.friends = data),
+      error: (error) => console.error('Error while loading friends:', error),
+    });
+  }
+
+  private loadIncomingRequests(): void {
+    this.friendsService.getIncomingRequests().subscribe({
+      next: (data) => (this.incomingRequests = data),
+      error: (error) => console.error('Error while loading incoming requests:', error),
+    });
   }
 
   searchUsers(){
@@ -37,29 +74,43 @@ export class Friends implements OnInit {
     }
 
     this.hasSearched = true;
-    this.friendsService.searchUsers(name).subscribe((data) => {
-      this.searchResults = data;
-    },
-      (error) => {
-        console.error('Error while searching for this user:', error);
-      })
+    this.friendsService.searchUsers(name).subscribe({
+      next: (data) => (this.searchResults = data),
+      error: (error) => console.error('Error while searching for this user:', error),
+    });
   }
 
-  addFriend(userId: number): void {
-    this.friendsService.addFriend(userId).subscribe({
-      next: () => {
-        // updates the friend-list
-        this.friendsService.getFriends().subscribe((data) => {
-          this.friends = data;
-        });
-        // goes through every user in searchResults if this is the just added-user, change connected to true
-        this.searchResults = this.searchResults.map((user) =>
-          user.id === userId ? { ...user, connected: true } : user
-        );
+  sendFriendRequest(userId: number): void {
+    this.friendsService.sendFriendRequest(userId).subscribe({
+      next: (dto) => {
+        // Falls automatisch akzeptiert wurde (reverse request), sofort als connected markieren
+        if (dto.status === 'ACCEPTED') {
+          this.searchResults = this.searchResults.map((user) =>
+            user.id === userId ? {...user, connected: true} : user
+          );
+          this.loadFriends();
+        }
       },
-      error: (error) => {
-        console.error('Error while adding friend:', error);
-      }
+      error: (error) => console.error('Error while sending friend request:', error),
+    });
+  }
+
+  acceptRequest(requestId: number): void {
+    this.friendsService.acceptFriendRequest(requestId).subscribe({
+      next: () => {
+        this.incomingRequests = this.incomingRequests.filter((r) => r.id !== requestId);
+        this.loadFriends();
+      },
+      error: (error) => console.error('Error while accepting friend request:', error),
+    });
+  }
+
+  declineRequest(requestId: number): void {
+    this.friendsService.declineFriendRequest(requestId).subscribe({
+      next: () => {
+        this.incomingRequests = this.incomingRequests.filter((r) => r.id !== requestId);
+      },
+      error: (error) => console.error('Error while declining friend request:', error),
     });
   }
 
