@@ -166,6 +166,16 @@ public class FriendsService {
 
     userRepository.save(currentUser);
     userRepository.save(friend);
+
+    //alte accepted friendrequests entfernen
+    friendRequestRepository
+            .findBySenderAndReceiverAndStatus(currentUser, friend, FriendRequestStatus.ACCEPTED)
+            .ifPresent(friendRequestRepository::delete);
+    friendRequestRepository
+            .findBySenderAndReceiverAndStatus(friend, currentUser, FriendRequestStatus.ACCEPTED)
+            .ifPresent(friendRequestRepository::delete);
+
+    notificationService.notifyFriendRemoved(friend.getName(), currentUser.getId());
   }
 
   private User getCurrentUserOrThrow(String username) {

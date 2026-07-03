@@ -45,6 +45,16 @@ export class Friends implements OnInit, OnDestroy {
         this.incomingRequests = this.incomingRequests.filter((r) => r.id !== request.id);
       })
     );
+
+    this.subscriptions.add(
+      this.webSocketService.friendRemoved$.subscribe((removedByUserId) => {
+        this.friends = this.friends.filter((f) => f.id !== removedByUserId);
+        // falls der entfernte User gerade in den Suchergebnissen sichtbar ist, connected zurücksetzen
+        this.searchResults = this.searchResults.map((user) =>
+          user.id === removedByUserId ? { ...user, connected: false } : user
+        );
+      })
+    );
   }
 
   ngOnDestroy() {

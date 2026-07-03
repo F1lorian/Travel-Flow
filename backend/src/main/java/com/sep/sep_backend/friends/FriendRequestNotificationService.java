@@ -21,4 +21,9 @@ public class FriendRequestNotificationService {
         messagingTemplate.convertAndSendToUser(
                 dto.senderUsername(), "/queue/friend-requests/status", dto);
     }
+
+    public void notifyFriendRemoved(String affectedUsername, long removedByUserId) {
+        messagingTemplate.convertAndSendToUser(
+                affectedUsername, "/queue/friend-removed", removedByUserId);
+    }
 }

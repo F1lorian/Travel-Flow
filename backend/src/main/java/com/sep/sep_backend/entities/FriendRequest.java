@@ -6,9 +6,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(
-        name = "friend_requests",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"sender_id", "receiver_id"}))
+@Table(name = "friend_requests")
 public class FriendRequest {
 
     @Id

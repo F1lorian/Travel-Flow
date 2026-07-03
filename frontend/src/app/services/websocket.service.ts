@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Client, IMessage } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
 import { Subject } from 'rxjs';
 import { FriendRequestDTO } from './friends.service';
 
@@ -11,6 +10,7 @@ export class WebSocketService {
 
   newFriendRequest$ = new Subject<FriendRequestDTO>();
   friendRequestAnswered$ = new Subject<FriendRequestDTO>();
+  friendRemoved$ = new Subject<number>();
 
   connect(): void {
     const token = localStorage.getItem('sepToken');
@@ -19,7 +19,7 @@ export class WebSocketService {
     }
 
     this.client = new Client({
-      webSocketFactory: () => new (SockJS as any)(`/ws?token=${encodeURIComponent(token)}`),
+      brokerURL: `ws://localhost:8082/ws?token=${encodeURIComponent(token)}`,
       reconnectDelay: 5000,
       onConnect: () => {
         this.connected = true;
@@ -30,6 +30,10 @@ export class WebSocketService {
 
         this.client!.subscribe('/user/queue/friend-requests/status', (message: IMessage) => {
           this.friendRequestAnswered$.next(JSON.parse(message.body));
+        });
+
+        this.client!.subscribe('/user/queue/friend-removed', (message: IMessage) => {
+          this.friendRemoved$.next(JSON.parse(message.body));
         });
       },
       onStompError: (frame) => {
