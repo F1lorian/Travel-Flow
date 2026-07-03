@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -116,6 +117,23 @@ public class AusgabenControllerTest {
     // beide miteinander vergleichen und pruefen ob der service aufgerufen wurde
     assertThat(result).isEqualTo(expected);
     verify(ausgabeService).ausgabenProKategorie(start, end, "maxmuster");
+  }
+
+  @Test
+  void ausgabeLoeschenRuftServiceAuf() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    AusgabeService ausgabeService = mock(AusgabeService.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    AusgabeController ausgabeController =
+        new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
+
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+
+    ausgabeController.ausgabeLoeschen(42L, authentication);
+
+    verify(ausgabeService).ausgabeLoeschen(42L, "maxmuster");
   }
 
   @Test
@@ -290,6 +308,13 @@ public class AusgabenControllerTest {
 
     PostMapping postMapping = postMethod.getAnnotation(PostMapping.class);
     assertThat(postMapping.value()).containsExactly("/ausgabe");
+
+    Method deleteMethod =
+        AusgabeController.class.getDeclaredMethod(
+            "ausgabeLoeschen", Long.class, Authentication.class);
+
+    DeleteMapping deleteMapping = deleteMethod.getAnnotation(DeleteMapping.class);
+    assertThat(deleteMapping.value()).containsExactly("/ausgabe/{id}");
 
     Method listMethod =
         AusgabeController.class.getDeclaredMethod(
