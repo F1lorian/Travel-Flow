@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 
 import { SpendingOverviewComponent } from './spending-overview.component';
@@ -27,7 +27,11 @@ describe('SpendingOverviewComponent', () => {
     expenseServiceSpy.getCategorySummary.and.returnValue(of([]));
     expenseServiceSpy.deleteExpense.and.returnValue(of(undefined));
     tripServiceSpy.getAllTrips.and.returnValue(of([]));
-    dialogSpy.open.and.returnValue({ afterClosed: () => of(true) } as any);
+    const dialogRefSpy = jasmine.createSpyObj<MatDialogRef<unknown>>('MatDialogRef', [
+      'afterClosed'
+    ]);
+    dialogRefSpy.afterClosed.and.returnValue(of(true));
+    dialogSpy.open.and.returnValue(dialogRefSpy);
 
     await TestBed.configureTestingModule({
       imports: [SpendingOverviewComponent],

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 
 import { TripSpendingOverviewComponent } from './trip-spending-overview';
@@ -44,7 +44,11 @@ describe('TripSpendingOverviewComponent', () => {
         invited: false
       })
     );
-    dialogSpy.open.and.returnValue({ afterClosed: () => of(true) } as any);
+    const dialogRefSpy = jasmine.createSpyObj<MatDialogRef<unknown>>('MatDialogRef', [
+      'afterClosed'
+    ]);
+    dialogRefSpy.afterClosed.and.returnValue(of(true));
+    dialogSpy.open.and.returnValue(dialogRefSpy);
 
     await TestBed.configureTestingModule({
       imports: [TripSpendingOverviewComponent],
