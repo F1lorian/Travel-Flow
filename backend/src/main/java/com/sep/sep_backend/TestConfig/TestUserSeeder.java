@@ -214,11 +214,7 @@ public class TestUserSeeder {
             eventRepository,
             userEventRepository);
     addUserToEventIfMissing(
-        friendUser,
-        sharedTripEvent,
-        testUser,
-        UserEvent.InviteStatus.PENDING,
-        userEventRepository);
+        friendUser, sharedTripEvent, testUser, UserEvent.InviteStatus.PENDING, userEventRepository);
 
     Event invitedEvent =
         createEventIfMissing(
@@ -233,11 +229,7 @@ public class TestUserSeeder {
             eventRepository,
             userEventRepository);
     addUserToEventIfMissing(
-        friendUser,
-        invitedEvent,
-        testUser,
-        UserEvent.InviteStatus.PENDING,
-        userEventRepository);
+        friendUser, invitedEvent, testUser, UserEvent.InviteStatus.PENDING, userEventRepository);
   }
 
   private Trip createTripIfMissing(
@@ -288,8 +280,7 @@ public class TestUserSeeder {
             .filter(existingEvent -> hasSameTrip(existingEvent, trip))
             .findFirst()
             .orElseGet(
-                () ->
-                    eventRepository.save(new Event(name, startTime, endTime, kosten, trip)));
+                () -> eventRepository.save(new Event(name, startTime, endTime, kosten, trip)));
 
     addUserToEventIfMissing(participant, event, creator, status, userEventRepository);
     return event;
