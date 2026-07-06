@@ -16,7 +16,10 @@ public class FriendsService {
   private final FriendRequestRepository friendRequestRepository;
   private final FriendRequestNotificationService notificationService;
 
-  public FriendsService(UserRepository userRepository,  FriendRequestRepository friendRequestRepository, FriendRequestNotificationService notificationService) {
+  public FriendsService(
+      UserRepository userRepository,
+      FriendRequestRepository friendRequestRepository,
+      FriendRequestNotificationService notificationService) {
     this.userRepository = userRepository;
     this.friendRequestRepository = friendRequestRepository;
     this.notificationService = notificationService;
@@ -47,7 +50,7 @@ public class FriendsService {
 
     if (sender.getId() == receiver.getId()) {
       throw new ResponseStatusException(
-              HttpStatus.BAD_REQUEST, "Users cannot send a friend request to themselves");
+          HttpStatus.BAD_REQUEST, "Users cannot send a friend request to themselves");
     }
 
     if (isConnected(sender, receiver)) {
@@ -55,16 +58,17 @@ public class FriendsService {
     }
 
     friendRequestRepository
-            .findBySenderAndReceiverAndStatus(sender, receiver, FriendRequestStatus.PENDING)
-            .ifPresent(r -> {
+        .findBySenderAndReceiverAndStatus(sender, receiver, FriendRequestStatus.PENDING)
+        .ifPresent(
+            r -> {
               throw new ResponseStatusException(HttpStatus.CONFLICT, "Friend request already sent");
             });
 
     // Falls der Empfänger dem Sender bereits eine offene Anfrage geschickt hat,
     // nehmen wir diese direkt an, statt eine zweite Anfrage anzulegen.
     var reverseRequest =
-            friendRequestRepository.findBySenderAndReceiverAndStatus(
-                    receiver, sender, FriendRequestStatus.PENDING);
+        friendRequestRepository.findBySenderAndReceiverAndStatus(
+            receiver, sender, FriendRequestStatus.PENDING);
 
     if (reverseRequest.isPresent()) {
       FriendRequestDTO dto = acceptInternal(reverseRequest.get());
@@ -85,14 +89,15 @@ public class FriendsService {
     User currentUser = getCurrentUserOrThrow(currentUsername);
 
     FriendRequest request =
-            friendRequestRepository
-                    .findByIdAndReceiver(requestId, currentUser)
-                    .orElseThrow(
-                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+        friendRequestRepository
+            .findByIdAndReceiver(requestId, currentUser)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
 
     if (request.getStatus() != FriendRequestStatus.PENDING) {
       throw new ResponseStatusException(
-              HttpStatus.CONFLICT, "Friend request has already been answered");
+          HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
     FriendRequestDTO dto = acceptInternal(request);
@@ -105,14 +110,15 @@ public class FriendsService {
     User currentUser = getCurrentUserOrThrow(currentUsername);
 
     FriendRequest request =
-            friendRequestRepository
-                    .findByIdAndReceiver(requestId, currentUser)
-                    .orElseThrow(
-                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+        friendRequestRepository
+            .findByIdAndReceiver(requestId, currentUser)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
 
     if (request.getStatus() != FriendRequestStatus.PENDING) {
       throw new ResponseStatusException(
-              HttpStatus.CONFLICT, "Friend request has already been answered");
+          HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
     request.setStatus(FriendRequestStatus.DECLINED);
@@ -126,19 +132,19 @@ public class FriendsService {
   public List<FriendRequestDTO> getIncomingRequests(String currentUsername) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     return friendRequestRepository
-            .findByReceiverAndStatus(currentUser, FriendRequestStatus.PENDING)
-            .stream()
-            .map(this::toFriendRequestDTO)
-            .toList();
+        .findByReceiverAndStatus(currentUser, FriendRequestStatus.PENDING)
+        .stream()
+        .map(this::toFriendRequestDTO)
+        .toList();
   }
 
   public List<FriendRequestDTO> getOutgoingRequests(String currentUsername) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     return friendRequestRepository
-            .findBySenderAndStatus(currentUser, FriendRequestStatus.PENDING)
-            .stream()
-            .map(this::toFriendRequestDTO)
-            .toList();
+        .findBySenderAndStatus(currentUser, FriendRequestStatus.PENDING)
+        .stream()
+        .map(this::toFriendRequestDTO)
+        .toList();
   }
 
   private FriendRequestDTO acceptInternal(FriendRequest request) {
@@ -167,13 +173,13 @@ public class FriendsService {
     userRepository.save(currentUser);
     userRepository.save(friend);
 
-    //alte accepted friendrequests entfernen
+    // alte accepted friendrequests entfernen
     friendRequestRepository
-            .findBySenderAndReceiverAndStatus(currentUser, friend, FriendRequestStatus.ACCEPTED)
-            .ifPresent(friendRequestRepository::delete);
+        .findBySenderAndReceiverAndStatus(currentUser, friend, FriendRequestStatus.ACCEPTED)
+        .ifPresent(friendRequestRepository::delete);
     friendRequestRepository
-            .findBySenderAndReceiverAndStatus(friend, currentUser, FriendRequestStatus.ACCEPTED)
-            .ifPresent(friendRequestRepository::delete);
+        .findBySenderAndReceiverAndStatus(friend, currentUser, FriendRequestStatus.ACCEPTED)
+        .ifPresent(friendRequestRepository::delete);
 
     notificationService.notifyFriendRemoved(friend.getName(), currentUser.getId());
   }
@@ -202,11 +208,11 @@ public class FriendsService {
 
   private FriendRequestDTO toFriendRequestDTO(FriendRequest request) {
     return new FriendRequestDTO(
-            request.getId(),
-            request.getSender().getId(),
-            request.getSender().getName(),
-            request.getReceiver().getId(),
-            request.getReceiver().getName(),
-            request.getStatus());
+        request.getId(),
+        request.getSender().getId(),
+        request.getSender().getName(),
+        request.getReceiver().getId(),
+        request.getReceiver().getName(),
+        request.getStatus());
   }
 }

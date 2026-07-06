@@ -33,19 +33,19 @@ public class FriendsController {
 
   @PostMapping("/requests/{userId}")
   public FriendRequestDTO sendFriendRequest(
-          @PathVariable long userId, Authentication authentication) {
+      @PathVariable long userId, Authentication authentication) {
     return friendsService.sendFriendRequest(getCurrentUsername(authentication), userId);
   }
 
   @PostMapping("/requests/{requestId}/accept")
   public FriendRequestDTO acceptFriendRequest(
-          @PathVariable long requestId, Authentication authentication) {
+      @PathVariable long requestId, Authentication authentication) {
     return friendsService.acceptFriendRequest(getCurrentUsername(authentication), requestId);
   }
 
   @PostMapping("/requests/{requestId}/decline")
   public FriendRequestDTO declineFriendRequest(
-          @PathVariable long requestId, Authentication authentication) {
+      @PathVariable long requestId, Authentication authentication) {
     return friendsService.declineFriendRequest(getCurrentUsername(authentication), requestId);
   }
 

@@ -8,24 +8,25 @@ import org.springframework.web.socket.config.annotation.*;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+  private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
-    public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor) {
-        this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
-    }
+  public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor) {
+    this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
+  }
 
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:4200", "http://localhost:4201")
-                .addInterceptors(jwtHandshakeInterceptor)
-                .setHandshakeHandler(new UserHandshakeHandler());
-    }
+  @Override
+  public void registerStompEndpoints(StompEndpointRegistry registry) {
+    registry
+        .addEndpoint("/ws")
+        .setAllowedOrigins("http://localhost:4200", "http://localhost:4201")
+        .addInterceptors(jwtHandshakeInterceptor)
+        .setHandshakeHandler(new UserHandshakeHandler());
+  }
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue");
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.setUserDestinationPrefix("/user");
-    }
+  @Override
+  public void configureMessageBroker(MessageBrokerRegistry registry) {
+    registry.enableSimpleBroker("/topic", "/queue");
+    registry.setApplicationDestinationPrefixes("/app");
+    registry.setUserDestinationPrefix("/user");
+  }
 }

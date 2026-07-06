@@ -14,40 +14,40 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 @Component
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
-    private final JwtService jwtService;
+  private final JwtService jwtService;
 
-    public JwtHandshakeInterceptor(JwtService jwtService) {
-        this.jwtService = jwtService;
-    }
+  public JwtHandshakeInterceptor(JwtService jwtService) {
+    this.jwtService = jwtService;
+  }
 
-    @Override
-    public boolean beforeHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
-            Map<String, Object> attributes) {
+  @Override
+  public boolean beforeHandshake(
+      ServerHttpRequest request,
+      ServerHttpResponse response,
+      WebSocketHandler wsHandler,
+      Map<String, Object> attributes) {
 
-        if (request instanceof ServletServerHttpRequest servletRequest) {
-            HttpServletRequest servlet = servletRequest.getServletRequest();
-            String token = servlet.getParameter("token");
+    if (request instanceof ServletServerHttpRequest servletRequest) {
+      HttpServletRequest servlet = servletRequest.getServletRequest();
+      String token = servlet.getParameter("token");
 
-            if (token != null) {
-                try {
-                    String username = jwtService.validateToken(token);
-                    attributes.put("principal", (Principal) () -> username);
-                    return true;
-                } catch (IllegalArgumentException e) {
-                    // invalid or expired token -> handshake abgelehnt
-                }
-            }
+      if (token != null) {
+        try {
+          String username = jwtService.validateToken(token);
+          attributes.put("principal", (Principal) () -> username);
+          return true;
+        } catch (IllegalArgumentException e) {
+          // invalid or expired token -> handshake abgelehnt
         }
-        return false;
+      }
     }
+    return false;
+  }
 
-    @Override
-    public void afterHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
-            Exception exception) {}
+  @Override
+  public void afterHandshake(
+      ServerHttpRequest request,
+      ServerHttpResponse response,
+      WebSocketHandler wsHandler,
+      Exception exception) {}
 }
