@@ -47,6 +47,9 @@ export class AccountManagement {
   error = signal('');
   loggedInUser = signal(localStorage.getItem('sepUser') ?? '');
 
+  // Names of password fields whose value is currently shown as plain text (eye toggle).
+  private readonly revealedPasswords = signal(new Set<string>());
+
   firstName = '';
   surname = '';
   username = '';
@@ -115,6 +118,24 @@ export class AccountManagement {
     this.mode.set(mode);
     this.message.set('');
     this.error.set('');
+    // Hide any revealed passwords when switching screens.
+    this.revealedPasswords.set(new Set<string>());
+  }
+
+  /** Whether the given password field is currently shown as plain text. */
+  isPasswordVisible(field: string): boolean {
+    return this.revealedPasswords().has(field);
+  }
+
+  /** Toggles plain-text visibility for a single password field. */
+  togglePassword(field: string): void {
+    const next = new Set(this.revealedPasswords());
+    if (next.has(field)) {
+      next.delete(field);
+    } else {
+      next.add(field);
+    }
+    this.revealedPasswords.set(next);
   }
 
   register(): void {
