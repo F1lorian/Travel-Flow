@@ -122,6 +122,25 @@ class EmailEventParserTest {
   }
 
   @Test
+  void cleansHtmlEvenWhenDeliveredAsTextPlain() {
+    String html =
+        "<!DOCTYPE html><html lang=\"en\"><head><title>Verify your email</title>"
+            + "<style>a.button-link{background-color:#0f1122;color:#fff}</style></head>"
+            + "<body><p>Please confirm your ticket for the Concert.</p></body></html>";
+
+    ExtractedEventDTO event =
+        parser
+            .parse(mail("text/plain; charset=UTF-8", "Verify your email", html), "msg-8")
+            .orElseThrow();
+
+    assertThat(event.getDescription())
+        .contains("Please confirm your ticket for the Concert.")
+        .doesNotContain("<!DOCTYPE")
+        .doesNotContain("background-color")
+        .doesNotContain("<");
+  }
+
+  @Test
   void ignoresEmailsWithoutEventInformation() {
     Optional<ExtractedEventDTO> event =
         parser.parse(textMail("Weekly newsletter", "Read our latest blog posts."), "msg-4");

@@ -226,7 +226,13 @@ public class EmailEventParser {
   private String extractText(Part part) throws Exception {
     if (part.isMimeType("text/plain")) {
       Object content = part.getContent();
-      return content == null ? null : content.toString();
+      if (content == null) {
+        return null;
+      }
+      String text = content.toString();
+      // Some senders wrap HTML markup inside a text/plain part; clean it too so the
+      // description never shows raw tags/CSS instead of readable text.
+      return looksLikeHtml(text) ? htmlToText(text) : text;
     }
     if (part.isMimeType("text/html")) {
       Object content = part.getContent();
@@ -262,6 +268,22 @@ public class EmailEventParser {
       return builder.length() == 0 ? null : builder.toString();
     }
     return null;
+  }
+
+  /** Heuristic: does this text contain HTML markup that should be stripped before display? */
+  private boolean looksLikeHtml(String text) {
+    if (text == null) {
+      return false;
+    }
+    String lower = text.toLowerCase();
+    return lower.contains("<!doctype html")
+        || lower.contains("<html")
+        || lower.contains("<body")
+        || lower.contains("<div")
+        || lower.contains("<table")
+        || lower.contains("<style")
+        || lower.contains("<p>")
+        || lower.contains("<br");
   }
 
   /**
