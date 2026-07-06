@@ -3,6 +3,7 @@ package com.sep.sep_backend.tripManagement.services;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
@@ -12,19 +13,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Adds a friend to a trip ("invite"). Only members can invite, only friends can be invited, and the
+ * new member is notified by email so they learn about the trip even while logged out.
+ */
 @Service
 public class TripInviteService {
   private final TripRepository tripRepository;
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
+  private final EmailNotificationService emailNotificationService;
 
   public TripInviteService(
       TripRepository tripRepository,
       UserRepository userRepository,
-      UserTripRepository userTripRepository) {
+      UserTripRepository userTripRepository,
+      EmailNotificationService emailNotificationService) {
     this.tripRepository = tripRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
+    this.emailNotificationService = emailNotificationService;
   }
 
   @Transactional
@@ -48,6 +56,13 @@ public class TripInviteService {
 
     if (!hasTrip(friend, trip)) {
       userTripRepository.save(new UserTrip(friend, trip, currentUser));
+      emailNotificationService.sendBestEffort(
+          friend.getEmail(),
+          "You were added to the trip \"" + trip.getName() + "\"",
+          currentUser.getName()
+              + " added you to the trip \""
+              + trip.getName()
+              + "\". Log in to SEP to see its events and expenses.");
     }
 
     return new TripInviteResponseDTO(trip.getId(), friend.getId(), "Trip invite sent");

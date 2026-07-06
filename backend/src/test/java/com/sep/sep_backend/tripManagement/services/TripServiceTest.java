@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -38,6 +39,8 @@ class TripServiceTest {
   @Mock private UserEventRepository userEventRepository;
 
   @Mock private AusgabeRepository ausgabeRepository;
+
+  @Mock private EmailNotificationService emailNotificationService;
 
   @InjectMocks private TripService tripService;
 

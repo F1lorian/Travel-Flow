@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
@@ -22,8 +23,11 @@ class TripInviteServiceTest {
   private final UserRepository userRepository = org.mockito.Mockito.mock(UserRepository.class);
   private final UserTripRepository userTripRepository =
       org.mockito.Mockito.mock(UserTripRepository.class);
+  private final EmailNotificationService emailNotificationService =
+      org.mockito.Mockito.mock(EmailNotificationService.class);
   private final TripInviteService tripInviteService =
-      new TripInviteService(tripRepository, userRepository, userTripRepository);
+      new TripInviteService(
+          tripRepository, userRepository, userTripRepository, emailNotificationService);
 
   @Test
   void inviteFriendToTripAddsTripToFriend() {
@@ -44,6 +48,8 @@ class TripInviteServiceTest {
     assertThat(response.tripId()).isEqualTo(3L);
     assertThat(response.friendId()).isEqualTo(2L);
     verify(userTripRepository).save(any(UserTrip.class));
+    // The new member is notified by email so they learn about the trip even while logged out.
+    verify(emailNotificationService).sendBestEffort(any(), contains("Berlin"), any());
   }
 
   @Test

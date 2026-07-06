@@ -6,6 +6,7 @@ Called by TripController, which exposes the results to the Angular frontend. */
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -36,6 +37,7 @@ public class TripService {
   private final UserTripRepository userTripRepository;
   private final UserEventRepository userEventRepository;
   private final AusgabeRepository ausgabeRepository;
+  private final EmailNotificationService emailNotificationService;
 
   public TripService(
       TripRepository tripRepository,
@@ -43,13 +45,15 @@ public class TripService {
       UserRepository userRepository,
       UserTripRepository userTripRepository,
       UserEventRepository userEventRepository,
-      AusgabeRepository ausgabeRepository) {
+      AusgabeRepository ausgabeRepository,
+      EmailNotificationService emailNotificationService) {
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
     this.userEventRepository = userEventRepository;
     this.ausgabeRepository = ausgabeRepository;
+    this.emailNotificationService = emailNotificationService;
   }
 
   /** Returns only the trips the given user is a member of. */
@@ -103,6 +107,12 @@ public class TripService {
     trip.setEndDate(endDate);
     Trip savedTrip = tripRepository.save(trip);
     userTripRepository.save(new UserTrip(user, savedTrip, null));
+
+    // Mirror the in-app confirmation by email; a mail failure never fails the creation itself.
+    emailNotificationService.sendBestEffort(
+        user.getEmail(),
+        "Your trip \"" + savedTrip.getName() + "\" was created",
+        "Your trip \"" + savedTrip.getName() + "\" was created. Log in to SEP to plan its events.");
 
     return savedTrip;
   }
