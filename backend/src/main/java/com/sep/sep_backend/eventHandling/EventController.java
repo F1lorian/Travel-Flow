@@ -209,6 +209,13 @@ public class EventController {
     return ResponseEntity.ok(dtos);
   }
 
+  @DeleteMapping("event/{eventId}/participants/{userId}")
+  public ResponseEntity<Void> removeParticipantFromEvent(
+      @PathVariable Long eventId, @PathVariable Long userId, Authentication authentication) {
+    eventService.removeParticipantFromEvent(eventId, userId, getCurrentUserId(authentication));
+    return ResponseEntity.noContent().build();
+  }
+
   /**
    * returns the id of the current user
    *

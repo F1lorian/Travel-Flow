@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -269,6 +270,34 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(edited);
     verify(eventService).EditEvent(42L, request);
+  }
+
+  @Test
+  void eventControllerHatDenRemoveParticipantEndpoint() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod(
+            "removeParticipantFromEvent", Long.class, Long.class, Authentication.class);
+
+    DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
+    assertThat(deleteMapping.value()).containsExactly("event/{eventId}/participants/{userId}");
+  }
+
+  @Test
+  void removeParticipantFromEventDelegatesToServiceWithCurrentUser() {
+    EventService eventService = mock(EventService.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+
+    ResponseEntity<Void> response =
+        eventController.removeParticipantFromEvent(42L, 8L, authentication);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    verify(eventService).removeParticipantFromEvent(42L, 8L, 7L);
   }
 
   private Authentication authentication(String username) {

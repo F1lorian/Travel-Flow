@@ -10,13 +10,16 @@ import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripDTO;
+import com.sep.sep_backend.tripManagement.services.TripInviteService;
 import com.sep.sep_backend.tripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * REST endpoints for trips: list, fetch, create, and delete. Maps HTTP requests to {@link
@@ -32,14 +35,17 @@ public class TripController {
   public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;
+  private final TripInviteService tripInviteService;
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
 
   public TripController(
       TripService tripService,
+      TripInviteService tripInviteService,
       UserRepository userRepository,
       UserTripRepository userTripRepository) {
     this.tripService = tripService;
+    this.tripInviteService = tripInviteService;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
   }
@@ -95,11 +101,26 @@ public class TripController {
     }
   }
 
+  @DeleteMapping("/{tripId}/participants/{userId}")
+  public ResponseEntity<Void> removeParticipantFromTrip(
+      @PathVariable Long tripId, @PathVariable Long userId, Authentication authentication) {
+    tripInviteService.removeFriendFromTrip(getCurrentUsername(authentication), tripId, userId);
+    return ResponseEntity.noContent().build();
+  }
+
   private Long getCurrentUserId(Authentication authentication) {
     User user =
         userRepository
             .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     return user.getId();
+  }
+
+  private String getCurrentUsername(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");
+    }
+
+    return authentication.getName();
   }
 }

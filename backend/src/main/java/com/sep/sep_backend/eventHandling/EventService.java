@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
@@ -279,6 +281,29 @@ public class EventService {
             .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
     userEvent.setStatus(status);
     userEventRepository.save(userEvent);
+  }
+
+  @Transactional
+  public void removeParticipantFromEvent(Long eventId, Long userId, Long requestingUserId) {
+    if (userId.equals(requestingUserId)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Users cannot remove themselves");
+    }
+
+    UserEvent participant =
+        userEventRepository
+            .findByEvent_IdAndUser_Id(eventId, userId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User is not part of this event"));
+
+    boolean requesterCreatedInvite = participant.getCreator().getId().equals(requestingUserId);
+    if (!requesterCreatedInvite) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "User cannot remove this event participant");
+    }
+
+    userEventRepository.delete(participant);
   }
 
   /**

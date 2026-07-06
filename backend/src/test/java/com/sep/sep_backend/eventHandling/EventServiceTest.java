@@ -34,6 +34,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -349,6 +351,39 @@ class EventServiceTest {
 
     verify(eventRepository, never()).deleteById(any());
     verify(userEventRepository, never()).deleteByEvent_Id(any());
+  }
+
+  @Test
+  void removeParticipantFromEventDeletesInviteCreatedByRequestingUser() {
+    Event event = new Event();
+    User participant = userWithEvents(8L);
+    User creator = userWithEvents(7L);
+    UserEvent userEvent = new UserEvent(event, participant, creator);
+
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L))
+        .thenReturn(Optional.of(userEvent));
+
+    eventService.removeParticipantFromEvent(42L, 8L, 7L);
+
+    verify(userEventRepository).delete(userEvent);
+  }
+
+  @Test
+  void removeParticipantFromEventRejectsOtherRequestingUser() {
+    Event event = new Event();
+    User participant = userWithEvents(8L);
+    User creator = userWithEvents(7L);
+    UserEvent userEvent = new UserEvent(event, participant, creator);
+
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L))
+        .thenReturn(Optional.of(userEvent));
+
+    assertThatThrownBy(() -> eventService.removeParticipantFromEvent(42L, 8L, 9L))
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
+
+    verify(userEventRepository, never()).delete(any(UserEvent.class));
   }
 
   @Test

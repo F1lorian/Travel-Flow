@@ -8,6 +8,7 @@ import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
@@ -22,8 +23,11 @@ class TripInviteServiceTest {
   private final UserRepository userRepository = org.mockito.Mockito.mock(UserRepository.class);
   private final UserTripRepository userTripRepository =
       org.mockito.Mockito.mock(UserTripRepository.class);
+  private final UserEventRepository userEventRepository =
+      org.mockito.Mockito.mock(UserEventRepository.class);
   private final TripInviteService tripInviteService =
-      new TripInviteService(tripRepository, userRepository, userTripRepository);
+      new TripInviteService(
+          tripRepository, userRepository, userTripRepository, userEventRepository);
 
   @Test
   void inviteFriendToTripAddsTripToFriend() {
@@ -61,6 +65,29 @@ class TripInviteServiceTest {
         .isInstanceOf(ResponseStatusException.class)
         .extracting(exception -> ((ResponseStatusException) exception).getStatusCode())
         .isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  @Test
+  void removeFriendFromTripDeletesMembershipAndTripEventLinks() {
+    Trip trip = trip(3L);
+    User currentUser = user(1L);
+    User friend = user(2L);
+    UserTrip currentMembership = new UserTrip(currentUser, trip, null);
+    UserTrip friendMembership = new UserTrip(friend, trip, currentUser);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
+        .thenReturn(Optional.of(currentUser));
+    when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
+    when(tripRepository.findById(3L)).thenReturn(Optional.of(trip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(1L, 3L))
+        .thenReturn(Optional.of(currentMembership));
+    when(userTripRepository.findByIdUserIdAndIdTripId(2L, 3L))
+        .thenReturn(Optional.of(friendMembership));
+
+    tripInviteService.removeFriendFromTrip("max", 3L, 2L);
+
+    verify(userEventRepository).deleteByEvent_Trip_IdAndUser_Id(3L, 2L);
+    verify(userTripRepository).delete(friendMembership);
   }
 
   private User user(long id) {

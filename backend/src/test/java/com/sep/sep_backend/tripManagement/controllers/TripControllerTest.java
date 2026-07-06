@@ -8,6 +8,7 @@ import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import com.sep.sep_backend.tripManagement.services.TripInviteService;
 import com.sep.sep_backend.tripManagement.services.TripService;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,8 @@ class TripControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private TripService tripService;
+
+  @MockitoBean private TripInviteService tripInviteService;
 
   @MockitoBean private UserRepository userRepository;
 
@@ -88,6 +91,18 @@ class TripControllerTest {
                 .content("{\"name\": \"Paris\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Paris"));
+  }
+
+  @Test
+  void removeParticipantFromTripDelegatesToInviteService() throws Exception {
+    Authentication authentication = authentication("testuser");
+    when(authentication.isAuthenticated()).thenReturn(true);
+
+    mockMvc
+        .perform(delete("/api/trips/1/participants/2").principal(authentication))
+        .andExpect(status().isNoContent());
+
+    verify(tripInviteService).removeFriendFromTrip("testuser", 1L, 2L);
   }
 
   private Authentication authentication(String username) {
