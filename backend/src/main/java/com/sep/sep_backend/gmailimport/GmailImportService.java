@@ -21,6 +21,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,6 +50,8 @@ public class GmailImportService {
   private final UserEventRepository userEventRepository;
   private final TripRepository tripRepository;
   private final int maxMessages;
+  private final int scanConcurrency;
+  private final int scanTimeoutSeconds;
 
   public GmailImportService(
       GmailOAuthService oAuthService,
@@ -53,8 +61,12 @@ public class GmailImportService {
       UserRepository userRepository,
       UserEventRepository userEventRepository,
       TripRepository tripRepository,
-      @org.springframework.beans.factory.annotation.Value("${gmail.import.max-messages:20}")
-          int maxMessages) {
+      @org.springframework.beans.factory.annotation.Value("${gmail.import.max-messages:15}")
+          int maxMessages,
+      @org.springframework.beans.factory.annotation.Value("${gmail.import.scan-concurrency:5}")
+          int scanConcurrency,
+      @org.springframework.beans.factory.annotation.Value("${gmail.import.scan-timeout-seconds:45}")
+          int scanTimeoutSeconds) {
     this.oAuthService = oAuthService;
     this.gmailApiClient = gmailApiClient;
     this.emailEventParser = emailEventParser;
@@ -63,6 +75,8 @@ public class GmailImportService {
     this.userEventRepository = userEventRepository;
     this.tripRepository = tripRepository;
     this.maxMessages = maxMessages;
+    this.scanConcurrency = Math.max(1, scanConcurrency);
+    this.scanTimeoutSeconds = scanTimeoutSeconds;
   }
 
   /**
@@ -119,21 +133,70 @@ public class GmailImportService {
   public List<ExtractedEventDTO> scanRecentEmails(long userId) {
     String accessToken = oAuthService.getValidAccessToken(userId);
     List<String> messageIds = gmailApiClient.listRecentMessageIds(accessToken, maxMessages);
-
-    List<ExtractedEventDTO> events = new ArrayList<>();
-    Set<String> seenSignatures = new HashSet<>();
-    for (String messageId : messageIds) {
-      Optional<ExtractedEventDTO> parsed = parseMessageSafely(accessToken, messageId);
-      if (parsed.isEmpty()) {
-        continue;
-      }
-      ExtractedEventDTO event = parsed.get();
-      // De-duplicate emails that describe the same event (e.g. an original and a forwarded copy).
-      if (seenSignatures.add(signatureOf(event))) {
-        events.add(event);
-      }
+    if (messageIds.isEmpty()) {
+      return List.of();
     }
-    return events;
+
+    // Fetch+parse messages concurrently: each message makes slow Gmail and AI calls, so doing them
+    // sequentially would blow past the reverse-proxy read timeout. A bounded deadline guarantees we
+    // return a response in time even if some messages are still in flight.
+    ExecutorService pool =
+        Executors.newFixedThreadPool(Math.min(messageIds.size(), scanConcurrency));
+    try {
+      List<Callable<Optional<ExtractedEventDTO>>> tasks = new ArrayList<>();
+      for (String messageId : messageIds) {
+        tasks.add(() -> parseMessageSafely(accessToken, messageId));
+      }
+      List<Future<Optional<ExtractedEventDTO>>> futures =
+          pool.invokeAll(tasks, scanTimeoutSeconds, TimeUnit.SECONDS);
+
+      List<ExtractedEventDTO> events = new ArrayList<>();
+      Set<String> seenSignatures = new HashSet<>();
+      for (Future<Optional<ExtractedEventDTO>> future : futures) {
+        Optional<ExtractedEventDTO> parsed = resolveResult(future);
+        if (parsed.isEmpty()) {
+          continue;
+        }
+        ExtractedEventDTO event = parsed.get();
+        // De-duplicate emails describing the same event (e.g. an original and a forwarded copy).
+        if (seenSignatures.add(signatureOf(event))) {
+          events.add(event);
+        }
+      }
+      return events;
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      throw new GmailApiException("Gmail scan was interrupted before it could finish");
+    } finally {
+      pool.shutdownNow();
+    }
+  }
+
+  /**
+   * Unwraps a completed scan task. Messages that timed out, were cancelled by the deadline, or
+   * failed to parse are skipped; only the actionable auth/rate-limit failures are re-thrown so the
+   * controller can turn them into 401/429.
+   */
+  private Optional<ExtractedEventDTO> resolveResult(Future<Optional<ExtractedEventDTO>> future) {
+    if (future.isCancelled()) {
+      return Optional.empty();
+    }
+    try {
+      return future.get();
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      return Optional.empty();
+    } catch (ExecutionException executionException) {
+      Throwable cause = executionException.getCause();
+      if (cause instanceof GmailRateLimitException rateLimit) {
+        throw rateLimit;
+      }
+      if (cause instanceof GmailAuthException auth) {
+        throw auth;
+      }
+      log.warn("Skipping Gmail message due to error: {}", cause == null ? "unknown" : cause);
+      return Optional.empty();
+    }
   }
 
   /**

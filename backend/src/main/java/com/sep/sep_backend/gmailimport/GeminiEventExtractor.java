@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.HttpOptions;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
+import jakarta.annotation.PreDestroy;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -22,30 +24,43 @@ import org.springframework.util.StringUtils;
 public class GeminiEventExtractor implements AiEventExtractor {
 
   private final ObjectMapper objectMapper;
-  private final String apiKey;
   private final String model;
+
+  /**
+   * A single, reused Gemini client (thread-safe). Built once so a scan that extracts many emails
+   * concurrently does not pay client-construction cost per email. {@code null} when no API key is
+   * configured, in which case the extractor reports itself unavailable.
+   */
+  private final Client client;
 
   public GeminiEventExtractor(
       ObjectMapper objectMapper,
       @Value("${gemini.api-key:}") String apiKey,
-      @Value("${gemini.model:gemini-2.5-flash}") String model) {
+      @Value("${gemini.model:gemini-2.5-flash}") String model,
+      @Value("${gemini.request-timeout-ms:15000}") int requestTimeoutMs) {
     this.objectMapper = objectMapper;
-    this.apiKey = apiKey;
     this.model = model;
+    // Cap each request so one slow model call cannot stall the whole scan past the proxy timeout.
+    this.client =
+        StringUtils.hasText(apiKey)
+            ? Client.builder()
+                .apiKey(apiKey)
+                .httpOptions(HttpOptions.builder().timeout(requestTimeoutMs).build())
+                .build()
+            : null;
   }
 
   @Override
   public boolean isAvailable() {
-    return StringUtils.hasText(apiKey);
+    return client != null;
   }
 
   @Override
   public Optional<ExtractedEventDTO> extract(String subject, String body) {
-    if (!isAvailable() || !StringUtils.hasText(body)) {
+    if (client == null || !StringUtils.hasText(body)) {
       return Optional.empty();
     }
     try {
-      Client client = Client.builder().apiKey(apiKey).build();
       GenerateContentConfig config =
           GenerateContentConfig.builder()
               .responseMimeType("application/json")
@@ -59,6 +74,13 @@ public class GeminiEventExtractor implements AiEventExtractor {
     } catch (Exception exception) {
       // Never propagate AI failures: the parser falls back to heuristic extraction.
       return Optional.empty();
+    }
+  }
+
+  @PreDestroy
+  void shutdown() {
+    if (client != null) {
+      client.close();
     }
   }
 

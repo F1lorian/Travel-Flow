@@ -111,7 +111,9 @@ class EmailEventParserTest {
             + "<p>See you &amp; enjoy!</p></body></html>";
 
     ExtractedEventDTO event =
-        parser.parse(mail("text/html; charset=UTF-8", "Concert ticket", html), "msg-7").orElseThrow();
+        parser
+            .parse(mail("text/html; charset=UTF-8", "Concert ticket", html), "msg-7")
+            .orElseThrow();
 
     assertThat(event.getDescription())
         .contains("Your ticket for the Concert is confirmed.")

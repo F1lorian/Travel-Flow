@@ -55,7 +55,9 @@ class GmailImportServiceTest {
             userRepository,
             userEventRepository,
             tripRepository,
-            20);
+            20,
+            5,
+            45);
   }
 
   @Test
