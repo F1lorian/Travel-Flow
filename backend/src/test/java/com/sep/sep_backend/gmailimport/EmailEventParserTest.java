@@ -157,6 +157,47 @@ class EmailEventParserTest {
         .isEmpty();
   }
 
+  @Test
+  void extractsGermanDateAndTimeFromBodyWhenAiUnavailable() {
+    ExtractedEventDTO event =
+        parser
+            .parse(
+                textMail(
+                    "Ihr Termin wurde bestätigt",
+                    "Ihr Termin wurde für den 6.07.2026, 12:00 Uhr bestätigt."),
+                "msg-date-de")
+            .orElseThrow();
+
+    assertThat(event.getDate()).isEqualTo(LocalDate.of(2026, 7, 6));
+    assertThat(event.getStartTime()).isEqualTo(LocalTime.of(12, 0));
+  }
+
+  @Test
+  void extractsIsoDateFromBodyWhenAiUnavailable() {
+    ExtractedEventDTO event =
+        parser
+            .parse(
+                textMail("Appointment confirmed", "Your appointment is scheduled for 2026-07-06."),
+                "msg-date-iso")
+            .orElseThrow();
+
+    assertThat(event.getDate()).isEqualTo(LocalDate.of(2026, 7, 6));
+    assertThat(event.getStartTime()).isNull();
+  }
+
+  @Test
+  void leavesDateNullWhenBodyHasNoParseableDate() {
+    ExtractedEventDTO event =
+        parser
+            .parse(
+                textMail("Appointment confirmed", "Your appointment is confirmed."),
+                "msg-date-none")
+            .orElseThrow();
+
+    assertThat(event.getDate()).isNull();
+    assertThat(event.getStartTime()).isNull();
+  }
+
   private byte[] jsonLdMail(String json) {
     return mail("application/ld+json; charset=UTF-8", "JSON-LD mail", json);
   }

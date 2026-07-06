@@ -15,9 +15,14 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 /**
@@ -80,11 +85,20 @@ public class EmailEventParser {
         dto.setTitle(subject);
       }
       // If no description was extracted (no structured data and AI unavailable or silent),
-      // fall back to the full email body so the user still sees the email content.
+      // fall back to the email body so the user still sees the email content. Strip tracking URLs
+      // and cap the length first, otherwise a marketing email's body is just a wall of links.
       if ((dto.getDescription() == null || dto.getDescription().isBlank())
           && body != null
           && !body.isBlank()) {
-        dto.setDescription(body.trim());
+        String cleaned = cleanBodyForDescription(body);
+        if (!cleaned.isBlank()) {
+          dto.setDescription(cleaned);
+        }
+      }
+      // When no date was found (AI slow/unavailable and no structured data), try to read one
+      // straight from the email text so the event still carries the date/time it plainly states.
+      if (dto.getDate() == null) {
+        applyHeuristicDateTime(dto, subject, body);
       }
       dto.setSourceMessageId(messageId);
       return Optional.of(dto);
@@ -92,6 +106,31 @@ public class EmailEventParser {
       // An unreadable email must never crash a whole import run; skip it instead.
       return Optional.empty();
     }
+  }
+
+  /** Longest body-fallback description kept; anything past this is truncated with an ellipsis. */
+  private static final int MAX_FALLBACK_DESCRIPTION_LENGTH = 600;
+
+  /**
+   * Turns a raw email body into a readable fallback description: removes URLs (bare,
+   * angle-bracketed and www.), drops {@code [bracketed]} link labels, collapses whitespace and caps
+   * the length. This keeps a marketing email's tracking-link soup from becoming the event
+   * description.
+   */
+  private String cleanBodyForDescription(String body) {
+    String text =
+        body.replaceAll("(?i)<https?://[^>]*>", " ")
+            .replaceAll("(?i)https?://\\S+", " ")
+            .replaceAll("(?i)www\\.\\S+", " ")
+            .replaceAll("\\[[^\\]]*\\]", " ")
+            .replaceAll("[ \\t]+", " ")
+            .replaceAll("(?m)^[ \\t]+|[ \\t]+$", "")
+            .replaceAll("\\n{3,}", "\n\n")
+            .strip();
+    if (text.length() > MAX_FALLBACK_DESCRIPTION_LENGTH) {
+      text = text.substring(0, MAX_FALLBACK_DESCRIPTION_LENGTH).strip() + "…";
+    }
+    return text;
   }
 
   private ExtractedEventDTO extractFields(String subject, String body, JsonNode eventJsonLd) {
@@ -400,6 +439,162 @@ public class EmailEventParser {
     } catch (Exception ignored) {
       return null;
     }
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // Offline date/time extraction — a fallback for when the AI is slow or unavailable, so an event
+  // still carries the date/time the email plainly states in its text.
+  // ---------------------------------------------------------------------------------------------
+
+  private static final Map<String, Integer> MONTH_NAMES = buildMonthNames();
+
+  /** German dotted date, e.g. {@code 6.07.2026}. */
+  private static final Pattern DATE_DOTTED =
+      Pattern.compile("\\b(\\d{1,2})\\.(\\d{1,2})\\.(\\d{4})\\b");
+
+  /** ISO date, e.g. {@code 2026-07-06}. */
+  private static final Pattern DATE_ISO = Pattern.compile("\\b(\\d{4})-(\\d{1,2})-(\\d{1,2})\\b");
+
+  /** Slash date, assumed day-first (European), e.g. {@code 6/7/2026}. */
+  private static final Pattern DATE_SLASH = Pattern.compile("\\b(\\d{1,2})/(\\d{1,2})/(\\d{4})\\b");
+
+  /** Day month-name year, e.g. {@code 6. Juli 2026} or {@code 6 July 2026}. */
+  private static final Pattern DATE_DAY_MONTH_YEAR =
+      Pattern.compile("\\b(\\d{1,2})\\.?\\s+([A-Za-zÄÖÜäöü]+)\\.?\\s+(\\d{4})\\b");
+
+  /** Month-name day, year, e.g. {@code July 6, 2026}. */
+  private static final Pattern DATE_MONTH_DAY_YEAR =
+      Pattern.compile("\\b([A-Za-zÄÖÜäöü]+)\\.?\\s+(\\d{1,2}),?\\s+(\\d{4})\\b");
+
+  /** 24-hour time, optionally followed by "Uhr", e.g. {@code 12:00} / {@code 12:00 Uhr}. */
+  private static final Pattern TIME_24H =
+      Pattern.compile("\\b([01]?\\d|2[0-3]):([0-5]\\d)\\b(?:\\s*Uhr)?", Pattern.CASE_INSENSITIVE);
+
+  /** 12-hour am/pm time, e.g. {@code 8:30 pm} / {@code 8 pm}. */
+  private static final Pattern TIME_AMPM =
+      Pattern.compile("\\b(\\d{1,2})(?::([0-5]\\d))?\\s*([AaPp])\\.?[Mm]\\.?\\b");
+
+  /**
+   * Fills {@code date} (and, if a date is known, {@code startTime}) from the email text, without
+   * ever overriding values already provided by structured data or the AI.
+   */
+  private void applyHeuristicDateTime(ExtractedEventDTO dto, String subject, String body) {
+    String text = (subject == null ? "" : subject) + "\n" + (body == null ? "" : body);
+    LocalDate date = findDate(text);
+    if (date == null) {
+      return;
+    }
+    dto.setDate(date);
+    if (dto.getStartTime() == null) {
+      LocalTime time = findTime(text);
+      if (time != null) {
+        dto.setStartTime(time);
+      }
+    }
+  }
+
+  /** Returns the first plausible date in the text, trying numeric formats before month names. */
+  private LocalDate findDate(String text) {
+    Matcher dotted = DATE_DOTTED.matcher(text);
+    if (dotted.find()) {
+      LocalDate date = toDate(intAt(dotted, 3), intAt(dotted, 2), intAt(dotted, 1));
+      if (date != null) {
+        return date;
+      }
+    }
+    Matcher iso = DATE_ISO.matcher(text);
+    if (iso.find()) {
+      LocalDate date = toDate(intAt(iso, 1), intAt(iso, 2), intAt(iso, 3));
+      if (date != null) {
+        return date;
+      }
+    }
+    Matcher slash = DATE_SLASH.matcher(text);
+    if (slash.find()) {
+      LocalDate date = toDate(intAt(slash, 3), intAt(slash, 2), intAt(slash, 1));
+      if (date != null) {
+        return date;
+      }
+    }
+    LocalDate named = findNamedMonthDate(text, DATE_DAY_MONTH_YEAR, 1, 2, 3);
+    if (named != null) {
+      return named;
+    }
+    return findNamedMonthDate(text, DATE_MONTH_DAY_YEAR, 2, 1, 3);
+  }
+
+  /** Matches a month-name date pattern, skipping matches whose "month" word is not a real month. */
+  private LocalDate findNamedMonthDate(
+      String text, Pattern pattern, int dayGroup, int monthGroup, int yearGroup) {
+    Matcher matcher = pattern.matcher(text);
+    while (matcher.find()) {
+      Integer month = MONTH_NAMES.get(matcher.group(monthGroup).toLowerCase(Locale.ROOT));
+      if (month != null) {
+        LocalDate date =
+            toDate(Integer.parseInt(matcher.group(yearGroup)), month, intAt(matcher, dayGroup));
+        if (date != null) {
+          return date;
+        }
+      }
+    }
+    return null;
+  }
+
+  private LocalTime findTime(String text) {
+    Matcher time24 = TIME_24H.matcher(text);
+    if (time24.find()) {
+      return LocalTime.of(intAt(time24, 1), intAt(time24, 2));
+    }
+    Matcher ampm = TIME_AMPM.matcher(text);
+    if (ampm.find()) {
+      int hour = intAt(ampm, 1) % 12;
+      if (ampm.group(3).equalsIgnoreCase("p")) {
+        hour += 12;
+      }
+      int minute = ampm.group(2) == null ? 0 : Integer.parseInt(ampm.group(2));
+      try {
+        return LocalTime.of(hour, minute);
+      } catch (Exception ignored) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  private LocalDate toDate(int year, int month, int day) {
+    try {
+      return LocalDate.of(year, month, day);
+    } catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  private int intAt(Matcher matcher, int group) {
+    return Integer.parseInt(matcher.group(group));
+  }
+
+  private static Map<String, Integer> buildMonthNames() {
+    String[][] names = {
+      {"january", "jan", "januar"},
+      {"february", "feb", "februar"},
+      {"march", "mar", "märz", "maerz"},
+      {"april", "apr"},
+      {"may", "mai"},
+      {"june", "jun", "juni"},
+      {"july", "jul", "juli"},
+      {"august", "aug"},
+      {"september", "sep", "sept"},
+      {"october", "oct", "okt", "oktober"},
+      {"november", "nov"},
+      {"december", "dec", "dez", "dezember"}
+    };
+    Map<String, Integer> map = new HashMap<>();
+    for (int i = 0; i < names.length; i++) {
+      for (String name : names[i]) {
+        map.put(name, i + 1);
+      }
+    }
+    return map;
   }
 
   private String firstText(JsonNode node, String fallback) {

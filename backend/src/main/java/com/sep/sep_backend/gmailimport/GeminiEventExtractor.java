@@ -6,6 +6,7 @@ import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.HttpOptions;
+import com.google.genai.types.ThinkingConfig;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
 import jakarta.annotation.PreDestroy;
 import java.time.LocalDate;
@@ -67,6 +68,10 @@ public class GeminiEventExtractor implements AiEventExtractor {
               // A low temperature keeps the model close to the email text and reduces
               // hallucination.
               .temperature(0.1f)
+              // Disable the model's "thinking" phase: this is a simple structured-extraction task,
+              // and thinking adds several seconds of latency per call, which a scan multiplies
+              // across every email.
+              .thinkingConfig(ThinkingConfig.builder().thinkingBudget(0).build())
               .build();
       GenerateContentResponse response =
           client.models.generateContent(model, buildPrompt(subject, body), config);
