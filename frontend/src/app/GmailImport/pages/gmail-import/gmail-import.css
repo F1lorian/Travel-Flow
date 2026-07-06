@@ -114,11 +114,25 @@
 }
 
 .gmail-import__field input,
-.gmail-import__field textarea {
+.gmail-import__field textarea,
+.gmail-import__field select {
   padding: 0.5rem 0.6rem;
   border: 1px solid #ccc;
   border-radius: 6px;
   font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Give the title its own full-width row and a larger, easier-to-read input. */
+.gmail-import__field--title {
+  flex-basis: 100%;
+}
+
+.gmail-import__title-input {
+  width: 100%;
+  font-size: 1.15rem;
+  padding: 0.65rem 0.8rem;
 }
 
 .gmail-import__actions {

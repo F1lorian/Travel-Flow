@@ -98,7 +98,7 @@ class GmailImportServiceTest {
     GmailImportRequestDTO request = new GmailImportRequestDTO();
     request.setTitle("Dinner");
     request.setDescription("Table for two");
-    request.setLocation("Bistro");
+    request.setKosten(42.5);
     request.setDate(LocalDate.of(2026, 6, 1));
     request.setStartTime(LocalTime.of(19, 0));
     request.setEndTime(LocalTime.of(21, 0));
@@ -110,7 +110,7 @@ class GmailImportServiceTest {
     Event saved = eventCaptor.getValue();
     assertThat(saved.getName()).isEqualTo("Dinner");
     assertThat(saved.getDescription()).isEqualTo("Table for two");
-    assertThat(saved.getLocation()).isEqualTo("Bistro");
+    assertThat(saved.getKosten()).isEqualTo(42.5);
     assertThat(saved.getStartTime()).isEqualTo(LocalDateTime.of(2026, 6, 1, 19, 0));
     assertThat(saved.getEndTime()).isEqualTo(LocalDateTime.of(2026, 6, 1, 21, 0));
 

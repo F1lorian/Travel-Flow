@@ -3,6 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GmailImportService } from '../../services/gmail-import.service';
 import { ExtractedEvent, GmailImportRequest } from '../../models/gmail-import.models';
+import { Trip, TripService } from '../../../TripManagement/services/trip.service';
+
+/** Value used by the trip <select> to signal the user wants to create a brand new trip. */
+const CREATE_NEW_TRIP = 'new';
 
 /** Editable form model backing the confirmation screen. */
 interface EventForm {
@@ -11,8 +15,12 @@ interface EventForm {
   date: string;
   startTime: string;
   endTime: string;
-  timeZone: string;
-  location: string;
+  /** Cost of the event in EUR; may be a string while typing before it is normalized. */
+  kosten: number | string | undefined;
+  /** Selected trip: an existing trip id, {@link CREATE_NEW_TRIP}, or undefined for no trip. */
+  tripChoice: number | typeof CREATE_NEW_TRIP | undefined;
+  /** Name entered when creating a new trip inline (only used when tripChoice is CREATE_NEW_TRIP). */
+  newTripName: string;
 }
 
 /**
@@ -29,13 +37,17 @@ interface EventForm {
 })
 export class GmailImportComponent implements OnInit {
   private readonly gmailService = inject(GmailImportService);
+  private readonly tripService = inject(TripService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  protected readonly CREATE_NEW_TRIP = CREATE_NEW_TRIP;
 
   connected = signal(false);
   emailAddress = signal<string | null>(null);
   candidates = signal<ExtractedEvent[]>([]);
   selected = signal<ExtractedEvent | null>(null);
+  trips = signal<Trip[]>([]);
 
   isBusy = signal(false);
   hasScanned = signal(false);
@@ -46,6 +58,7 @@ export class GmailImportComponent implements OnInit {
   form: EventForm = this.emptyForm();
 
   ngOnInit(): void {
+    this.loadTrips();
     // Google redirects back here with ?code=... after the user grants access.
     const code = this.route.snapshot.queryParamMap.get('code');
     const error = this.route.snapshot.queryParamMap.get('error');
@@ -58,6 +71,14 @@ export class GmailImportComponent implements OnInit {
     } else {
       this.loadStatus();
     }
+  }
+
+  /** Loads the user's trips so they can be attached to (or created for) the imported event. */
+  private loadTrips(): void {
+    this.tripService.getAllTrips().subscribe({
+      next: (trips) => this.trips.set(trips),
+      error: () => this.trips.set([])
+    });
   }
 
   /** Starts the OAuth flow by redirecting the browser to Google's consent screen. */
@@ -116,9 +137,18 @@ export class GmailImportComponent implements OnInit {
       date: event.date ?? '',
       startTime: this.toInputTime(event.startTime),
       endTime: this.toInputTime(event.endTime),
-      timeZone: event.timeZone ?? '',
-      location: event.location ?? ''
+      kosten: undefined,
+      tripChoice: undefined,
+      newTripName: ''
     };
+  }
+
+  /** Normalizes the free-typed cost into a number (accepting a comma as decimal separator). */
+  normalizeKosten(): void {
+    if (typeof this.form.kosten === 'string') {
+      const parsed = parseFloat(this.form.kosten.replace(',', '.'));
+      this.form.kosten = isNaN(parsed) ? undefined : parsed;
+    }
   }
 
   /** Cancels the review without creating anything. */
@@ -133,15 +163,43 @@ export class GmailImportComponent implements OnInit {
       this.errorMessage.set('Please provide a date before creating the event.');
       return;
     }
+    this.normalizeKosten();
+
+    // Creating a new trip inline: create it first, then attach the event to it.
+    if (this.form.tripChoice === CREATE_NEW_TRIP) {
+      const name = this.form.newTripName.trim();
+      if (!name) {
+        this.errorMessage.set('Please enter a name for the new trip.');
+        return;
+      }
+      this.isBusy.set(true);
+      this.tripService.createTrip(name).subscribe({
+        next: (trip) => {
+          this.trips.update((list) => [...list, trip]);
+          this.submitEvent(trip.id);
+        },
+        error: (err) => {
+          this.isBusy.set(false);
+          this.errorMessage.set(this.readError(err, 'Could not create the trip. Please try again.'));
+        }
+      });
+      return;
+    }
+
     this.isBusy.set(true);
+    this.submitEvent(typeof this.form.tripChoice === 'number' ? this.form.tripChoice : null);
+  }
+
+  /** Sends the confirmed values to the backend, optionally attaching them to a trip. */
+  private submitEvent(tripId: number | null): void {
     const request: GmailImportRequest = {
       title: this.form.title.trim() || 'Untitled event',
       description: this.emptyToNull(this.form.description),
       date: this.form.date,
       startTime: this.emptyToNull(this.form.startTime),
       endTime: this.emptyToNull(this.form.endTime),
-      timeZone: this.emptyToNull(this.form.timeZone),
-      location: this.emptyToNull(this.form.location)
+      kosten: typeof this.form.kosten === 'number' ? this.form.kosten : 0,
+      tripId
     };
 
     this.gmailService.importEvent(request).subscribe({
@@ -227,8 +285,9 @@ export class GmailImportComponent implements OnInit {
       date: '',
       startTime: '',
       endTime: '',
-      timeZone: '',
-      location: ''
+      kosten: undefined,
+      tripChoice: undefined,
+      newTripName: ''
     };
   }
 }

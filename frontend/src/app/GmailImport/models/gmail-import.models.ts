@@ -34,8 +34,9 @@ export interface GmailImportRequest {
   date: string | null;
   startTime: string | null;
   endTime: string | null;
-  timeZone: string | null;
-  location: string | null;
+  /** Cost of the event in EUR; 0 means free/no price. */
+  kosten: number;
+  /** Optional trip the created event should be attached to. */
   tripId?: number | null;
 }
 

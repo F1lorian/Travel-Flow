@@ -164,10 +164,8 @@ public class GmailImportService {
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
     Trip trip = findTrip(request.getTripId());
 
-    Event event = new Event(title, start, end, 0, trip);
+    Event event = new Event(title, start, end, request.getKosten(), trip);
     event.setDescription(request.getDescription());
-    event.setLocation(request.getLocation());
-    event.setTimeZone(request.getTimeZone());
     Event savedEvent = eventRepository.save(event);
 
     UserEvent participation = new UserEvent(savedEvent, user, user);

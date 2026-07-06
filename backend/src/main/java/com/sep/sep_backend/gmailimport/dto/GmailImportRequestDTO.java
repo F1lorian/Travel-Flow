@@ -14,8 +14,9 @@ public class GmailImportRequestDTO {
   private LocalDate date;
   private LocalTime startTime;
   private LocalTime endTime;
-  private String timeZone;
-  private String location;
+
+  /** Cost of the event in EUR; 0 means free/no price. */
+  private double kosten;
 
   /** Optional trip the created event should be attached to. */
   private Long tripId;
@@ -62,20 +63,12 @@ public class GmailImportRequestDTO {
     this.endTime = endTime;
   }
 
-  public String getTimeZone() {
-    return timeZone;
+  public double getKosten() {
+    return kosten;
   }
 
-  public void setTimeZone(String timeZone) {
-    this.timeZone = timeZone;
-  }
-
-  public String getLocation() {
-    return location;
-  }
-
-  public void setLocation(String location) {
-    this.location = location;
+  public void setKosten(double kosten) {
+    this.kosten = kosten;
   }
 
   public Long getTripId() {

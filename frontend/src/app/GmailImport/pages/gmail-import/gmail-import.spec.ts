@@ -4,11 +4,13 @@ import { of } from 'rxjs';
 import { GmailImportComponent } from './gmail-import';
 import { GmailImportService } from '../../services/gmail-import.service';
 import { ExtractedEvent } from '../../models/gmail-import.models';
+import { TripService } from '../../../TripManagement/services/trip.service';
 
 describe('GmailImportComponent', () => {
   let fixture: ComponentFixture<GmailImportComponent>;
   let component: GmailImportComponent;
   let serviceSpy: jasmine.SpyObj<GmailImportService>;
+  let tripServiceSpy: jasmine.SpyObj<TripService>;
 
   function configure(queryParams: Record<string, string> = {}) {
     serviceSpy = jasmine.createSpyObj<GmailImportService>('GmailImportService', [
@@ -22,10 +24,14 @@ describe('GmailImportComponent', () => {
     serviceSpy.getStatus.and.returnValue(of({ connected: true, emailAddress: 'a@gmail.com' }));
     serviceSpy.connect.and.returnValue(of({ connected: true, emailAddress: 'a@gmail.com' }));
 
+    tripServiceSpy = jasmine.createSpyObj<TripService>('TripService', ['getAllTrips', 'createTrip']);
+    tripServiceSpy.getAllTrips.and.returnValue(of([]));
+
     TestBed.configureTestingModule({
       imports: [GmailImportComponent],
       providers: [
         { provide: GmailImportService, useValue: serviceSpy },
+        { provide: TripService, useValue: tripServiceSpy },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         {
           provide: ActivatedRoute,

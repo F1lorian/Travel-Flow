@@ -112,7 +112,8 @@ de-duplicated by title + date + start time during a scan.
 - **Redirect URI points at the frontend** (`/gmail-import`); the Angular page forwards the code to
   the backend, which does the token exchange. The OAuth `state` is generated but not persisted; the
   callback is JWT-authenticated, which is the primary protection.
-- **Event cost** is not part of email extraction, so imported events are created with cost `0`.
+- **Event cost** is not part of email extraction; it defaults to `0` but can be entered by the user
+  on the review form before creating the event.
 - The `contextLoads` test is a no-op in this repo; new beans use standard constructor injection of
   existing bean types plus Spring Boot's autoconfigured `RestClient.Builder`.
 - Five **pre-existing** frontend spec failures (`App should render title`, `Calendar`, `EventDialog`,

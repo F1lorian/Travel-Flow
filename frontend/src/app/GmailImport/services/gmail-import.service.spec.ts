@@ -44,8 +44,8 @@ describe('GmailImportService', () => {
       date: '2026-06-01',
       startTime: '19:00',
       endTime: '21:00',
-      timeZone: null,
-      location: 'Bistro'
+      kosten: 25,
+      tripId: null
     };
     service.importEvent(request).subscribe();
 

@@ -80,9 +80,14 @@
       </p>
 
       <form class="gmail-import__form" (ngSubmit)="createEvent()">
-        <label class="gmail-import__field">
+        <label class="gmail-import__field gmail-import__field--title">
           <span>Title</span>
-          <input type="text" name="title" [(ngModel)]="form.title" />
+          <input
+            type="text"
+            name="title"
+            class="gmail-import__title-input"
+            [(ngModel)]="form.title"
+          />
         </label>
 
         <label class="gmail-import__field">
@@ -107,19 +112,39 @@
 
         <div class="gmail-import__row">
           <label class="gmail-import__field">
-            <span>Location</span>
-            <input type="text" name="location" [(ngModel)]="form.location" />
-          </label>
-          <label class="gmail-import__field">
-            <span>Time zone</span>
+            <span>Cost (€)</span>
             <input
-              type="text"
-              name="timeZone"
-              placeholder="e.g. Europe/Berlin"
-              [(ngModel)]="form.timeZone"
+              type="number"
+              name="kosten"
+              min="0"
+              step="0.01"
+              placeholder="0"
+              [(ngModel)]="form.kosten"
             />
           </label>
+          <label class="gmail-import__field">
+            <span>Trip</span>
+            <select name="tripChoice" [(ngModel)]="form.tripChoice">
+              <option [ngValue]="undefined">No trip</option>
+              @for (trip of trips(); track trip.id) {
+                <option [ngValue]="trip.id">{{ trip.name }}</option>
+              }
+              <option [ngValue]="CREATE_NEW_TRIP">＋ Create new trip…</option>
+            </select>
+          </label>
         </div>
+
+        @if (form.tripChoice === CREATE_NEW_TRIP) {
+          <label class="gmail-import__field">
+            <span>New trip name</span>
+            <input
+              type="text"
+              name="newTripName"
+              placeholder="e.g. Summer in Italy"
+              [(ngModel)]="form.newTripName"
+            />
+          </label>
+        }
 
         <div class="gmail-import__actions">
           <button type="submit" class="btn btn--primary" [disabled]="isBusy()">
