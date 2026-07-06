@@ -68,6 +68,13 @@ export class AccountManagement {
   }
 
   private renderGoogleButton(container: HTMLElement): void {
+    if (!GOOGLE_CLIENT_ID) {
+      // Without a client id the GSI button would send Google an empty client_id and fail with a
+      // cryptic "Missing required parameter: client_id" error. Show the real cause instead.
+      console.warn('[account] Google sign-in disabled: googleClientId is not configured.');
+      this.error.set('Google sign-in is unavailable: the Google client id is not configured.');
+      return;
+    }
     if (typeof google === 'undefined' || !google?.accounts?.id) {
       // GSI script not loaded yet; retry shortly.
       setTimeout(() => this.renderGoogleButton(container), 200);
