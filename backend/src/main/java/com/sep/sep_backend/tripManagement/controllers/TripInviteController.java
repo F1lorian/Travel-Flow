@@ -7,9 +7,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * REST endpoint for inviting a friend to a trip. The service checks that the inviter is a member of
+ * the trip and that the invitee really is a friend; failures surface as {@code {"message": "..."}}
+ * responses via {@link com.sep.sep_backend.exception.GlobalExceptionHandler}.
+ */
 @RestController
 @RequestMapping("/api/TripInvites")
-@CrossOrigin(origins = "*")
 public class TripInviteController {
   private final TripInviteService tripInviteService;
 

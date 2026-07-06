@@ -2,7 +2,6 @@ package com.sep.sep_backend.profilemanagement;
 
 import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import java.security.Principal;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -44,15 +43,12 @@ public class ProfileManagementController {
     return profileManagementService.deleteAccount(currentUsername(principal), request);
   }
 
+  // Validation errors (IllegalArgumentException) become 400 {"message": ...} responses through
+  // the application-wide GlobalExceptionHandler.
   private String currentUsername(Principal principal) {
     if (principal == null) {
       throw new IllegalArgumentException("Not authenticated");
     }
     return principal.getName();
-  }
-
-  @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<MessageResponseDTO> handleBadRequest(IllegalArgumentException exception) {
-    return ResponseEntity.badRequest().body(new MessageResponseDTO(exception.getMessage()));
   }
 }

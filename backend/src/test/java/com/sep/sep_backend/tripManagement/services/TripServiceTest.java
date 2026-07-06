@@ -12,6 +12,7 @@ import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class TripServiceTest {
@@ -41,9 +44,9 @@ class TripServiceTest {
   @Test
   void createTrip_savesAndReturnsTrip() {
     Trip trip = new Trip("Paris");
-    User user = userWithTrips(7L);
-    when(tripRepository.save(any(Trip.class))).thenReturn(trip);
+    User user = userWithId(7L);
     when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+    when(tripRepository.save(any(Trip.class))).thenReturn(trip);
 
     Trip result = tripService.createTrip("Paris", null, null, 7L);
 
@@ -66,6 +69,30 @@ class TripServiceTest {
   }
 
   @Test
+  void createTrip_throwsWhenEndDateBeforeStartDate() {
+    LocalDate start = LocalDate.of(2026, 8, 10);
+    LocalDate end = LocalDate.of(2026, 8, 1);
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> tripService.createTrip("Paris", start, end, 7L));
+
+    assertEquals("Trip end date cannot be before its start date", exception.getMessage());
+    verify(tripRepository, never()).save(any());
+  }
+
+  @Test
+  void createTrip_throwsWhenUserUnknown_withoutSavingATrip() {
+    when(userRepository.findById(7L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        IllegalArgumentException.class, () -> tripService.createTrip("Paris", null, null, 7L));
+
+    // The creator is resolved before saving, so a bad user id never leaves an orphaned trip row.
+    verify(tripRepository, never()).save(any());
+  }
+
+  @Test
   void getAllTrips_returnsAllTrips() {
     when(tripRepository.findAllByUserId(7L))
         .thenReturn(List.of(new Trip("Paris"), new Trip("Berlin")));
@@ -77,30 +104,43 @@ class TripServiceTest {
   }
 
   @Test
-  void getTrip_returnsTrip_whenExists() {
+  void getTripForMember_returnsTrip_whenUserIsMember() {
     Trip trip = new Trip("Paris");
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
 
-    Optional<Trip> result = tripService.getTrip(1L);
+    Trip result = tripService.getTripForMember(1L, 7L);
 
-    assertTrue(result.isPresent());
-    assertEquals("Paris", result.get().getName());
+    assertEquals("Paris", result.getName());
   }
 
   @Test
-  void getTrip_returnsEmpty_whenNotFound() {
+  void getTripForMember_throws404_whenTripUnknown() {
     when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
-    Optional<Trip> result = tripService.getTrip(99L);
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> tripService.getTripForMember(99L, 7L));
 
-    assertTrue(result.isEmpty());
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+  }
+
+  @Test
+  void getTripForMember_throws403_whenUserIsNotAMember() {
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
+    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(false);
+
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> tripService.getTripForMember(1L, 7L));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
   }
 
   @Test
   void deleteTrip_deletesRelatedDataBeforeTrip() {
     when(tripRepository.existsById(1L)).thenReturn(true);
+    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
 
-    tripService.deleteTrip(1L);
+    tripService.deleteTrip(1L, 7L);
 
     InOrder inOrder =
         inOrder(
@@ -120,8 +160,22 @@ class TripServiceTest {
   void deleteTrip_throwsWhenTripNotFound() {
     when(tripRepository.existsById(99L)).thenReturn(false);
 
-    assertThrows(IllegalArgumentException.class, () -> tripService.deleteTrip(99L));
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(99L, 7L));
 
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    verify(tripRepository, never()).deleteById(any());
+  }
+
+  @Test
+  void deleteTrip_throws403_whenUserIsNotAMember() {
+    when(tripRepository.existsById(1L)).thenReturn(true);
+    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(false);
+
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(1L, 7L));
+
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
     verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
     verify(eventRepository, never()).deleteByTrip_Id(any());
     verify(ausgabeRepository, never()).deleteByTrip_Id(any());
@@ -129,7 +183,7 @@ class TripServiceTest {
     verify(tripRepository, never()).deleteById(any());
   }
 
-  private User userWithTrips(long id) {
+  private User userWithId(long id) {
     User user = new User();
     user.setId(id);
     return user;
