@@ -4,6 +4,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TripService, Trip } from '../../services/trip.service';
+import { NotificationService } from '../../../components/notification-menu/notification.service';
 
 @Component({
   selector: 'app-trip-list',
@@ -14,6 +15,7 @@ import { TripService, Trip } from '../../services/trip.service';
 })
 export class TripList implements OnInit {
   private tripService = inject(TripService);
+  private notificationService = inject(NotificationService);
 
   // Signal holding the loaded trips; the template re-renders when it changes.
   trips = signal<Trip[]>([]);
@@ -44,6 +46,7 @@ export class TripList implements OnInit {
       next: (trip) => {
         // Append the new trip and clear the form on success.
         this.trips.update(list => [...list, trip]);
+        this.notificationService.add(`Trip "${trip.name}" created`);
         this.newTripName = '';
         this.newTripStartDate = '';
         this.newTripEndDate = '';

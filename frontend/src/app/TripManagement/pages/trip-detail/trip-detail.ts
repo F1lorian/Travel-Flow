@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { EventRecommendation, TripService, Trip, Event, Category } from '../../services/trip.service';
+import { NotificationService } from '../../../components/notification-menu/notification.service';
 import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
 import { EventService as CalendarEventService } from '../../../../event-adding-manual/service/event.service';
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
@@ -22,6 +23,7 @@ import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
 })
 export class TripDetail implements OnInit {
   private tripService = inject(TripService);
+  private notificationService = inject(NotificationService);
   private calendarEventService = inject(CalendarEventService);
   private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
@@ -78,6 +80,7 @@ export class TripDetail implements OnInit {
           startTime: result.event.start,
           endTime: result.event.end,
         }]);
+        this.notificationService.add(`Event "${result.event.name}" added`);
       }
       if (result?.action === 'error') {
         this.errorMessage = result.message;
@@ -170,6 +173,7 @@ export class TripDetail implements OnInit {
       this.tripService.addEvent(tripId, recommendation.name, startTime, undefined, cost).subscribe({
         next: (event) => {
           this.events.update(list => [...list, event]);
+          this.notificationService.add(`Event "${event.name}" added`);
           this.errorMessage = '';
         },
         error: (err) => this.errorMessage = 'Could not add recommended event: ' + err.message

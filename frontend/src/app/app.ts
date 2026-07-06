@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { ProfileMenu } from './profile-management/profile-menu/profile-menu';
+import { NotificationMenu } from './components/notification-menu/notification-menu';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, ProfileMenu],
+  imports: [RouterOutlet, RouterLink, ProfileMenu, NotificationMenu],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
