@@ -88,15 +88,37 @@ class EmailEventParserTest {
   }
 
   @Test
-  void fallsBackToSubjectWhenNoStructuredDataAndNoAi() {
+  void fallsBackToSubjectAndBodyWhenNoStructuredDataAndNoAi() {
     ExtractedEventDTO event =
         parser
             .parse(textMail("Flight confirmation", "Your flight is booked."), "msg-3")
             .orElseThrow();
 
     assertThat(event.getTitle()).isEqualTo("Flight confirmation");
+    // Without structured data or AI, the full email body is used as the description
+    // so the user still sees the email content instead of an empty form.
+    assertThat(event.getDescription()).isEqualTo("Your flight is booked.");
     assertThat(event.getDate()).isNull();
     assertThat(event.getStartTime()).isNull();
+  }
+
+  @Test
+  void stripsStyleAndScriptFromHtmlBodyDescription() {
+    String html =
+        "<html><head><style>.a{color:red}</style>"
+            + "<script>var x=1;</script></head>"
+            + "<body><p>Your ticket for the Concert is confirmed.</p>"
+            + "<p>See you &amp; enjoy!</p></body></html>";
+
+    ExtractedEventDTO event =
+        parser.parse(mail("text/html; charset=UTF-8", "Concert ticket", html), "msg-7").orElseThrow();
+
+    assertThat(event.getDescription())
+        .contains("Your ticket for the Concert is confirmed.")
+        .contains("See you & enjoy!")
+        .doesNotContain("color:red")
+        .doesNotContain("var x=1")
+        .doesNotContain("<");
   }
 
   @Test

@@ -79,6 +79,13 @@ public class EmailEventParser {
       if (dto.getTitle() == null || dto.getTitle().isBlank()) {
         dto.setTitle(subject);
       }
+      // If no description was extracted (no structured data and AI unavailable or silent),
+      // fall back to the full email body so the user still sees the email content.
+      if ((dto.getDescription() == null || dto.getDescription().isBlank())
+          && body != null
+          && !body.isBlank()) {
+        dto.setDescription(body.trim());
+      }
       dto.setSourceMessageId(messageId);
       return Optional.of(dto);
     } catch (Exception exception) {
@@ -223,7 +230,25 @@ public class EmailEventParser {
     }
     if (part.isMimeType("text/html")) {
       Object content = part.getContent();
-      return content == null ? null : content.toString().replaceAll("<[^>]+>", " ");
+      return content == null ? null : htmlToText(content.toString());
+    }
+    if (part.isMimeType("multipart/alternative")) {
+      // Alternatives carry the same message in several formats; prefer the clean
+      // text/plain version and only fall back to HTML when no plain part exists.
+      Multipart multipart = (Multipart) part.getContent();
+      String htmlFallback = null;
+      for (int i = 0; i < multipart.getCount(); i++) {
+        Part bodyPart = multipart.getBodyPart(i);
+        if (bodyPart.isMimeType("text/plain")) {
+          String text = extractText(bodyPart);
+          if (text != null && !text.isBlank()) {
+            return text;
+          }
+        } else if (htmlFallback == null) {
+          htmlFallback = extractText(bodyPart);
+        }
+      }
+      return htmlFallback;
     }
     if (part.isMimeType("multipart/*")) {
       Multipart multipart = (Multipart) part.getContent();
@@ -237,6 +262,32 @@ public class EmailEventParser {
       return builder.length() == 0 ? null : builder.toString();
     }
     return null;
+  }
+
+  /**
+   * Converts an HTML email body into readable plain text: drops {@code <style>}/{@code <script>}
+   * blocks (their CSS/JS would otherwise leak into the description), removes remaining tags and
+   * comments, decodes common HTML entities and collapses excess whitespace.
+   */
+  private String htmlToText(String html) {
+    String text =
+        html.replaceAll("(?is)<(script|style)[^>]*>.*?</\\1>", " ")
+            .replaceAll("(?s)<!--.*?-->", " ")
+            .replaceAll("(?i)<br\\s*/?>", "\n")
+            .replaceAll("(?i)</(p|div|tr|li|h[1-6])>", "\n")
+            .replaceAll("<[^>]+>", " ");
+    text =
+        text.replace("&nbsp;", " ")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
+            .replace("&apos;", "'");
+    // Collapse runs of spaces/tabs and trim blank lines so the result reads like an email.
+    text = text.replaceAll("[ \\t]+", " ").replaceAll("(?m)^[ \\t]+|[ \\t]+$", "");
+    text = text.replaceAll("\\n{3,}", "\n\n");
+    return text.strip();
   }
 
   private JsonNode findEventJsonLd(Part part) throws Exception {
