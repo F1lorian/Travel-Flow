@@ -3,10 +3,15 @@ package com.sep.sep_backend.ausgabe;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.TripRepository;
+
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -256,4 +261,31 @@ public class AusgabeController {
 
     return result;
   }
+
+  @GetMapping(value = "/ausgabenliste/export", produces = "text/csv")
+  public ResponseEntity<String> exportAusgabenCsv(@RequestParam LocalDate start,
+                                                  @RequestParam LocalDate end,
+                                                  Authentication authentication) {
+    String csv = ausgabeService.exportAusgabenCsv(start, end, getCurrentUsername(authentication));
+    return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
+            .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+            .body(csv);
+  }
+
+  @GetMapping(value = "/ausgabenlisteTrip/export", produces = "text/csv")
+  public ResponseEntity<String> exportAusgabenTripCsv(
+      @RequestParam String tripname, Authentication authentication) {
+    String csv = ausgabeService.exportAusgabenTripCsv(tripname, getCurrentUsername(authentication));
+
+    if (csv == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+    }
+
+    return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
+            .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+            .body(csv);
+  }
+
 }

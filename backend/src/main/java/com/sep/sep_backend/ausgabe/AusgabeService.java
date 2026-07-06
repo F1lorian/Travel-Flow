@@ -400,4 +400,50 @@ public class AusgabeService {
         .findByNameIgnoreCaseOrEmailIgnoreCase(username, username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
   }
+
+  public String exportAusgabenCsv(LocalDate start, LocalDate end, String username) {
+    List<AusgabeResponseDTO> rows = ausgabenliste(start, end, username);
+    return buildCsv(rows);
+  }
+
+  public String exportAusgabenTripCsv(String tripname, String username) {
+    List<AusgabeResponseDTO> rows = ausgabenlisteTrip(tripname, username);
+    if (rows == null) {
+      return null;
+    }
+    return buildCsv(rows);
+  }
+
+  public String buildCsv(List<AusgabeResponseDTO> rows) {
+    StringBuilder csv = new StringBuilder();
+    csv.append("Date,Title,Trip,Category,Amount\n");
+    for (AusgabeResponseDTO row : rows) {
+      csv.append(escapeCsv(row.getDate()))
+              .append(",")
+              .append(escapeCsv(row.getEventName() != null ? row.getEventName() : "Expense"))
+              .append(",")
+              .append(escapeCsv(row.getTrip()))
+              .append(",")
+              .append(escapeCsv(row.getKategorie()))
+              .append(",")
+              .append(row.getKosten())
+              .append("\n");
+
+    }
+    return csv.toString();
+  }
+  // we need escapeCsv(), because values can contain commas, for example trip name "Paris, France" would break the file unless we escape it
+  public String escapeCsv(Object value) {
+    if (value == null) {
+      return "";
+    }
+
+    String text = value.toString();
+    if (text.contains(",") || text.contains("\"") || text.contains("\n")) {
+      return "\"" + text.replace("\"", "\"\"") + "\"";
+    }
+
+    return text;
+  }
+
 }
