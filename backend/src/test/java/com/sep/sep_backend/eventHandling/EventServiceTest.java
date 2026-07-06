@@ -360,8 +360,7 @@ class EventServiceTest {
     User creator = userWithEvents(7L);
     UserEvent userEvent = new UserEvent(event, participant, creator);
 
-    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L))
-        .thenReturn(Optional.of(userEvent));
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L)).thenReturn(Optional.of(userEvent));
 
     eventService.removeParticipantFromEvent(42L, 8L, 7L);
 
@@ -375,8 +374,7 @@ class EventServiceTest {
     User creator = userWithEvents(7L);
     UserEvent userEvent = new UserEvent(event, participant, creator);
 
-    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L))
-        .thenReturn(Optional.of(userEvent));
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L)).thenReturn(Optional.of(userEvent));
 
     assertThatThrownBy(() -> eventService.removeParticipantFromEvent(42L, 8L, 9L))
         .isInstanceOf(ResponseStatusException.class)
