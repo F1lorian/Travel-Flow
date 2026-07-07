@@ -118,7 +118,7 @@ test('Freundschaftsanfrage senden aktualisiert die Suchergebnisse', async ({ pag
 
   // Bei einer neuen PENDING-Anfrage bleibt der Nutzer als "nicht verbunden" markiert,
   // bis der Empfänger annimmt.
-  await expect(page.getByRole('button', { name: 'Send friend request' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Request sent' })).toBeVisible();
 });
 
 test('Eingehende Freundschaftsanfrage wird angezeigt', async ({ page }) => {
