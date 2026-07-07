@@ -20,7 +20,7 @@ export class InviteDialog implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<InviteDialog>);
   private readonly friendsService = inject(FriendsService);
   friends: Friend[] = [];
-  errorMessage: String = "";
+  errorMessage = "";
   readonly data = inject<InviteDialogData>(MAT_DIALOG_DATA);
   inviteDropdownOpen = false;
   selection: Friend[] = [];
