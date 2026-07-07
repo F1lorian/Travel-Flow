@@ -21,6 +21,7 @@ export class Friends implements OnInit, OnDestroy {
   incomingRequests: FriendRequestDTO[] = [];
   searchName = '';
   hasSearched = false;
+  requestSent: { [userId: string]: boolean } = {};
 
   private subscriptions = new Subscription();
 
@@ -103,6 +104,7 @@ export class Friends implements OnInit, OnDestroy {
       },
       error: (error) => console.error('Error while sending friend request:', error),
     });
+    this.requestSent[userId] = true;
   }
 
   acceptRequest(requestId: number): void {
