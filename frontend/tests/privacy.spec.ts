@@ -35,8 +35,10 @@ test('Privacy Settings page is shown with friend permissions', async ({ page }) 
     page.getByText('Decide which friends can see your profile information and events.'),
   ).toBeVisible();
 
-  await expect(page.getByText('Svetoslav Ivanov')).toBeVisible();
-  await expect(page.getByText('sveto', { exact: true })).toBeVisible();
+  const friendInfo = page.locator('.friend-info').filter({ hasText: 'Svetoslav Ivanov' });
+
+  await expect(friendInfo).toBeVisible();
+  await expect(friendInfo).toContainText('sveto');
 
   await expect(page.getByText('Can see events')).toBeVisible();
   await expect(page.getByText('Can see profile')).toBeVisible();
