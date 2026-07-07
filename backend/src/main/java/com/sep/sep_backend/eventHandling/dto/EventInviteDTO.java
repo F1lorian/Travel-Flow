@@ -4,6 +4,7 @@ import com.sep.sep_backend.entities.UserEvent;
 
 /**
  * DTO for EventInvitations
+ *
  * @param eventId
  * @param eventName
  * @param invitedByUserId
@@ -11,18 +12,18 @@ import com.sep.sep_backend.entities.UserEvent;
  * @param status
  */
 public record EventInviteDTO(
-        long eventId,
-        String eventName,
-        long invitedByUserId,
-        String invitedByUsername,
-        UserEvent.InviteStatus status) {
+    long eventId,
+    String eventName,
+    long invitedByUserId,
+    String invitedByUsername,
+    UserEvent.InviteStatus status) {
 
-    public static EventInviteDTO from(UserEvent userEvent) {
-        return new EventInviteDTO(
-                userEvent.getEvent().getId(),
-                userEvent.getEvent().getName(),
-                userEvent.getCreator().getId(),
-                userEvent.getCreator().getName(),
-                userEvent.getStatus());
-    }
+  public static EventInviteDTO from(UserEvent userEvent) {
+    return new EventInviteDTO(
+        userEvent.getEvent().getId(),
+        userEvent.getEvent().getName(),
+        userEvent.getCreator().getId(),
+        userEvent.getCreator().getName(),
+        userEvent.getStatus());
+  }
 }

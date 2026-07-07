@@ -7,16 +7,15 @@ import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-
 /**
- * Service that handles the Invitations to trips as well as the responses. Sits between {@link com.sep.sep_backend.tripManagement.controllers.TripInviteController} and
- *  * the JPA repositories
+ * Service that handles the Invitations to trips as well as the responses. Sits between {@link
+ * com.sep.sep_backend.tripManagement.controllers.TripInviteController} and * the JPA repositories
  */
 @Service
 public class TripInviteService {
@@ -38,6 +37,7 @@ public class TripInviteService {
 
   /**
    * sends an invitation to the friend (friendId)
+   *
    * @param currentUsername
    * @param tripId
    * @param friendId
@@ -45,7 +45,7 @@ public class TripInviteService {
    */
   @Transactional
   public TripInviteResponseDTO inviteFriendToTrip(
-          String currentUsername, long tripId, long friendId) {
+      String currentUsername, long tripId, long friendId) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     User friend = getUserOrThrow(friendId);
     Trip trip = getTripOrThrow(tripId);
@@ -89,26 +89,27 @@ public class TripInviteService {
 
   /**
    * lets the user respond to the invite and either accept or decline it
+   *
    * @param currentUsername
    * @param tripId
    * @param accept either true => ACCEPTED or false => DECLINED
-   * @return returns a TripInviteResponseDTO with the tripId, the userId and a message with either accepted or declined
+   * @return returns a TripInviteResponseDTO with the tripId, the userId and a message with either
+   *     accepted or declined
    */
   @Transactional
   public TripInviteResponseDTO respondToTripInvite(
-          String currentUsername, long tripId, boolean accept) {
+      String currentUsername, long tripId, boolean accept) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     Trip trip = getTripOrThrow(tripId);
 
     UserTrip entry =
-            userTripRepository
-                    .findByUserAndTrip(currentUser, trip)
-                    .orElseThrow(
-                            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
+        userTripRepository
+            .findByUserAndTrip(currentUser, trip)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
 
     if (entry.getStatus() != UserTrip.InviteStatus.PENDING) {
-      throw new ResponseStatusException(
-              HttpStatus.CONFLICT, "Invite has already been answered");
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Invite has already been answered");
     }
 
     entry.setStatus(accept ? UserTrip.InviteStatus.ACCEPTED : UserTrip.InviteStatus.DECLINED);
@@ -117,22 +118,26 @@ public class TripInviteService {
     notificationService.notifyInviteAnswered(entry);
 
     return new TripInviteResponseDTO(
-            trip.getId(), currentUser.getId(), accept ? "Trip invite accepted" : "Trip invite declined");
+        trip.getId(),
+        currentUser.getId(),
+        accept ? "Trip invite accepted" : "Trip invite declined");
   }
 
   /**
    * returns a list of all incoming and unanswered tripInvite a user currently has
+   *
    * @param currentUsername
    * @return
    */
   public List<UserTrip> getIncomingTripInvites(String currentUsername) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     return userTripRepository.findByUser_IdAndStatus(
-            currentUser.getId(), UserTrip.InviteStatus.PENDING);
+        currentUser.getId(), UserTrip.InviteStatus.PENDING);
   }
 
   /**
    * searches the user from the database using the username
+   *
    * @param username
    * @return
    */
@@ -145,6 +150,7 @@ public class TripInviteService {
 
   /**
    * searches the user from the database using the id
+   *
    * @param userId
    * @return
    */
@@ -156,6 +162,7 @@ public class TripInviteService {
 
   /**
    * searches the trip from the database with the id
+   *
    * @param tripId
    * @return
    */
@@ -167,6 +174,7 @@ public class TripInviteService {
 
   /**
    * checks if the 2 users are friends
+   *
    * @param currentUser
    * @param friend
    * @return
@@ -178,14 +186,15 @@ public class TripInviteService {
 
   /**
    * checks if the user has already accepted his invite to the trip
+   *
    * @param user
    * @param trip
    * @return
    */
   private boolean hasAcceptedTrip(User user, Trip trip) {
     return userTripRepository
-            .findByUserAndTrip(user, trip)
-            .filter(entry -> entry.getStatus() == UserTrip.InviteStatus.ACCEPTED)
-            .isPresent();
+        .findByUserAndTrip(user, trip)
+        .filter(entry -> entry.getStatus() == UserTrip.InviteStatus.ACCEPTED)
+        .isPresent();
   }
 }

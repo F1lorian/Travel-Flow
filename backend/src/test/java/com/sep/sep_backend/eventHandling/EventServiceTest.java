@@ -491,13 +491,13 @@ class EventServiceTest {
 
   private EventService serviceWithRealObjectMapper() {
     return new EventService(
-            eventRepository,
-            tripRepository,
-            ausgabeService,
-            userRepository,
-            new ObjectMapper(),
-            userEventRepository,
-            notificationService);
+        eventRepository,
+        tripRepository,
+        ausgabeService,
+        userRepository,
+        new ObjectMapper(),
+        userEventRepository,
+        notificationService);
   }
 
   private User userWithEvents(long id) {
@@ -529,7 +529,8 @@ class EventServiceTest {
 
   @Test
   void inviteFriendToEventCreatesPendingInviteAndNotifies() {
-    Event event = new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
     User requester = userWithEvents(7L);
     User friend = userWithEvents(8L);
@@ -552,22 +553,24 @@ class EventServiceTest {
 
   @Test
   void inviteFriendToEventRejectsWhenRequesterNotParticipant() {
-    Event event = new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Only participants can invite friends");
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Only participants can invite friends");
 
     verify(userEventRepository, never()).save(any(UserEvent.class));
   }
 
   @Test
   void inviteFriendToEventRejectsWhenFriendAlreadyInvited() {
-    Event event = new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
@@ -575,15 +578,16 @@ class EventServiceTest {
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("User already invited");
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("User already invited");
 
     verify(userEventRepository, never()).save(any(UserEvent.class));
   }
 
   @Test
   void respondToInviteUpdatesStatusAndNotifiesCreator() {
-    Event event = new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
     User creator = userWithEvents(7L);
     User invitee = userWithEvents(8L);
@@ -600,10 +604,9 @@ class EventServiceTest {
 
   @Test
   void respondToInviteRejectsSettingStatusBackToPending() {
-    assertThatThrownBy(
-            () -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.PENDING))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Cannot set status back to pending");
+    assertThatThrownBy(() -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.PENDING))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot set status back to pending");
 
     verify(userEventRepository, never()).save(any(UserEvent.class));
   }
@@ -612,20 +615,20 @@ class EventServiceTest {
   void respondToInviteThrowsWhenInviteNotFound() {
     when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(
-            () -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.ACCEPTED))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Invite not found");
+    assertThatThrownBy(() -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.ACCEPTED))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invite not found");
   }
 
   @Test
   void getIncomingEventInvitesReturnsOnlyPendingInvitesForUser() {
-    Event event = new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
     UserEvent pendingInvite = new UserEvent(event, userWithEvents(8L), userWithEvents(7L));
 
     when(userEventRepository.findByUser_IdAndStatus(8L, UserEvent.InviteStatus.PENDING))
-            .thenReturn(List.of(pendingInvite));
+        .thenReturn(List.of(pendingInvite));
 
     List<UserEvent> result = eventService.getIncomingEventInvites(8L);
 

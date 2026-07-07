@@ -282,9 +282,9 @@ public class EventService {
     }
 
     UserEvent userEvent =
-            userEventRepository
-                    .findByEvent_IdAndUser_Id(eventId, userId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
+        userEventRepository
+            .findByEvent_IdAndUser_Id(eventId, userId)
+            .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
     userEvent.setStatus(status);
     userEventRepository.save(userEvent);
 
@@ -293,6 +293,7 @@ public class EventService {
 
   /**
    * returns all pending invited for a user
+   *
    * @param userId
    * @return
    */
@@ -313,6 +314,7 @@ public class EventService {
 
   /**
    * returns a list of all users that are part of an event
+   *
    * @param eventId
    * @return
    */

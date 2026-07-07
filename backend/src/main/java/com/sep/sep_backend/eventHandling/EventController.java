@@ -39,7 +39,7 @@ public class EventController {
    */
   @PostMapping("event/create/manual")
   public ResponseEntity<EventResponseDTO> EventsManuellErstellen(
-          @RequestBody EventRequestDTO dto, Authentication authentication) {
+      @RequestBody EventRequestDTO dto, Authentication authentication) {
     User user =
         userRepository
             .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
@@ -212,14 +212,16 @@ public class EventController {
 
   /**
    * returns the open invites to events a user has
+   *
    * @param authentication
    * @return
    */
   @GetMapping("event/invites/incoming")
-  public ResponseEntity<List<EventInviteDTO>> getIncomingEventInvites(Authentication authentication) {
+  public ResponseEntity<List<EventInviteDTO>> getIncomingEventInvites(
+      Authentication authentication) {
     Long userId = getCurrentUserId(authentication);
     List<EventInviteDTO> dtos =
-            eventService.getIncomingEventInvites(userId).stream().map(EventInviteDTO::from).toList();
+        eventService.getIncomingEventInvites(userId).stream().map(EventInviteDTO::from).toList();
     return ResponseEntity.ok(dtos);
   }
 

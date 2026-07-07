@@ -2,9 +2,7 @@ package com.sep.sep_backend.eventHandling.dto;
 
 import com.sep.sep_backend.entities.UserEvent;
 
-/**
- * DTO for UserEventConnections before they are saved in the database
- */
+/** DTO for UserEventConnections before they are saved in the database */
 public class UserEventDTO {
   private Long userId;
   private String username;

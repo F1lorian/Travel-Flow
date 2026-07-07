@@ -3,7 +3,6 @@ package com.sep.sep_backend.tripManagement.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,7 +33,7 @@ class TripInviteServiceTest {
 
   private TripInviteService newService() {
     return new TripInviteService(
-            tripRepository, userRepository, userTripRepository, notificationService);
+        tripRepository, userRepository, userTripRepository, notificationService);
   }
 
   @Test
@@ -46,12 +45,12 @@ class TripInviteServiceTest {
     UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     currentUser.getFriends().add(friend);
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
-            .thenReturn(Optional.of(creatorEntry));
+        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.empty());
 
     TripInviteResponseDTO result = service.inviteFriendToTrip("max", 10L, 2L);
@@ -68,14 +67,14 @@ class TripInviteServiceTest {
     Trip trip = trip(10L);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 1L))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.BAD_REQUEST);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
   @Test
@@ -86,14 +85,14 @@ class TripInviteServiceTest {
     Trip trip = trip(10L);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(3L)).thenReturn(Optional.of(stranger));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 3L))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.FORBIDDEN);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
   }
 
   @Test
@@ -106,16 +105,16 @@ class TripInviteServiceTest {
     UserTrip pendingEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
-            .thenReturn(Optional.of(pendingEntry));
+        .thenReturn(Optional.of(pendingEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.FORBIDDEN);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
 
     verify(userTripRepository, never()).save(any(UserTrip.class));
   }
@@ -131,17 +130,17 @@ class TripInviteServiceTest {
     UserTrip friendEntry = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.ACCEPTED);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
-            .thenReturn(Optional.of(creatorEntry));
+        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(friendEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.CONFLICT);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.CONFLICT);
   }
 
   @Test
@@ -155,17 +154,17 @@ class TripInviteServiceTest {
     UserTrip friendEntry = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
-            .thenReturn(Optional.of(creatorEntry));
+        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(friendEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.CONFLICT);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.CONFLICT);
   }
 
   @Test
@@ -176,14 +175,15 @@ class TripInviteServiceTest {
     Trip trip = trip(10L);
     currentUser.getFriends().add(friend);
     UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
-    UserTrip declinedEntry = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.DECLINED);
+    UserTrip declinedEntry =
+        new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.DECLINED);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
-            .thenReturn(Optional.of(creatorEntry));
+        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(declinedEntry));
 
     service.inviteFriendToTrip("max", 10L, 2L);
@@ -202,7 +202,7 @@ class TripInviteServiceTest {
     UserTrip entry = new UserTrip(currentUser, trip, invitedBy, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("anna", "anna"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip)).thenReturn(Optional.of(entry));
 
@@ -222,7 +222,7 @@ class TripInviteServiceTest {
     UserTrip entry = new UserTrip(currentUser, trip, invitedBy, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("anna", "anna"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip)).thenReturn(Optional.of(entry));
 
@@ -241,14 +241,14 @@ class TripInviteServiceTest {
     UserTrip entry = new UserTrip(currentUser, trip, invitedBy, UserTrip.InviteStatus.ACCEPTED);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("anna", "anna"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip)).thenReturn(Optional.of(entry));
 
     assertThatThrownBy(() -> service.respondToTripInvite("anna", 10L, true))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.CONFLICT);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.CONFLICT);
   }
 
   @Test
@@ -258,14 +258,14 @@ class TripInviteServiceTest {
     Trip trip = trip(10L);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("anna", "anna"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByUserAndTrip(currentUser, trip)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.respondToTripInvite("anna", 10L, true))
-            .isInstanceOf(ResponseStatusException.class)
-            .extracting(e -> ((ResponseStatusException) e).getStatusCode())
-            .isEqualTo(HttpStatus.NOT_FOUND);
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.NOT_FOUND);
   }
 
   @Test
@@ -273,12 +273,13 @@ class TripInviteServiceTest {
     TripInviteService service = newService();
     User currentUser = user(2L, "anna");
     Trip trip = trip(10L);
-    UserTrip pendingEntry = new UserTrip(currentUser, trip, user(1L, "max"), UserTrip.InviteStatus.PENDING);
+    UserTrip pendingEntry =
+        new UserTrip(currentUser, trip, user(1L, "max"), UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("anna", "anna"))
-            .thenReturn(Optional.of(currentUser));
+        .thenReturn(Optional.of(currentUser));
     when(userTripRepository.findByUser_IdAndStatus(2L, UserTrip.InviteStatus.PENDING))
-            .thenReturn(List.of(pendingEntry));
+        .thenReturn(List.of(pendingEntry));
 
     List<UserTrip> result = service.getIncomingTripInvites("anna");
 
