@@ -30,9 +30,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -454,7 +454,10 @@ public class EventService {
     if (addresses == null || addresses.length == 0) {
       return "";
     }
-    return Arrays.stream(addresses).map(Address::toString).reduce((a, b) -> a + ", " + b).orElse("");
+    return Arrays.stream(addresses)
+        .map(Address::toString)
+        .reduce((a, b) -> a + ", " + b)
+        .orElse("");
   }
 
   private String formatDate(Date date) {
