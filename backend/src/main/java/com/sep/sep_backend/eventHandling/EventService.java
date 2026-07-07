@@ -10,6 +10,9 @@ import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
+import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -41,6 +44,7 @@ public class EventService {
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
   private final UserEventRepository userEventRepository;
+  private final EventInviteNotificationService notificationService;
 
   @Value("${gemini.api-key}")
   private String geminiApiKey;
@@ -63,13 +67,15 @@ public class EventService {
       AusgabeService ausgabeService,
       UserRepository userRepository,
       ObjectMapper objectMapper,
-      UserEventRepository userEventRepository) {
+      UserEventRepository userEventRepository,
+      EventInviteNotificationService notificationService) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
     this.userRepository = userRepository;
     this.objectMapper = objectMapper;
     this.userEventRepository = userEventRepository;
+    this.notificationService = notificationService;
   }
 
   /**
@@ -259,6 +265,8 @@ public class EventService {
 
     UserEvent invite = new UserEvent(event, friend, requestingUser);
     userEventRepository.save(invite);
+
+    notificationService.notifyNewInvite(friend, event, requestingUser);
   }
 
   /**
@@ -274,11 +282,22 @@ public class EventService {
     }
 
     UserEvent userEvent =
-        userEventRepository
-            .findByEvent_IdAndUser_Id(eventId, userId)
-            .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
+            userEventRepository
+                    .findByEvent_IdAndUser_Id(eventId, userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
     userEvent.setStatus(status);
     userEventRepository.save(userEvent);
+
+    notificationService.notifyInviteAnswered(userEvent);
+  }
+
+  /**
+   * returns all pending invited for a user
+   * @param userId
+   * @return
+   */
+  public List<UserEvent> getIncomingEventInvites(Long userId) {
+    return userEventRepository.findByUser_IdAndStatus(userId, UserEvent.InviteStatus.PENDING);
   }
 
   /**
@@ -292,6 +311,11 @@ public class EventService {
         .toList();
   }
 
+  /**
+   * returns a list of all users that are part of an event
+   * @param eventId
+   * @return
+   */
   public List<UserEvent> getParticipants(Long eventId) {
     return userEventRepository.findByEvent_Id(eventId);
   }

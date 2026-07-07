@@ -1,4 +1,4 @@
-package com.sep.sep_backend.eventHandling;
+package com.sep.sep_backend.eventHandling.dto;
 
 /**
  * Response body for delete-event requests.

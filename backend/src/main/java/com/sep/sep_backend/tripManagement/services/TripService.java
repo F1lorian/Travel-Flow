@@ -56,7 +56,7 @@ public class TripService {
     return tripRepository.findById(id);
   }
 
-  // Creates a trip. Name is required; dates are optional. Throws if the name is blank.
+  // Creates a trip. Name is required; dates are optional. Throws if the name is blank. Status is automatically set to ACCEPTED
   public Trip createTrip(String name, LocalDate startDate, LocalDate endDate, Long userId) {
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Trip name cannot be empty");
@@ -67,10 +67,10 @@ public class TripService {
     Trip savedTrip = tripRepository.save(trip);
 
     User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    userTripRepository.save(new UserTrip(user, savedTrip, null));
+            userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    userTripRepository.save(new UserTrip(user, savedTrip, null, UserTrip.InviteStatus.ACCEPTED));
 
     return savedTrip;
   }

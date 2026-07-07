@@ -20,4 +20,6 @@ public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> 
   List<UserTrip> findByInvitedBy(User invitedBy);
 
   boolean existsByTrip(Trip trip);
+
+  List<UserTrip> findByUser_IdAndStatus(Long userId, UserTrip.InviteStatus status);
 }
