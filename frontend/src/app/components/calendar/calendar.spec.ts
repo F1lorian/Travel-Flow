@@ -1,18 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 
-import {Calendar} from '@fullcalendar/core';
+import { CalendarComponent } from './calendar';
 
-describe('Calendar', () => {
-  let component: Calendar;
-  let fixture: ComponentFixture<Calendar>;
+describe('CalendarComponent', () => {
+  let component: CalendarComponent;
+  let fixture: ComponentFixture<CalendarComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Calendar]
-    })
-    .compileComponents();
+      imports: [CalendarComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(Calendar);
+    fixture = TestBed.createComponent(CalendarComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

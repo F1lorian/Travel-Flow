@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { EventDialog } from './event-dialog';
 
@@ -8,9 +11,15 @@ describe('EventDialog', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EventDialog]
-    })
-    .compileComponents();
+      imports: [EventDialog],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // The dialog is normally opened through MatDialog, which provides these two.
+        { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
+        { provide: MAT_DIALOG_DATA, useValue: { mode: 'create', tripId: 1 } }
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EventDialog);
     component = fixture.componentInstance;
