@@ -36,14 +36,38 @@ class FriendsControllerTest {
             "searchUsers", String.class, Authentication.class);
     assertThat(searchMethod.getAnnotation(GetMapping.class).value()).containsExactly("/search");
 
-    Method addMethod =
-        FriendsController.class.getDeclaredMethod("addFriend", long.class, Authentication.class);
-    assertThat(addMethod.getAnnotation(PostMapping.class).value()).containsExactly("/{userId}");
-
     Method removeMethod =
         FriendsController.class.getDeclaredMethod("removeFriend", long.class, Authentication.class);
     assertThat(removeMethod.getAnnotation(DeleteMapping.class).value())
         .containsExactly("/{userId}");
+
+    Method sendMethod =
+        FriendsController.class.getDeclaredMethod(
+            "sendFriendRequest", long.class, Authentication.class);
+    assertThat(sendMethod.getAnnotation(PostMapping.class).value())
+        .containsExactly("/requests/{userId}");
+
+    Method acceptMethod =
+        FriendsController.class.getDeclaredMethod(
+            "acceptFriendRequest", long.class, Authentication.class);
+    assertThat(acceptMethod.getAnnotation(PostMapping.class).value())
+        .containsExactly("/requests/{requestId}/accept");
+
+    Method declineMethod =
+        FriendsController.class.getDeclaredMethod(
+            "declineFriendRequest", long.class, Authentication.class);
+    assertThat(declineMethod.getAnnotation(PostMapping.class).value())
+        .containsExactly("/requests/{requestId}/decline");
+
+    Method incomingMethod =
+        FriendsController.class.getDeclaredMethod("getIncomingRequests", Authentication.class);
+    assertThat(incomingMethod.getAnnotation(GetMapping.class).value())
+        .containsExactly("/requests/incoming");
+
+    Method outgoingMethod =
+        FriendsController.class.getDeclaredMethod("getOutgoingRequests", Authentication.class);
+    assertThat(outgoingMethod.getAnnotation(GetMapping.class).value())
+        .containsExactly("/requests/outgoing");
   }
 
   @Test
@@ -77,21 +101,6 @@ class FriendsControllerTest {
   }
 
   @Test
-  void addFriendDelegatesToServiceWithAuthenticatedUsername() {
-    FriendsService friendsService = mock(FriendsService.class);
-    FriendsController friendsController = new FriendsController(friendsService);
-    Authentication authentication = authentication("max");
-    FriendDTO friend = new FriendDTO(2L, "anna", "Anna", "Muster", true);
-
-    when(friendsService.addFriend("max", 2L)).thenReturn(friend);
-
-    FriendDTO result = friendsController.addFriend(2L, authentication);
-
-    assertThat(result).isSameAs(friend);
-    verify(friendsService).addFriend("max", 2L);
-  }
-
-  @Test
   void removeFriendDelegatesToServiceWithAuthenticatedUsername() {
     FriendsService friendsService = mock(FriendsService.class);
     FriendsController friendsController = new FriendsController(friendsService);
@@ -100,6 +109,86 @@ class FriendsControllerTest {
     friendsController.removeFriend(2L, authentication);
 
     verify(friendsService).removeFriend("max", 2L);
+  }
+
+  @Test
+  void sendFriendRequestDelegatesToServiceWithAuthenticatedUsername() {
+    FriendsService friendsService = mock(FriendsService.class);
+    FriendsController friendsController = new FriendsController(friendsService);
+    Authentication authentication = authentication("max");
+    FriendRequestDTO request =
+        new FriendRequestDTO(1L, 1L, "max", 2L, "anna", FriendRequestStatus.PENDING);
+
+    when(friendsService.sendFriendRequest("max", 2L)).thenReturn(request);
+
+    FriendRequestDTO result = friendsController.sendFriendRequest(2L, authentication);
+
+    assertThat(result).isSameAs(request);
+    verify(friendsService).sendFriendRequest("max", 2L);
+  }
+
+  @Test
+  void acceptFriendRequestDelegatesToServiceWithAuthenticatedUsername() {
+    FriendsService friendsService = mock(FriendsService.class);
+    FriendsController friendsController = new FriendsController(friendsService);
+    Authentication authentication = authentication("max");
+    FriendRequestDTO request =
+        new FriendRequestDTO(1L, 2L, "anna", 1L, "max", FriendRequestStatus.ACCEPTED);
+
+    when(friendsService.acceptFriendRequest("max", 1L)).thenReturn(request);
+
+    FriendRequestDTO result = friendsController.acceptFriendRequest(1L, authentication);
+
+    assertThat(result).isSameAs(request);
+    verify(friendsService).acceptFriendRequest("max", 1L);
+  }
+
+  @Test
+  void declineFriendRequestDelegatesToServiceWithAuthenticatedUsername() {
+    FriendsService friendsService = mock(FriendsService.class);
+    FriendsController friendsController = new FriendsController(friendsService);
+    Authentication authentication = authentication("max");
+    FriendRequestDTO request =
+        new FriendRequestDTO(1L, 2L, "anna", 1L, "max", FriendRequestStatus.DECLINED);
+
+    when(friendsService.declineFriendRequest("max", 1L)).thenReturn(request);
+
+    FriendRequestDTO result = friendsController.declineFriendRequest(1L, authentication);
+
+    assertThat(result).isSameAs(request);
+    verify(friendsService).declineFriendRequest("max", 1L);
+  }
+
+  @Test
+  void getIncomingRequestsDelegatesToServiceWithAuthenticatedUsername() {
+    FriendsService friendsService = mock(FriendsService.class);
+    FriendsController friendsController = new FriendsController(friendsService);
+    Authentication authentication = authentication("max");
+    List<FriendRequestDTO> requests =
+        List.of(new FriendRequestDTO(1L, 2L, "anna", 1L, "max", FriendRequestStatus.PENDING));
+
+    when(friendsService.getIncomingRequests("max")).thenReturn(requests);
+
+    List<FriendRequestDTO> result = friendsController.getIncomingRequests(authentication);
+
+    assertThat(result).isSameAs(requests);
+    verify(friendsService).getIncomingRequests("max");
+  }
+
+  @Test
+  void getOutgoingRequestsDelegatesToServiceWithAuthenticatedUsername() {
+    FriendsService friendsService = mock(FriendsService.class);
+    FriendsController friendsController = new FriendsController(friendsService);
+    Authentication authentication = authentication("max");
+    List<FriendRequestDTO> requests =
+        List.of(new FriendRequestDTO(1L, 1L, "max", 2L, "anna", FriendRequestStatus.PENDING));
+
+    when(friendsService.getOutgoingRequests("max")).thenReturn(requests);
+
+    List<FriendRequestDTO> result = friendsController.getOutgoingRequests(authentication);
+
+    assertThat(result).isSameAs(requests);
+    verify(friendsService).getOutgoingRequests("max");
   }
 
   @Test

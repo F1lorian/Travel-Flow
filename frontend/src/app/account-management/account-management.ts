@@ -2,6 +2,7 @@ import { Component, ElementRef, effect, inject, NgZone, signal, viewChild } from
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccountManagementService } from './account-management.service';
+import { WebSocketService } from '../services/websocket.service';
 
 type AccountMode = 'login' | 'register' | 'verify' | 'forgot' | 'reset' | 'forgot-email' | 'forgot-code' | 'reset-email';
 
@@ -36,6 +37,7 @@ export class AccountManagement {
   private readonly accountService = inject(AccountManagementService);
   private readonly router = inject(Router);
   private readonly zone = inject(NgZone);
+  private readonly webSocketService = inject(WebSocketService);
 
   private readonly googleButton = viewChild<ElementRef<HTMLElement>>('googleButton');
   private googleInitialized = false;
@@ -98,6 +100,7 @@ export class AccountManagement {
           localStorage.setItem('sepUser', res.username);
           if (res.token) {
             localStorage.setItem('sepToken', res.token);
+            this.webSocketService.connect();
           }
           this.message.set(res.message);
           this.error.set('');
@@ -159,6 +162,7 @@ export class AccountManagement {
         localStorage.setItem('sepUser', response.username);
         if (response.token) {
           localStorage.setItem('sepToken', response.token);
+          this.webSocketService.connect();
         }
         this.message.set(response.message);
         this.error.set('');
@@ -169,6 +173,7 @@ export class AccountManagement {
   }
 
   logout(): void {
+    this.webSocketService.disconnect();
     this.loggedInUser.set('');
     localStorage.removeItem('sepUser');
     localStorage.removeItem('sepToken');
