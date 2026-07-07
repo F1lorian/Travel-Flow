@@ -15,15 +15,28 @@ import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
+import jakarta.mail.Address;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
 import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.UIDFolder;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.persistence.EntityNotFoundException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -326,6 +339,156 @@ public class EventService {
     return parseTextWithGemini(message.getSubject(), body);
   }
 
+  public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
+      throws Exception {
+    Store store = null;
+    Folder folder = null;
+    try {
+      store = connectToImap(request.host(), request.port(), request.username(), request.password());
+      folder = openFolder(store, request.folder());
+
+      int messageCount = folder.getMessageCount();
+      if (messageCount == 0) {
+        return List.of();
+      }
+
+      int limit = resolveImapLimit(request.limit());
+      int start = Math.max(1, messageCount - limit + 1);
+      Message[] messages = folder.getMessages(start, messageCount);
+      UIDFolder uidFolder = getUidFolder(folder);
+
+      return Arrays.stream(messages)
+          .sorted(Comparator.comparingInt(Message::getMessageNumber).reversed())
+          .map(message -> toImapPreview(message, uidFolder))
+          .toList();
+    } finally {
+      closeFolder(folder);
+      closeStore(store);
+    }
+  }
+
+  public EventResponseDTO parseImapMessage(ImapMailSelectionRequestDTO request) throws Exception {
+    Store store = null;
+    Folder folder = null;
+    try {
+      store = connectToImap(request.host(), request.port(), request.username(), request.password());
+      folder = openFolder(store, request.folder());
+      UIDFolder uidFolder = getUidFolder(folder);
+      Message message = uidFolder.getMessageByUID(request.uid());
+
+      if (message == null) {
+        throw new EntityNotFoundException("IMAP mail with UID " + request.uid() + " not found");
+      }
+
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      message.writeTo(outputStream);
+      return ParseMailFile(new ByteArrayInputStream(outputStream.toByteArray()));
+    } finally {
+      closeFolder(folder);
+      closeStore(store);
+    }
+  }
+
+  private Store connectToImap(String host, Integer port, String username, String password)
+      throws MessagingException {
+    if (host == null || host.isBlank()) {
+      throw new IllegalArgumentException("IMAP host is required");
+    }
+    if (username == null || username.isBlank()) {
+      throw new IllegalArgumentException("IMAP username is required");
+    }
+    if (password == null || password.isBlank()) {
+      throw new IllegalArgumentException("IMAP password is required");
+    }
+
+    int resolvedPort = port == null ? 993 : port;
+    Properties properties = new Properties();
+    properties.put("mail.store.protocol", "imaps");
+    properties.put("mail.imaps.ssl.enable", "true");
+    properties.put("mail.imaps.connectiontimeout", "10000");
+    properties.put("mail.imaps.timeout", "10000");
+
+    Session session = Session.getInstance(properties);
+    Store store = session.getStore("imaps");
+    store.connect(host, resolvedPort, username, password);
+    return store;
+  }
+
+  private Folder openFolder(Store store, String requestedFolder) throws MessagingException {
+    String folderName =
+        requestedFolder == null || requestedFolder.isBlank() ? "INBOX" : requestedFolder;
+    Folder folder = store.getFolder(folderName);
+    folder.open(Folder.READ_ONLY);
+    return folder;
+  }
+
+  private UIDFolder getUidFolder(Folder folder) {
+    if (!(folder instanceof UIDFolder uidFolder)) {
+      throw new IllegalStateException("IMAP server does not support message UIDs");
+    }
+    return uidFolder;
+  }
+
+  private int resolveImapLimit(Integer requestedLimit) {
+    if (requestedLimit == null || requestedLimit <= 0) {
+      return 50;
+    }
+    return Math.min(requestedLimit, 50);
+  }
+
+  private ImapMailPreviewDTO toImapPreview(Message message, UIDFolder uidFolder) {
+    try {
+      return new ImapMailPreviewDTO(
+          uidFolder.getUID(message),
+          nullToBlank(message.getSubject()),
+          formatAddresses(message.getFrom()),
+          formatDate(message.getSentDate()),
+          formatDate(message.getReceivedDate()),
+          buildSnippet(extractText(message)));
+    } catch (Exception exception) {
+      throw new IllegalStateException("Could not read IMAP mail preview", exception);
+    }
+  }
+
+  private String formatAddresses(Address[] addresses) {
+    if (addresses == null || addresses.length == 0) {
+      return "";
+    }
+    return Arrays.stream(addresses).map(Address::toString).reduce((a, b) -> a + ", " + b).orElse("");
+  }
+
+  private String formatDate(Date date) {
+    if (date == null) {
+      return null;
+    }
+    return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+        date.toInstant().atZone(ZoneId.systemDefault()));
+  }
+
+  private String buildSnippet(String text) {
+    if (text == null || text.isBlank()) {
+      return "";
+    }
+    String normalized = text.replaceAll("\\s+", " ").trim();
+    return normalized.length() <= 180 ? normalized : normalized.substring(0, 180);
+  }
+
+  private String nullToBlank(String value) {
+    return value == null ? "" : value;
+  }
+
+  private void closeFolder(Folder folder) throws MessagingException {
+    if (folder != null && folder.isOpen()) {
+      folder.close(false);
+    }
+  }
+
+  private void closeStore(Store store) throws MessagingException {
+    if (store != null && store.isConnected()) {
+      store.close();
+    }
+  }
+
   private EventResponseDTO parseTextWithGemini(String subject, String mailText) {
     if (geminiApiKey == null || geminiApiKey.isBlank() || mailText == null || mailText.isBlank()) {
       return mapTextToDTO(mailText);
@@ -499,6 +662,15 @@ public class EventService {
   private String extractText(Part part) throws Exception {
     if (part.isMimeType("text/plain")) {
       return part.getContent().toString();
+    }
+    if (part.isMimeType("multipart/*")) {
+      Multipart multipart = (Multipart) part.getContent();
+      for (int i = 0; i < multipart.getCount(); i++) {
+        String text = extractText(multipart.getBodyPart(i));
+        if (text != null && !text.isBlank()) {
+          return text;
+        }
+      }
     }
     return null;
   }
