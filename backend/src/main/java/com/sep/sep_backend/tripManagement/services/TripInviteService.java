@@ -63,6 +63,11 @@ public class TripInviteService {
               + " added you to the trip \""
               + trip.getName()
               + "\". Log in to SEP to see its events and expenses.");
+      // The inviter's in-app notification is mirrored to their inbox as well.
+      emailNotificationService.sendBestEffort(
+          currentUser.getEmail(),
+          "Invite sent for trip \"" + trip.getName() + "\"",
+          "You invited " + friend.getName() + " to the trip \"" + trip.getName() + "\".");
     }
 
     return new TripInviteResponseDTO(trip.getId(), friend.getId(), "Trip invite sent");

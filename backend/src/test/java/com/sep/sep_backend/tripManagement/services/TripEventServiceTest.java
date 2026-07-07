@@ -5,8 +5,11 @@ import static org.mockito.Mockito.*;
 
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +35,10 @@ class TripEventServiceTest {
 
   @Mock private UserEventRepository userEventRepository;
 
+  @Mock private UserRepository userRepository;
+
+  @Mock private EmailNotificationService emailNotificationService;
+
   @InjectMocks private TripEventService eventService;
 
   private final LocalDateTime sampleStartTime = LocalDateTime.of(2026, 7, 15, 19, 30);
@@ -51,6 +58,24 @@ class TripEventServiceTest {
     assertEquals("Dinner", result.getName());
     assertEquals(50, result.getKosten());
     verify(eventRepository).save(any(Event.class));
+  }
+
+  @Test
+  void addEventToTrip_emailsTheUserAboutTheNewEvent() {
+    Trip trip = new Trip("Paris");
+    Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
+    when(tripService.getTripForMember(1L, USER_ID)).thenReturn(trip);
+    when(eventRepository.save(any(Event.class))).thenReturn(event);
+    User user = new User();
+    user.setId(USER_ID);
+    user.setEmail("max@example.com");
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+    eventService.addEventToTrip(1L, USER_ID, "Dinner", sampleStartTime, sampleEndTime, 50, null);
+
+    // Every in-app notification is mirrored to the user's inbox.
+    verify(emailNotificationService)
+        .sendBestEffort(eq("max@example.com"), contains("Dinner"), contains("Paris"));
   }
 
   @Test

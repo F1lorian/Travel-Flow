@@ -6,8 +6,10 @@ Called by TripEventController, which exposes the results to the Angular frontend
 import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -30,16 +32,22 @@ public class TripEventService {
   private final TripService tripService;
   private final CategoryService categoryService;
   private final UserEventRepository userEventRepository;
+  private final UserRepository userRepository;
+  private final EmailNotificationService emailNotificationService;
 
   public TripEventService(
       EventRepository eventRepository,
       TripService tripService,
       CategoryService categoryService,
-      UserEventRepository userEventRepository) {
+      UserEventRepository userEventRepository,
+      UserRepository userRepository,
+      EmailNotificationService emailNotificationService) {
     this.eventRepository = eventRepository;
     this.tripService = tripService;
     this.categoryService = categoryService;
     this.userEventRepository = userEventRepository;
+    this.userRepository = userRepository;
+    this.emailNotificationService = emailNotificationService;
   }
 
   /**
@@ -73,7 +81,12 @@ public class TripEventService {
       newEvent.setCategorie(category);
     }
 
-    return eventRepository.save(newEvent);
+    Event saved = eventRepository.save(newEvent);
+    notifyByEmail(
+        userId,
+        "Event \"" + saved.getName() + "\" added",
+        "The event \"" + saved.getName() + "\" was added to your trip \"" + trip.getName() + "\".");
+    return saved;
   }
 
   /** Lists a trip's events, provided the user is a member of that trip. */
@@ -89,6 +102,14 @@ public class TripEventService {
     requireEventTripMember(event, userId);
     userEventRepository.deleteByEvent_Id(eventId);
     eventRepository.delete(event);
+    notifyByEmail(
+        userId,
+        "Event \"" + event.getName() + "\" deleted",
+        "The event \""
+            + event.getName()
+            + "\" was deleted from your trip \""
+            + event.getTrip().getName()
+            + "\".");
   }
 
   /**
@@ -107,7 +128,16 @@ public class TripEventService {
 
     // Changing the trip reference and saving moves the event (updates its foreign key).
     event.setTrip(newTrip);
-    return eventRepository.save(event);
+    Event moved = eventRepository.save(event);
+    notifyByEmail(
+        userId,
+        "Event \"" + moved.getName() + "\" moved",
+        "The event \""
+            + moved.getName()
+            + "\" was moved to your trip \""
+            + newTrip.getName()
+            + "\".");
+    return moved;
   }
 
   private Event getEventOrThrow(Long eventId) {
@@ -115,6 +145,17 @@ public class TripEventService {
         .findById(eventId)
         .orElseThrow(
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found: " + eventId));
+  }
+
+  /**
+   * Mirrors an in-app notification to the acting user's inbox, best-effort: every notification the
+   * user sees in the bell is also announced by email. A missing user or mail failure is ignored so
+   * the action itself never fails because of the email.
+   */
+  private void notifyByEmail(Long userId, String subject, String body) {
+    userRepository
+        .findById(userId)
+        .ifPresent(user -> emailNotificationService.sendBestEffort(user.getEmail(), subject, body));
   }
 
   /**

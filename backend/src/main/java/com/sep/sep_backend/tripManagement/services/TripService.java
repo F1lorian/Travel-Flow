@@ -124,9 +124,12 @@ public class TripService {
    */
   @Transactional
   public void deleteTrip(Long id, Long userId) {
-    if (!tripRepository.existsById(id)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found: " + id);
-    }
+    // The name is captured up front so the confirmation email can still mention it afterwards.
+    Trip trip =
+        tripRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found: " + id));
     requireMember(id, userId);
 
     userEventRepository.deleteByEvent_Trip_Id(id);
@@ -134,5 +137,17 @@ public class TripService {
     ausgabeRepository.deleteByTrip_Id(id);
     userTripRepository.deleteByIdTripId(id);
     tripRepository.deleteById(id);
+
+    // Mirror the in-app notification by email, best-effort (never fails the deletion).
+    userRepository
+        .findById(userId)
+        .ifPresent(
+            user ->
+                emailNotificationService.sendBestEffort(
+                    user.getEmail(),
+                    "Your trip \"" + trip.getName() + "\" was deleted",
+                    "Your trip \""
+                        + trip.getName()
+                        + "\" and all of its events and expenses were deleted."));
   }
 }

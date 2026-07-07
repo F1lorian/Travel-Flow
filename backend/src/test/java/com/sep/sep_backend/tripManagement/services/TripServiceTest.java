@@ -140,7 +140,7 @@ class TripServiceTest {
 
   @Test
   void deleteTrip_deletesRelatedDataBeforeTrip() {
-    when(tripRepository.existsById(1L)).thenReturn(true);
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
     when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
 
     tripService.deleteTrip(1L, 7L);
@@ -161,7 +161,7 @@ class TripServiceTest {
 
   @Test
   void deleteTrip_throwsWhenTripNotFound() {
-    when(tripRepository.existsById(99L)).thenReturn(false);
+    when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
     ResponseStatusException exception =
         assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(99L, 7L));
@@ -171,8 +171,22 @@ class TripServiceTest {
   }
 
   @Test
+  void deleteTrip_emailsTheUserAboutTheDeletion() {
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
+    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
+    User user = userWithId(7L);
+    user.setEmail("max@example.com");
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+
+    tripService.deleteTrip(1L, 7L);
+
+    verify(emailNotificationService)
+        .sendBestEffort(eq("max@example.com"), contains("Paris"), contains("deleted"));
+  }
+
+  @Test
   void deleteTrip_throws403_whenUserIsNotAMember() {
-    when(tripRepository.existsById(1L)).thenReturn(true);
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
     when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(false);
 
     ResponseStatusException exception =

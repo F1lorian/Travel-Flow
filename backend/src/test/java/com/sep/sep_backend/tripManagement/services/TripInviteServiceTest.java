@@ -33,7 +33,9 @@ class TripInviteServiceTest {
   void inviteFriendToTripAddsTripToFriend() {
     Trip trip = trip(3L);
     User currentUser = user(1L);
+    currentUser.setEmail("max@example.com");
     User friend = user(2L);
+    friend.setEmail("anna@example.com");
     currentUser.getFriends().add(friend);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
@@ -48,8 +50,12 @@ class TripInviteServiceTest {
     assertThat(response.tripId()).isEqualTo(3L);
     assertThat(response.friendId()).isEqualTo(2L);
     verify(userTripRepository).save(any(UserTrip.class));
-    // The new member is notified by email so they learn about the trip even while logged out.
-    verify(emailNotificationService).sendBestEffort(any(), contains("Berlin"), any());
+    // The new member is notified by email so they learn about the trip even while logged out,
+    // and the inviter's in-app notification is mirrored to their inbox as well.
+    verify(emailNotificationService)
+        .sendBestEffort(eq("anna@example.com"), contains("Berlin"), any());
+    verify(emailNotificationService)
+        .sendBestEffort(eq("max@example.com"), contains("Berlin"), any());
   }
 
   @Test
