@@ -1,5 +1,14 @@
 import { Page } from '@playwright/test';
 
+function padDatePart(value: number): string {
+  return value.toString().padStart(2, '0');
+}
+
+export function calendarDate(day = 15): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${padDatePart(now.getMonth() + 1)}-${padDatePart(day)}`;
+}
+
 export async function clearSession(page: Page): Promise<void> {
   await page.addInitScript(() => {
     localStorage.removeItem('sepToken');
@@ -54,10 +63,18 @@ export async function mockTrips(page: Page, trips: unknown[] = []): Promise<void
 
 export async function mockFriends(page: Page, friends: unknown[] = []): Promise<void> {
   await mockJson(page, '**/api/friends', friends);
+  await mockJson(page, '**/api/friends/search?*', []);
 }
 
 export async function mockCalendarEvents(page: Page, events: unknown[] = []): Promise<void> {
   await mockJson(page, '**/api/event/pull/all_events', events);
+}
+
+export async function mockEventParticipants(
+  page: Page,
+  participants: unknown[] = [],
+): Promise<void> {
+  await mockJson(page, '**/api/event/*/participants', participants);
 }
 
 export async function mockConflictEvents(page: Page, events: unknown[] = []): Promise<void> {
