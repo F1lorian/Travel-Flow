@@ -21,7 +21,7 @@ export class Friends implements OnInit, OnDestroy {
   incomingRequests: FriendRequestDTO[] = [];
   searchName = '';
   hasSearched = false;
-  requestSent: { [userId: string]: boolean } = {};
+  requestSent: Record<string, boolean> = {};
 
   private subscriptions = new Subscription();
 
