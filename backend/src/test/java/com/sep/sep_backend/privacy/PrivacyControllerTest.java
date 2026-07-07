@@ -15,79 +15,76 @@ import org.springframework.web.server.ResponseStatusException;
 
 class PrivacyControllerTest {
 
-    private final PrivacyService privacyService = mock(PrivacyService.class);
-    private final PrivacyController privacyController = new PrivacyController(privacyService);
+  private final PrivacyService privacyService = mock(PrivacyService.class);
+  private final PrivacyController privacyController = new PrivacyController(privacyService);
 
-    private Authentication authentication() {
-        return new UsernamePasswordAuthenticationToken("cedrick", null, List.of());
-    }
+  private Authentication authentication() {
+    return new UsernamePasswordAuthenticationToken("cedrick", null, List.of());
+  }
 
-    @Test
-    void getPermissionsGibtPrivacySettingsZurueck() {
-        List<PrivacyPermissionDTO> permissions =
-                List.of(new PrivacyPermissionDTO(2L, "noah", "Noah", "Bucic", true, false));
+  @Test
+  void getPermissionsGibtPrivacySettingsZurueck() {
+    List<PrivacyPermissionDTO> permissions =
+        List.of(new PrivacyPermissionDTO(2L, "noah", "Noah", "Bucic", true, false));
 
-        when(privacyService.getPermissions("cedrick")).thenReturn(permissions);
+    when(privacyService.getPermissions("cedrick")).thenReturn(permissions);
 
-        List<PrivacyPermissionDTO> result = privacyController.getPermissions(authentication());
+    List<PrivacyPermissionDTO> result = privacyController.getPermissions(authentication());
 
-        assertThat(result).isSameAs(permissions);
-        verify(privacyService).getPermissions("cedrick");
-    }
+    assertThat(result).isSameAs(permissions);
+    verify(privacyService).getPermissions("cedrick");
+  }
 
-    @Test
-    void updatePermissionGibtAktualisiertePermissionZurueck() {
-        UpdatePrivacyPermissionRequestDTO request =
-                new UpdatePrivacyPermissionRequestDTO(true, false);
-        PrivacyPermissionDTO permission =
-                new PrivacyPermissionDTO(2L, "noah", "Noah", "Bucic", true, false);
+  @Test
+  void updatePermissionGibtAktualisiertePermissionZurueck() {
+    UpdatePrivacyPermissionRequestDTO request = new UpdatePrivacyPermissionRequestDTO(true, false);
+    PrivacyPermissionDTO permission =
+        new PrivacyPermissionDTO(2L, "noah", "Noah", "Bucic", true, false);
 
-        when(privacyService.updatePermission("cedrick", 2L, request)).thenReturn(permission);
+    when(privacyService.updatePermission("cedrick", 2L, request)).thenReturn(permission);
 
-        PrivacyPermissionDTO result =
-                privacyController.updatePermission(2L, request, authentication());
+    PrivacyPermissionDTO result = privacyController.updatePermission(2L, request, authentication());
 
-        assertThat(result).isSameAs(permission);
-        verify(privacyService).updatePermission("cedrick", 2L, request);
-    }
+    assertThat(result).isSameAs(permission);
+    verify(privacyService).updatePermission("cedrick", 2L, request);
+  }
 
-    @Test
-    void getSharedProfileGibtProfilZurueck() {
-        SharedUserProfileDTO profile =
-                new SharedUserProfileDTO(2L, "noah", "Noah", "Bucic");
+  @Test
+  void getSharedProfileGibtProfilZurueck() {
+    SharedUserProfileDTO profile = new SharedUserProfileDTO(2L, "noah", "Noah", "Bucic");
 
-        when(privacyService.getSharedProfile("cedrick", 2L)).thenReturn(profile);
+    when(privacyService.getSharedProfile("cedrick", 2L)).thenReturn(profile);
 
-        SharedUserProfileDTO result = privacyController.getSharedProfile(2L, authentication());
+    SharedUserProfileDTO result = privacyController.getSharedProfile(2L, authentication());
 
-        assertThat(result).isSameAs(profile);
-        verify(privacyService).getSharedProfile("cedrick", 2L);
-    }
+    assertThat(result).isSameAs(profile);
+    verify(privacyService).getSharedProfile("cedrick", 2L);
+  }
 
-    @Test
-    void getSharedEventsGibtEventsZurueck() {
-        List<SharedEventDTO> events =
-                List.of(
-                        new SharedEventDTO(
-                                1L,
-                                "Museum visit",
-                                LocalDateTime.of(2026, 6, 1, 10, 0),
-                                LocalDateTime.of(2026, 6, 1, 12, 0),
-                                25,
-                                null));
+  @Test
+  void getSharedEventsGibtEventsZurueck() {
+    List<SharedEventDTO> events =
+        List.of(
+            new SharedEventDTO(
+                1L,
+                "Museum visit",
+                LocalDateTime.of(2026, 6, 1, 10, 0),
+                LocalDateTime.of(2026, 6, 1, 12, 0),
+                25,
+                null));
 
-        when(privacyService.getSharedEvents("cedrick", 2L)).thenReturn(events);
+    when(privacyService.getSharedEvents("cedrick", 2L)).thenReturn(events);
 
-        List<SharedEventDTO> result = privacyController.getSharedEvents(2L, authentication());
+    List<SharedEventDTO> result = privacyController.getSharedEvents(2L, authentication());
 
-        assertThat(result).isSameAs(events);
-        verify(privacyService).getSharedEvents("cedrick", 2L);
-    }
+    assertThat(result).isSameAs(events);
+    verify(privacyService).getSharedEvents("cedrick", 2L);
+  }
 
-    @Test
-    void getPermissionsWirftUnauthorizedWennAuthenticationFehlt() {
-        assertThatThrownBy(() -> privacyController.getPermissions(null))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("User is not authenticated");
-    }
+  @Test
+  void getPermissionsWirftUnauthorizedWennAuthenticationFehlt() {
+    assertThatThrownBy(() -> privacyController.getPermissions(null))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("User is not authenticated");
+  }
 }
