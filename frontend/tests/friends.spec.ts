@@ -31,10 +31,32 @@ const incomingRequests = [
   },
 ];
 
+const incomingTripInvites = [
+  {
+    tripId: 100,
+    tripName: 'Rom-Trip',
+    invitedByUserId: 4,
+    invitedByUsername: 'florian',
+    status: 'PENDING',
+  },
+];
+
+const incomingEventInvites = [
+  {
+    eventId: 200,
+    eventName: 'Konzert',
+    invitedByUserId: 4,
+    invitedByUsername: 'florian',
+    status: 'PENDING',
+  },
+];
+
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
   await mockJson(page, '**/api/friends', friends);
   await mockJson(page, '**/api/friends/requests/incoming', []);
+  await mockJson(page, '**/api/TripInvites/incoming', []);
+  await mockJson(page, '**/api/event/invites/incoming', []);
 });
 
 test('Friends-Seite wird angezeigt', async ({ page }) => {
@@ -186,4 +208,120 @@ test('Anfrage ablehnen entfernt sie aus der Liste', async ({ page }) => {
   await page.getByRole('button', { name: 'Decline' }).click();
 
   await expect(page.getByText('No open friend requests.')).toBeVisible();
+});
+
+//trip invites
+
+test('Eingehende Trip-Einladung wird angezeigt', async ({ page }) => {
+  await mockJson(page, '**/api/TripInvites/incoming', incomingTripInvites);
+
+  await page.goto('/friends');
+
+  await expect(page.getByRole('heading', { name: 'Incoming Invitations' })).toBeVisible();
+  await expect(page.getByText('florian')).toBeVisible();
+  await expect(page.getByText('Rom-Trip')).toBeVisible();
+});
+
+test('Keine offenen Einladungen zeigt Hinweistext', async ({ page }) => {
+  await page.goto('/friends');
+
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+});
+
+test('Trip-Einladung annehmen entfernt sie aus der Liste', async ({ page }) => {
+  await mockJson(page, '**/api/TripInvites/incoming', incomingTripInvites);
+  await page.route('**/api/TripInvites/100/accept', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        tripId: 100,
+        userId: 1,
+        message: 'Trip invite accepted',
+      }),
+    });
+  });
+
+  await page.goto('/friends');
+  await expect(page.getByText('Rom-Trip')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Accept' }).click();
+
+  await expect(page.getByText('Rom-Trip')).toBeHidden();
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+});
+
+test('Trip-Einladung ablehnen entfernt sie aus der Liste', async ({ page }) => {
+  await mockJson(page, '**/api/TripInvites/incoming', incomingTripInvites);
+  await page.route('**/api/TripInvites/100/decline', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        tripId: 100,
+        userId: 1,
+        message: 'Trip invite declined',
+      }),
+    });
+  });
+
+  await page.goto('/friends');
+  await expect(page.getByText('Rom-Trip')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Decline' }).click();
+
+  await expect(page.getByText('Rom-Trip')).toBeHidden();
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+});
+
+//Event Invites
+
+test('Eingehende Event-Einladung wird angezeigt', async ({ page }) => {
+  await mockJson(page, '**/api/event/invites/incoming', incomingEventInvites);
+
+  await page.goto('/friends');
+
+  await expect(page.getByRole('heading', { name: 'Incoming Invitations' })).toBeVisible();
+  await expect(page.getByText('florian')).toBeVisible();
+  await expect(page.getByText('Konzert')).toBeVisible();
+});
+
+test('Event-Einladung annehmen entfernt sie aus der Liste', async ({ page }) => {
+  await mockJson(page, '**/api/event/invites/incoming', incomingEventInvites);
+  await page.route('**/api/event/200/respond?status=ACCEPTED', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/friends');
+  await expect(page.getByText('Konzert')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Accept' }).click();
+
+  await expect(page.getByText('Konzert')).toBeHidden();
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+});
+
+test('Event-Einladung ablehnen entfernt sie aus der Liste', async ({ page }) => {
+  await mockJson(page, '**/api/event/invites/incoming', incomingEventInvites);
+  await page.route('**/api/event/200/respond?status=DECLINED', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+
+  await page.goto('/friends');
+  await expect(page.getByText('Konzert')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Decline' }).click();
+
+  await expect(page.getByText('Konzert')).toBeHidden();
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+});
+
+test('Trip- und Event-Einladungen werden gleichzeitig angezeigt', async ({ page }) => {
+  await mockJson(page, '**/api/TripInvites/incoming', incomingTripInvites);
+  await mockJson(page, '**/api/event/invites/incoming', incomingEventInvites);
+
+  await page.goto('/friends');
+
+  await expect(page.getByText('Rom-Trip')).toBeVisible();
+  await expect(page.getByText('Konzert')).toBeVisible();
 });
