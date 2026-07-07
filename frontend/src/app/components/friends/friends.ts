@@ -1,5 +1,6 @@
 import {Component, inject, OnInit, OnDestroy} from '@angular/core';
-import {Friend, FriendSearchResult, FriendsService, FriendRequestDTO} from '../../services/friends.service';
+import {Friend, FriendSearchResult, FriendsService, FriendRequestDTO, TripInviteDTO,
+  EventInviteDTO,} from '../../services/friends.service';
 import {FormsModule} from '@angular/forms';
 import {WebSocketService} from '../../services/websocket.service';
 import {Subscription} from 'rxjs';
@@ -19,6 +20,8 @@ export class Friends implements OnInit, OnDestroy {
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
   incomingRequests: FriendRequestDTO[] = [];
+  incomingTripInvites: TripInviteDTO[] = [];
+  incomingEventInvites: EventInviteDTO[] = [];
   searchName = '';
   hasSearched = false;
   requestSent: Record<string, boolean> = {};
@@ -28,6 +31,8 @@ export class Friends implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadFriends();
     this.loadIncomingRequests();
+    this.loadIncomingTripInvites();
+    this.loadIncomingEventInvites();
 
     // Live-Updates über WebSocket
     this.subscriptions.add(
@@ -56,6 +61,34 @@ export class Friends implements OnInit, OnDestroy {
         );
       })
     );
+
+    this.subscriptions.add(
+      this.webSocketService.newTripInvite$.subscribe((invite) => {
+        this.incomingTripInvites = [...this.incomingTripInvites, invite];
+      })
+    );
+
+    this.subscriptions.add(
+      this.webSocketService.tripInviteAnswered$.subscribe((invite) => {
+        this.incomingTripInvites = this.incomingTripInvites.filter(
+          (i) => i.tripId !== invite.tripId
+        );
+      })
+    );
+
+    this.subscriptions.add(
+      this.webSocketService.newEventInvite$.subscribe((invite) => {
+        this.incomingEventInvites = [...this.incomingEventInvites, invite];
+      })
+    );
+
+    this.subscriptions.add(
+      this.webSocketService.eventInviteAnswered$.subscribe((invite) => {
+        this.incomingEventInvites = this.incomingEventInvites.filter(
+          (i) => i.eventId !== invite.eventId
+        );
+      })
+    );
   }
 
   ngOnDestroy() {
@@ -73,6 +106,20 @@ export class Friends implements OnInit, OnDestroy {
     this.friendsService.getIncomingRequests().subscribe({
       next: (data) => (this.incomingRequests = data),
       error: (error) => console.error('Error while loading incoming requests:', error),
+    });
+  }
+
+  private loadIncomingTripInvites(): void {
+    this.friendsService.getIncomingTripInvites().subscribe({
+      next: (data) => (this.incomingTripInvites = data),
+      error: (error) => console.error('Error while loading trip invites:', error),
+    });
+  }
+
+  private loadIncomingEventInvites(): void {
+    this.friendsService.getIncomingEventInvites().subscribe({
+      next: (data) => (this.incomingEventInvites = data),
+      error: (error) => console.error('Error while loading event invites:', error),
     });
   }
 
@@ -94,7 +141,7 @@ export class Friends implements OnInit, OnDestroy {
   sendFriendRequest(userId: number): void {
     this.friendsService.sendFriendRequest(userId).subscribe({
       next: (dto) => {
-        // Falls automatisch akzeptiert wurde (reverse request), sofort als connected markieren
+        this.requestSent = { ...this.requestSent, [userId]: true };
         if (dto.status === 'ACCEPTED') {
           this.searchResults = this.searchResults.map((user) =>
             user.id === userId ? {...user, connected: true} : user
@@ -104,9 +151,12 @@ export class Friends implements OnInit, OnDestroy {
       },
       error: (error) => console.error('Error while sending friend request:', error),
     });
-    this.requestSent[userId] = true;
   }
 
+  /**
+   * accepting the friendrequest
+   * @param requestId
+   */
   acceptRequest(requestId: number): void {
     this.friendsService.acceptFriendRequest(requestId).subscribe({
       next: () => {
@@ -117,6 +167,10 @@ export class Friends implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * declining the friendrequest
+   * @param requestId
+   */
   declineRequest(requestId: number): void {
     this.friendsService.declineFriendRequest(requestId).subscribe({
       next: () => {
@@ -141,6 +195,42 @@ export class Friends implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error while removing friend:', error);
       }
+    });
+  }
+
+  acceptTripInvite(tripId: number): void {
+    this.friendsService.acceptTripInvite(tripId).subscribe({
+      next: () => {
+        this.incomingTripInvites = this.incomingTripInvites.filter((i) => i.tripId !== tripId);
+      },
+      error: (error) => console.error('Error while accepting trip invite:', error),
+    });
+  }
+
+  declineTripInvite(tripId: number): void {
+    this.friendsService.declineTripInvite(tripId).subscribe({
+      next: () => {
+        this.incomingTripInvites = this.incomingTripInvites.filter((i) => i.tripId !== tripId);
+      },
+      error: (error) => console.error('Error while declining trip invite:', error),
+    });
+  }
+
+  acceptEventInvite(eventId: number): void {
+    this.friendsService.acceptEventInvite(eventId).subscribe({
+      next: () => {
+        this.incomingEventInvites = this.incomingEventInvites.filter((i) => i.eventId !== eventId);
+      },
+      error: (error) => console.error('Error while accepting event invite:', error),
+    });
+  }
+
+  declineEventInvite(eventId: number): void {
+    this.friendsService.declineEventInvite(eventId).subscribe({
+      next: () => {
+        this.incomingEventInvites = this.incomingEventInvites.filter((i) => i.eventId !== eventId);
+      },
+      error: (error) => console.error('Error while declining event invite:', error),
     });
   }
 }
