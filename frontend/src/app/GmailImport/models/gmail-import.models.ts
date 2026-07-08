@@ -46,3 +46,12 @@ export interface CreatedEvent {
   end: string;
   message: string;
 }
+
+/** Summary returned after an automatic scan-and-import, which creates events with no review step. */
+export interface GmailAutoImportResult {
+  scanned: number;
+  created: number;
+  skippedNoDate: number;
+  skippedDuplicate: number;
+  message: string;
+}

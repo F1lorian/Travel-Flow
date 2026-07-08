@@ -19,7 +19,8 @@ describe('GmailImportComponent', () => {
       'connect',
       'disconnect',
       'scan',
-      'importEvent'
+      'importEvent',
+      'autoImport'
     ]);
     serviceSpy.getStatus.and.returnValue(of({ connected: true, emailAddress: 'a@gmail.com' }));
     serviceSpy.connect.and.returnValue(of({ connected: true, emailAddress: 'a@gmail.com' }));
@@ -128,5 +129,19 @@ describe('GmailImportComponent', () => {
     expect(serviceSpy.importEvent).toHaveBeenCalled();
     expect(component.successMessage()).toContain('Event created successfully');
     expect(component.selected()).toBeNull();
+  });
+
+  it('auto-imports events and shows a summary', () => {
+    configure();
+    serviceSpy.autoImport.and.returnValue(
+      of({ scanned: 3, created: 2, skippedNoDate: 1, skippedDuplicate: 0, message: 'ok' })
+    );
+
+    component.autoImport();
+
+    expect(serviceSpy.autoImport).toHaveBeenCalled();
+    expect(component.successMessage()).toContain('2 event(s) created');
+    expect(component.successMessage()).toContain('1 skipped (no date)');
+    expect(component.isBusy()).toBeFalse();
   });
 });

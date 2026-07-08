@@ -127,6 +127,30 @@ export class GmailImportComponent implements OnInit {
     });
   }
 
+  /** Scans recent emails and creates the detected events automatically, with no review step. */
+  autoImport(): void {
+    this.resetMessages();
+    this.isBusy.set(true);
+    this.selected.set(null);
+    this.gmailService.autoImport().subscribe({
+      next: (result) => {
+        this.isBusy.set(false);
+        const parts = [`${result.created} event(s) created`];
+        if (result.skippedDuplicate > 0) {
+          parts.push(`${result.skippedDuplicate} already imported`);
+        }
+        if (result.skippedNoDate > 0) {
+          parts.push(`${result.skippedNoDate} skipped (no date)`);
+        }
+        this.successMessage.set(`Auto-import finished: ${parts.join(', ')}.`);
+      },
+      error: (err) => {
+        this.isBusy.set(false);
+        this.errorMessage.set(this.readError(err, 'Could not import your emails. Please try again.'));
+      }
+    });
+  }
+
   /** Opens the confirmation form pre-filled with the chosen event's extracted values. */
   reviewEvent(event: ExtractedEvent): void {
     this.resetMessages();

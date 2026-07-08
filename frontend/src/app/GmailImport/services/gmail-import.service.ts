@@ -5,6 +5,7 @@ import {
   CreatedEvent,
   ExtractedEvent,
   GmailAuthUrl,
+  GmailAutoImportResult,
   GmailConnectionStatus,
   GmailImportRequest
 } from '../models/gmail-import.models';
@@ -46,5 +47,10 @@ export class GmailImportService {
   /** Creates a calendar event from the confirmed values. */
   importEvent(request: GmailImportRequest): Observable<CreatedEvent> {
     return this.http.post<CreatedEvent>(`${this.baseUrl}/import`, request);
+  }
+
+  /** Scans recent emails and creates events automatically (no review), returning a summary. */
+  autoImport(): Observable<GmailAutoImportResult> {
+    return this.http.post<GmailAutoImportResult>(`${this.baseUrl}/import-auto`, {});
   }
 }

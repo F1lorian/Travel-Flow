@@ -28,10 +28,17 @@
         <button type="button" class="btn btn--primary" (click)="scanEmails()" [disabled]="isBusy()">
           {{ isBusy() ? 'Working…' : 'Scan recent emails' }}
         </button>
+        <button type="button" class="btn btn--primary" (click)="autoImport()" [disabled]="isBusy()">
+          {{ isBusy() ? 'Working…' : 'Auto-import events' }}
+        </button>
         <button type="button" class="btn btn--ghost" (click)="disconnectGmail()" [disabled]="isBusy()">
           Disconnect
         </button>
       </div>
+      <p class="gmail-import__hint">
+        "Scan recent emails" lets you review each event before saving. "Auto-import events" creates
+        them directly from your recent mail — already-imported emails are skipped.
+      </p>
     } @else {
       <p class="gmail-import__status">No Gmail account connected yet.</p>
       <button type="button" class="btn btn--primary" (click)="connectGmail()" [disabled]="isBusy()">
