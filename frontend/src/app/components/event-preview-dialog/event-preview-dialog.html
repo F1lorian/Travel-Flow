@@ -1,0 +1,74 @@
+<div class="w-[560px] max-w-[calc(100vw-32px)] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
+  <div class="mb-5">
+    <h2 class="text-2xl font-bold tracking-tight text-slate-900">
+      Check event details
+    </h2>
+    <p class="mt-1 text-sm leading-6 text-slate-600">
+      These values were extracted from the email. Correct any mistakes before the event is created.
+    </p>
+  </div>
+
+  <div class="mb-6 flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="preview-name">Name</label>
+      <input
+        id="preview-name"
+        type="text"
+        [(ngModel)]="name"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="preview-kosten">Costs</label>
+      <input
+        id="preview-kosten"
+        type="number"
+        min="0"
+        [(ngModel)]="kosten"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="preview-start">Start</label>
+      <input
+        id="preview-start"
+        type="datetime-local"
+        [(ngModel)]="start"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="preview-end">End</label>
+      <input
+        id="preview-end"
+        type="datetime-local"
+        [(ngModel)]="end"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-2">
+    <button
+      (click)="cancel()"
+      class="rounded-lg border border-slate-300 bg-white px-5 py-3
+         font-semibold text-slate-700
+         transition hover:bg-slate-100">
+      Cancel
+    </button>
+
+    <button
+      (click)="confirm()"
+      class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]">
+      Create event
+    </button>
+  </div>
+</div>

@@ -5,6 +5,7 @@ import {EventService} from '../../../event-adding-manual/service/event.service';
 import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
+import {EventPreviewDialog} from '../event-preview-dialog/event-preview-dialog';
 import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
 
 interface EventTransferDialogData {
@@ -99,8 +100,9 @@ export class EventTransferDialog implements OnInit {
   }
 
   /**
-   * Parses the selected .eml file, checks the parsed time for conflicts, and saves the
-   * imported event only after the user confirms possible conflicts.
+   * Parses the selected .eml file, lets the user double-check and correct the extracted
+   * values, checks the reviewed time for conflicts, and saves the imported event only
+   * after the user confirms.
    */
   uploadFile() {
     if (!this.file) {
@@ -114,32 +116,52 @@ export class EventTransferDialog implements OnInit {
 
     this.eventService.parseEvent(formData, this.tripId).subscribe({
       next: (parsedEvent) => {
-        this.eventService.getConflictEvents(parsedEvent.start, parsedEvent.end).subscribe({
-          next: (conflicts) => {
-            if (conflicts.length > 0) {
-              const dialogRef = this.dialog.open(ConflictDialog, {
-                maxWidth: '560px',
-                data: { conflicts },
-              });
+        const previewRef = this.dialog.open(EventPreviewDialog, {
+          maxWidth: '560px',
+          data: { parsedEvent },
+        });
 
-              dialogRef.afterClosed().subscribe(confirmed => {
-                if (confirmed) {
-                  this.saveParsedEvent(parsedEvent);
-                }
-              });
-
-              return;
-            }
-
-            this.saveParsedEvent(parsedEvent);
-          },
-          error: (err) => {
-            this.showMessage(err.error || 'Konfliktpruefung fehlgeschlagen.');
+        previewRef.afterClosed().subscribe((reviewedEvent: ParsedEvent | undefined) => {
+          if (!reviewedEvent) {
+            return;
           }
+
+          this.checkConflictsAndSave(reviewedEvent);
         });
       },
       error: (err) => {
         this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
+      }
+    });
+  }
+
+  /**
+   * Checks the reviewed event for time conflicts and saves it, asking the user to confirm
+   * first when overlapping events exist.
+   * @param reviewedEvent event values the user confirmed in the preview dialog
+   */
+  private checkConflictsAndSave(reviewedEvent: ParsedEvent) {
+    this.eventService.getConflictEvents(reviewedEvent.start, reviewedEvent.end).subscribe({
+      next: (conflicts) => {
+        if (conflicts.length > 0) {
+          const dialogRef = this.dialog.open(ConflictDialog, {
+            maxWidth: '560px',
+            data: { conflicts },
+          });
+
+          dialogRef.afterClosed().subscribe(confirmed => {
+            if (confirmed) {
+              this.saveParsedEvent(reviewedEvent);
+            }
+          });
+
+          return;
+        }
+
+        this.saveParsedEvent(reviewedEvent);
+      },
+      error: (err) => {
+        this.showMessage(err.error || 'Konfliktpruefung fehlgeschlagen.');
       }
     });
   }
