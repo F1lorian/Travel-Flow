@@ -97,9 +97,7 @@ public class GeminiEventExtractor implements AiEventExtractor {
     dto.setDate(parseDate(node.path("date").asText(null)));
     dto.setStartTime(parseTime(node.path("startTime").asText(null)));
     dto.setEndTime(parseTime(node.path("endTime").asText(null)));
-    dto.setTimeZone(textOrNull(node, "timeZone", null));
     dto.setLocation(textOrNull(node, "location", null));
-    dto.setOrganizer(textOrNull(node, "organizer", null));
     return dto;
   }
 
@@ -113,17 +111,13 @@ public class GeminiEventExtractor implements AiEventExtractor {
           "date": "yyyy-MM-dd",
           "startTime": "HH:mm",
           "endTime": "HH:mm",
-          "timeZone": "",
-          "location": "",
-          "organizer": ""
+          "location": ""
         }
 
         Rules:
         - Use an empty string for any field that is not present in the email.
         - Never invent values; only extract what the email actually states.
         - date must be yyyy-MM-dd; startTime and endTime must be 24-hour HH:mm.
-        - timeZone should be an IANA name (e.g. Europe/Berlin) if the email states one.
-        - organizer is the person or company hosting the event, if named.
 
         Subject:
         %s

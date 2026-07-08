@@ -45,8 +45,7 @@ class EmailEventParserTest {
             "@type": "Place",
             "name": "Arena",
             "address": {"streetAddress": "Main St 1", "addressLocality": "Berlin"}
-          },
-          "organizer": {"@type": "Organization", "name": "EventCorp"}
+          }
         }
         """;
 
@@ -57,9 +56,7 @@ class EmailEventParserTest {
     assertThat(event.getDate()).isEqualTo(LocalDate.of(2026, 6, 1));
     assertThat(event.getStartTime()).isEqualTo(LocalTime.of(20, 0));
     assertThat(event.getEndTime()).isEqualTo(LocalTime.of(22, 0));
-    assertThat(event.getTimeZone()).isEqualTo("+02:00");
     assertThat(event.getLocation()).isEqualTo("Arena, Main St 1, Berlin");
-    assertThat(event.getOrganizer()).isEqualTo("EventCorp");
     assertThat(event.getSourceMessageId()).isEqualTo("msg-1");
   }
 

@@ -177,7 +177,6 @@ public class EmailEventParser {
     applyDateTime(dto, dateSource.path("endDate").asText(null), false);
 
     dto.setLocation(extractLocation(eventNode, detail));
-    dto.setOrganizer(extractOrganizer(eventNode));
     return dto;
   }
 
@@ -192,9 +191,6 @@ public class EmailEventParser {
     if (isStart) {
       dto.setDate(parsed.date());
       dto.setStartTime(parsed.time());
-      if (parsed.zone() != null) {
-        dto.setTimeZone(parsed.zone());
-      }
     } else {
       dto.setEndTime(parsed.time());
       if (dto.getDate() == null) {
@@ -239,14 +235,6 @@ public class EmailEventParser {
     addIfPresent(parts, addressNode.path("addressLocality").asText(null));
     addIfPresent(parts, addressNode.path("addressCountry").asText(null));
     return parts.isEmpty() ? null : String.join(", ", parts);
-  }
-
-  private String extractOrganizer(JsonNode eventNode) {
-    JsonNode organizer = eventNode.path("organizer");
-    if (organizer.isTextual()) {
-      return blankToNull(organizer.asText());
-    }
-    return blankToNull(organizer.path("name").asText(null));
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -415,26 +403,26 @@ public class EmailEventParser {
   // ---------------------------------------------------------------------------------------------
 
   /** Result of splitting an ISO date-time string into calendar parts. */
-  private record ParsedInstant(LocalDate date, LocalTime time, String zone) {}
+  private record ParsedInstant(LocalDate date, LocalTime time) {}
 
   private ParsedInstant parseFlexibleDateTime(String value) {
     String trimmed = value.trim();
     try {
       // Handles offsets/zones, e.g. 2026-06-01T20:00:00+02:00
       OffsetDateTime odt = OffsetDateTime.parse(trimmed);
-      return new ParsedInstant(odt.toLocalDate(), odt.toLocalTime(), odt.getOffset().getId());
+      return new ParsedInstant(odt.toLocalDate(), odt.toLocalTime());
     } catch (Exception ignored) {
       // fall through
     }
     try {
       var ldt = java.time.LocalDateTime.parse(trimmed);
-      return new ParsedInstant(ldt.toLocalDate(), ldt.toLocalTime(), null);
+      return new ParsedInstant(ldt.toLocalDate(), ldt.toLocalTime());
     } catch (Exception ignored) {
       // fall through
     }
     try {
       LocalDate date = LocalDate.parse(trimmed, DateTimeFormatter.ISO_LOCAL_DATE);
-      return new ParsedInstant(date, null, null);
+      return new ParsedInstant(date, null);
     } catch (Exception ignored) {
       return null;
     }

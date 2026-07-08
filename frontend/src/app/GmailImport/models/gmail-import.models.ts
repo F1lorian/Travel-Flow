@@ -22,9 +22,7 @@ export interface ExtractedEvent {
   date: string | null;
   startTime: string | null;
   endTime: string | null;
-  timeZone: string | null;
   location: string | null;
-  organizer: string | null;
 }
 
 /** The values the user confirmed on the review form, sent back to create the event. */

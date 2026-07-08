@@ -69,9 +69,7 @@ describe('GmailImportComponent', () => {
         date: '2026-06-01',
         startTime: '20:00:00',
         endTime: null,
-        timeZone: null,
-        location: 'Arena',
-        organizer: null
+        location: 'Arena'
       }
     ];
     serviceSpy.scan.and.returnValue(of(events));
@@ -91,9 +89,7 @@ describe('GmailImportComponent', () => {
       date: '2026-06-01',
       startTime: '20:00:00',
       endTime: '22:00:00',
-      timeZone: null,
-      location: 'Arena',
-      organizer: null
+      location: 'Arena'
     });
 
     expect(component.selected()).not.toBeNull();
@@ -124,9 +120,7 @@ describe('GmailImportComponent', () => {
       date: '2026-06-01',
       startTime: '19:00:00',
       endTime: '21:00:00',
-      timeZone: null,
-      location: 'Bistro',
-      organizer: null
+      location: 'Bistro'
     });
 
     component.createEvent();
