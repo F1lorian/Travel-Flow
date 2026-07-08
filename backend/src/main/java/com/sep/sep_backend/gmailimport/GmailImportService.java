@@ -1,14 +1,17 @@
 package com.sep.sep_backend.gmailimport;
 
 import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.ImportedGmailMessage;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.gmailimport.dto.CreatedEventDTO;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionStatusDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailImportRequestDTO;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.ImportedGmailMessageRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -49,6 +52,7 @@ public class GmailImportService {
   private final UserRepository userRepository;
   private final UserEventRepository userEventRepository;
   private final TripRepository tripRepository;
+  private final ImportedGmailMessageRepository importedGmailMessageRepository;
   private final int maxMessages;
   private final int scanConcurrency;
   private final int scanTimeoutSeconds;
@@ -61,6 +65,7 @@ public class GmailImportService {
       UserRepository userRepository,
       UserEventRepository userEventRepository,
       TripRepository tripRepository,
+      ImportedGmailMessageRepository importedGmailMessageRepository,
       @org.springframework.beans.factory.annotation.Value("${gmail.import.max-messages:15}")
           int maxMessages,
       @org.springframework.beans.factory.annotation.Value("${gmail.import.scan-concurrency:5}")
@@ -74,6 +79,7 @@ public class GmailImportService {
     this.userRepository = userRepository;
     this.userEventRepository = userEventRepository;
     this.tripRepository = tripRepository;
+    this.importedGmailMessageRepository = importedGmailMessageRepository;
     this.maxMessages = maxMessages;
     this.scanConcurrency = Math.max(1, scanConcurrency);
     this.scanTimeoutSeconds = scanTimeoutSeconds;
@@ -212,23 +218,101 @@ public class GmailImportService {
     if (date == null) {
       throw new IllegalArgumentException("A date is required to create an event");
     }
-    String title =
-        request.getTitle() == null || request.getTitle().isBlank()
-            ? "Untitled event"
-            : request.getTitle().trim();
+    Event savedEvent =
+        persistEvent(
+            userId,
+            request.getTitle(),
+            request.getDescription(),
+            date,
+            request.getStartTime(),
+            request.getEndTime(),
+            request.getKosten(),
+            request.getTripId());
+    return new CreatedEventDTO(
+        String.valueOf(savedEvent.getId()),
+        savedEvent.getName(),
+        savedEvent.getStartTime(),
+        savedEvent.getEndTime(),
+        "Event created successfully");
+  }
 
-    LocalDateTime start =
-        date.atTime(request.getStartTime() != null ? request.getStartTime() : LocalTime.MIDNIGHT);
-    LocalDateTime end = resolveEnd(date, start, request.getStartTime(), request.getEndTime());
+  /**
+   * Scans the user's recent emails and immediately creates a calendar event for every confident
+   * detection, without any review step. "Confident" means a date was actually extracted; keyword-
+   * only guesses (no date) are skipped so the automatic path does not spam the calendar. Messages
+   * imported on a previous scan are skipped via the persistent {@link ImportedGmailMessage} record,
+   * so re-scanning the same inbox never creates duplicates.
+   *
+   * @param userId local user id
+   * @return a summary of how many events were created and why others were skipped
+   */
+  public GmailAutoImportResultDTO scanAndImport(long userId) {
+    List<ExtractedEventDTO> detected = scanRecentEmails(userId);
+    int created = 0;
+    int skippedNoDate = 0;
+    int skippedDuplicate = 0;
+    for (ExtractedEventDTO event : detected) {
+      if (event.getDate() == null) {
+        skippedNoDate++;
+        continue;
+      }
+      String messageId = event.getSourceMessageId();
+      if (messageId != null
+          && importedGmailMessageRepository.existsByUserIdAndMessageId(userId, messageId)) {
+        skippedDuplicate++;
+        continue;
+      }
+      // Automatic import is not tied to a trip and has no user-entered price.
+      persistEvent(
+          userId,
+          event.getTitle(),
+          event.getDescription(),
+          event.getDate(),
+          event.getStartTime(),
+          event.getEndTime(),
+          0,
+          null);
+      if (messageId != null) {
+        importedGmailMessageRepository.save(new ImportedGmailMessage(userId, messageId));
+      }
+      created++;
+    }
+    log.info(
+        "Gmail auto-import for user {}: {} created, {} skipped (no date), {} skipped (duplicate)",
+        userId,
+        created,
+        skippedNoDate,
+        skippedDuplicate);
+    return new GmailAutoImportResultDTO(
+        detected.size(),
+        created,
+        skippedNoDate,
+        skippedDuplicate,
+        created + " event(s) created from Gmail");
+  }
+
+  /** Builds and persists a calendar event plus the creator's accepted participation. */
+  private Event persistEvent(
+      long userId,
+      String rawTitle,
+      String description,
+      LocalDate date,
+      LocalTime startTime,
+      LocalTime endTime,
+      double kosten,
+      Long tripId) {
+    String title = rawTitle == null || rawTitle.isBlank() ? "Untitled event" : rawTitle.trim();
+    LocalDateTime start = date.atTime(startTime != null ? startTime : LocalTime.MIDNIGHT);
+    LocalDateTime end = resolveEnd(date, start, startTime, endTime);
 
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-    Trip trip = findTrip(request.getTripId());
+    Trip trip = findTrip(tripId);
 
-    Event event = new Event(title, start, end, request.getKosten(), trip);
-    event.setDescription(request.getDescription());
+    Event event = new Event(title, start, end, kosten, trip);
+    event.setDescription(description);
     Event savedEvent = eventRepository.save(event);
 
     UserEvent participation = new UserEvent(savedEvent, user, user);
@@ -236,12 +320,7 @@ public class GmailImportService {
     userEventRepository.save(participation);
 
     log.info("Created calendar event {} for user {} from Gmail import", savedEvent.getId(), userId);
-    return new CreatedEventDTO(
-        String.valueOf(savedEvent.getId()),
-        savedEvent.getName(),
-        savedEvent.getStartTime(),
-        savedEvent.getEndTime(),
-        "Event created successfully");
+    return savedEvent;
   }
 
   private Optional<ExtractedEventDTO> parseMessageSafely(String accessToken, String messageId) {

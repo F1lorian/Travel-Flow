@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailImportRequestDTO;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDate;
@@ -51,6 +52,21 @@ class GmailImportControllerTest {
         controller.importEvent(new GmailImportRequestDTO(), authentication);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+  }
+
+  @Test
+  void importAutoDelegatesToServiceForCurrentUser() {
+    Authentication authentication = authentication("alice");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("alice", ""))
+        .thenReturn(Optional.of(user(7L)));
+    GmailAutoImportResultDTO summary =
+        new GmailAutoImportResultDTO(3, 2, 1, 0, "2 event(s) created");
+    when(service.scanAndImport(7L)).thenReturn(summary);
+
+    GmailAutoImportResultDTO result = controller.importAuto(authentication);
+
+    assertThat(result.created()).isEqualTo(2);
+    verify(service).scanAndImport(7L);
   }
 
   @Test

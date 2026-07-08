@@ -9,12 +9,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sep.sep_backend.entities.Event;
+import com.sep.sep_backend.entities.ImportedGmailMessage;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.gmailimport.dto.CreatedEventDTO;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailImportRequestDTO;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.ImportedGmailMessageRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -41,6 +44,7 @@ class GmailImportServiceTest {
   @Mock private UserRepository userRepository;
   @Mock private UserEventRepository userEventRepository;
   @Mock private TripRepository tripRepository;
+  @Mock private ImportedGmailMessageRepository importedGmailMessageRepository;
 
   private GmailImportService service;
 
@@ -55,6 +59,7 @@ class GmailImportServiceTest {
             userRepository,
             userEventRepository,
             tripRepository,
+            importedGmailMessageRepository,
             20,
             5,
             45);
@@ -152,6 +157,70 @@ class GmailImportServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("date is required");
     verify(eventRepository, never()).save(any());
+  }
+
+  @Test
+  void scanAndImportCreatesEventsForConfidentDetectionsAndRecordsThem() {
+    when(oAuthService.getValidAccessToken(7L)).thenReturn("token");
+    when(gmailApiClient.listRecentMessageIds("token", 20)).thenReturn(List.of("m1"));
+    when(gmailApiClient.getRawMessage(eq("token"), any())).thenReturn(new byte[] {1});
+    ExtractedEventDTO concert = event("Concert", LocalDate.of(2026, 6, 1), LocalTime.of(20, 0));
+    concert.setSourceMessageId("m1");
+    when(emailEventParser.parse(any(), eq("m1"))).thenReturn(Optional.of(concert));
+    when(importedGmailMessageRepository.existsByUserIdAndMessageId(7L, "m1")).thenReturn(false);
+    User user = new User();
+    user.setId(7L);
+    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    GmailAutoImportResultDTO result = service.scanAndImport(7L);
+
+    assertThat(result.created()).isEqualTo(1);
+    assertThat(result.skippedNoDate()).isZero();
+    assertThat(result.skippedDuplicate()).isZero();
+    verify(eventRepository).save(any(Event.class));
+
+    ArgumentCaptor<ImportedGmailMessage> markerCaptor =
+        ArgumentCaptor.forClass(ImportedGmailMessage.class);
+    verify(importedGmailMessageRepository).save(markerCaptor.capture());
+    assertThat(markerCaptor.getValue().getMessageId()).isEqualTo("m1");
+    assertThat(markerCaptor.getValue().getUserId()).isEqualTo(7L);
+  }
+
+  @Test
+  void scanAndImportSkipsDetectionsWithoutADate() {
+    when(oAuthService.getValidAccessToken(7L)).thenReturn("token");
+    when(gmailApiClient.listRecentMessageIds("token", 20)).thenReturn(List.of("m1"));
+    when(gmailApiClient.getRawMessage(eq("token"), any())).thenReturn(new byte[] {1});
+    ExtractedEventDTO noDate = event("Vague mention of a party", null, null);
+    noDate.setSourceMessageId("m1");
+    when(emailEventParser.parse(any(), eq("m1"))).thenReturn(Optional.of(noDate));
+
+    GmailAutoImportResultDTO result = service.scanAndImport(7L);
+
+    assertThat(result.created()).isZero();
+    assertThat(result.skippedNoDate()).isEqualTo(1);
+    verify(eventRepository, never()).save(any());
+    verify(importedGmailMessageRepository, never()).save(any());
+  }
+
+  @Test
+  void scanAndImportSkipsAlreadyImportedMessages() {
+    when(oAuthService.getValidAccessToken(7L)).thenReturn("token");
+    when(gmailApiClient.listRecentMessageIds("token", 20)).thenReturn(List.of("m1"));
+    when(gmailApiClient.getRawMessage(eq("token"), any())).thenReturn(new byte[] {1});
+    ExtractedEventDTO concert = event("Concert", LocalDate.of(2026, 6, 1), LocalTime.of(20, 0));
+    concert.setSourceMessageId("m1");
+    when(emailEventParser.parse(any(), eq("m1"))).thenReturn(Optional.of(concert));
+    when(importedGmailMessageRepository.existsByUserIdAndMessageId(7L, "m1")).thenReturn(true);
+
+    GmailAutoImportResultDTO result = service.scanAndImport(7L);
+
+    assertThat(result.created()).isZero();
+    assertThat(result.skippedDuplicate()).isEqualTo(1);
+    verify(eventRepository, never()).save(any());
+    verify(importedGmailMessageRepository, never()).save(any());
   }
 
   private ExtractedEventDTO event(String title, LocalDate date, LocalTime start) {

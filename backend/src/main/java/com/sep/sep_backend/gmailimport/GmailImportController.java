@@ -3,6 +3,7 @@ package com.sep.sep_backend.gmailimport;
 import com.sep.sep_backend.gmailimport.dto.CreatedEventDTO;
 import com.sep.sep_backend.gmailimport.dto.ExtractedEventDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailAuthUrlDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailCallbackRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionStatusDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailImportRequestDTO;
@@ -69,6 +70,15 @@ public class GmailImportController {
   @GetMapping("/scan")
   public List<ExtractedEventDTO> scan(Authentication authentication) {
     return gmailImportService.scanRecentEmails(currentUserId(authentication));
+  }
+
+  /**
+   * Scans recent emails and immediately creates calendar events for confident detections, with no
+   * review step. Re-running is safe: already-imported messages are skipped.
+   */
+  @PostMapping("/import-auto")
+  public GmailAutoImportResultDTO importAuto(Authentication authentication) {
+    return gmailImportService.scanAndImport(currentUserId(authentication));
   }
 
   /** Creates a calendar event from the values the user confirmed on the review screen. */
