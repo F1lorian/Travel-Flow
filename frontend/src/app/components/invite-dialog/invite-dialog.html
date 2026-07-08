@@ -6,7 +6,7 @@
       type="button"
       (click)="inviteDropdownOpen = !inviteDropdownOpen"
       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 flex justify-between items-center">
-      <span>Invite Friends</span>
+      <span>Choose Friends to invite</span>
       <mat-icon class="text-gray-400">expand_more</mat-icon>
     </button>
 
@@ -39,6 +39,6 @@
     [disabled]="selection.length === 0"
     (click)="inviteSelectedFriend()"
   >
-    Invite to trip
+    Send Invitations
   </button>
 </div>
