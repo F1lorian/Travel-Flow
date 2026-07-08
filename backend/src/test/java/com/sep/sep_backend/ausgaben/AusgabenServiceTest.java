@@ -187,6 +187,150 @@ public class AusgabenServiceTest {
   }
 
   @Test
+  void exportAusgabenCsvExportiertAusgabenUndEventsMitHeader() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
+
+    LocalDate start = LocalDate.of(2026, 5, 1);
+    LocalDate end = LocalDate.of(2026, 5, 10);
+    Trip trip = new Trip("Duisburg");
+    Ausgabe ausgabe = new Ausgabe(200, trip, LocalDate.of(2026, 5, 9), new Categories("Essen"));
+    Event event =
+        new Event(
+            "Museum",
+            LocalDateTime.of(2026, 5, 10, 10, 0),
+            LocalDateTime.of(2026, 5, 10, 12, 0),
+            25,
+            trip);
+    event.setCategorie(new Categories("Freizeit"));
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(ausgabeRepository.findByUserAndDateBetween(user, start, end)).thenReturn(List.of(ausgabe));
+    when(eventRepository.findByUsersContainingAndStartTimeBetween(
+            user, start.atStartOfDay(), end.atStartOfDay()))
+        .thenReturn(List.of(event));
+
+    String csv = ausgabeService.exportAusgabenCsv(start, end, "maxmuster");
+
+    assertThat(csv)
+        .isEqualTo(
+            """
+            Date,Title,Trip,Category,Amount
+            2026-05-09,Expense,Duisburg,Essen,200.0
+            2026-05-10,Museum,Duisburg,Freizeit,25.0
+            """);
+  }
+
+  @Test
+  void exportAusgabenTripCsvExportiertTripAusgabenUndEscapedCsvFelder() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
+
+    Trip trip = new Trip("Paris, France");
+    trip.setId(7);
+    Ausgabe ausgabe =
+        new Ausgabe(12.5, trip, LocalDate.of(2026, 6, 1), new Categories("Food, Drinks"));
+    Event event =
+        new Event(
+            "Boat \"Tour\"",
+            LocalDateTime.of(2026, 6, 2, 10, 0),
+            LocalDateTime.of(2026, 6, 2, 11, 0),
+            30,
+            trip);
+    event.setCategorie(new Categories("Freizeit"));
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(tripRepository.findByName("Paris, France")).thenReturn(trip);
+    when(ausgabeRepository.findByUserAndTrip(user, trip)).thenReturn(List.of(ausgabe));
+    when(eventRepository.findByUsersContainingAndTrip_Id(user, trip.getId()))
+        .thenReturn(List.of(event));
+
+    String csv = ausgabeService.exportAusgabenTripCsv("Paris, France", "maxmuster");
+
+    assertThat(csv)
+        .isEqualTo(
+            "Date,Title,Trip,Category,Amount\n"
+                + "2026-06-01,Expense,\"Paris, France\",\"Food, Drinks\",12.5\n"
+                + "2026-06-02,\"Boat \"\"Tour\"\"\",\"Paris, France\",Freizeit,30.0\n");
+  }
+
+  @Test
+  void exportAusgabenTripCsvGibtNullZurueckWennTripNichtExistiert() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository);
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(tripRepository.findByName("London")).thenReturn(null);
+
+    String csv = ausgabeService.exportAusgabenTripCsv("London", "maxmuster");
+
+    assertThat(csv).isNull();
+    verifyNoInteractions(ausgabeRepository);
+    verifyNoInteractions(eventRepository);
+  }
+
+  @Test
+  void buildCsvEscapedKommasAnfuehrungszeichenUndZeilenumbrueche() {
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            mock(AusgabeRepository.class),
+            mock(TripRepository.class),
+            mock(EventRepository.class),
+            mock(CategoriesRepository.class),
+            mock(UserRepository.class));
+    AusgabeResponseDTO row = new AusgabeResponseDTO();
+    row.setDate(LocalDate.of(2026, 7, 1));
+    row.setEventName("Dinner \"Deluxe\"\nNight");
+    row.setTrip("Paris, France");
+    row.setKategorie("Food");
+    row.setKosten(45.5);
+
+    String csv = ausgabeService.buildCsv(List.of(row));
+
+    assertThat(csv)
+        .isEqualTo(
+            "Date,Title,Trip,Category,Amount\n"
+                + "2026-07-01,\"Dinner \"\"Deluxe\"\"\n"
+                + "Night\",\"Paris, France\",Food,45.5\n");
+  }
+
+  @Test
   void ausgabeProKategorieSummiertKosten() {
     // du erstellst einen Service
     AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);

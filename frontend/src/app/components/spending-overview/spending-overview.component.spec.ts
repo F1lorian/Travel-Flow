@@ -18,7 +18,8 @@ describe('SpendingOverviewComponent', () => {
     expenseServiceSpy = jasmine.createSpyObj<ExpenseService>('ExpenseService', [
       'getExpensesByPeriod',
       'getCategorySummary',
-      'deleteExpense'
+      'deleteExpense',
+      'exportExpensesByPeriod'
     ]);
     tripServiceSpy = jasmine.createSpyObj<TripService>('TripService', ['getAllTrips']);
     dialogSpy = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
@@ -26,6 +27,7 @@ describe('SpendingOverviewComponent', () => {
     expenseServiceSpy.getExpensesByPeriod.and.returnValue(of([]));
     expenseServiceSpy.getCategorySummary.and.returnValue(of([]));
     expenseServiceSpy.deleteExpense.and.returnValue(of(undefined));
+    expenseServiceSpy.exportExpensesByPeriod.and.returnValue(of(new Blob()));
     tripServiceSpy.getAllTrips.and.returnValue(of([]));
     const dialogRefSpy = jasmine.createSpyObj<MatDialogRef<unknown>>('MatDialogRef', [
       'afterClosed'
@@ -60,5 +62,18 @@ describe('SpendingOverviewComponent', () => {
     expect(dialogSpy.open).toHaveBeenCalled();
     expect(expenseServiceSpy.deleteExpense).toHaveBeenCalledWith(42);
     expect(component.loadExpenses).toHaveBeenCalled();
+  });
+
+  it('should export expenses as csv', () => {
+    const blob = new Blob(['Date,Title,Trip,Category,Amount\n']);
+    expenseServiceSpy.exportExpensesByPeriod.and.returnValue(of(blob));
+    spyOn<any>(component, 'downloadCsv');
+
+    component.startDate = '2026-05-01';
+    component.endDate = '2026-05-10';
+    component.exportCsv();
+
+    expect(expenseServiceSpy.exportExpensesByPeriod).toHaveBeenCalledWith('2026-05-01', '2026-05-10');
+    expect((component as any).downloadCsv).toHaveBeenCalledWith(blob, 'cashbook-export.csv');
   });
 });

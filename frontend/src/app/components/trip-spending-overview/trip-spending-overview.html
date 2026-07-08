@@ -62,25 +62,33 @@
     </div>
 
     <apx-chart
+      *ngIf="categorySummary.length > 0"
       [labels]="chartlabels"
       [series]="chartseries"
+      [colors]="chartColors"
       [chart]="chartDetails">
     </apx-chart>
 
-    <table class="data-table">
-      <thead>
-      <tr>
-        <th>Category</th>
-        <th>Expenses</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let item of categorySummary">
-        <td>{{ getCategoryLabel(item.category) }}</td>
-        <td>{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
-      </tr>
-      </tbody>
-    </table>
+    <p *ngIf="categorySummary.length === 0" class="empty">
+      There are no expenses yet. Add one above to start tracking this trip.
+    </p>
+
+    <div *ngIf="categorySummary.length > 0" class="table-scroll">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Category</th>
+          <th>Expenses</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let item of categorySummary">
+          <td data-label="Category">{{ getCategoryLabel(item.category) }}</td>
+          <td class="amount-cell" data-label="Expenses">{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- Recent expenses list -->
@@ -103,39 +111,41 @@
     </div>
 
     <p *ngIf="expenses.length === 0" class="empty">
-      No expenses found.
+      There are no expenses yet. Add one above to start tracking this trip.
     </p>
 
-    <table *ngIf="expenses.length > 0" class="data-table">
-      <thead>
-      <tr>
-        <th>Cost</th>
-        <th>Trip</th>
-        <th>Date</th>
-        <th>Category</th>
-        <th class="icon-column" aria-label="Actions"></th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let expense of displayedExpenses">
-        <td>{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ expense.trip }}</td>
-        <td>{{ expense.date }}</td>
-        <td>{{ getCategoryLabel(expense.kategorie) }}</td>
-        <td class="icon-column">
-          <button
-            class="delete-button"
-            type="button"
-            (click)="deleteExpense(expense)"
-            title="Delete expense"
-            aria-label="Delete expense"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+    <div *ngIf="expenses.length > 0" class="table-scroll">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Cost</th>
+          <th>Trip</th>
+          <th>Date</th>
+          <th>Category</th>
+          <th class="icon-column" aria-label="Actions"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let expense of displayedExpenses">
+          <td class="amount-cell" data-label="Cost">{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td data-label="Trip">{{ expense.trip }}</td>
+          <td data-label="Date">{{ expense.date }}</td>
+          <td data-label="Category">{{ getCategoryLabel(expense.kategorie) }}</td>
+          <td class="icon-column" data-label="Actions">
+            <button
+              class="delete-button"
+              type="button"
+              (click)="deleteExpense(expense)"
+              title="Delete expense"
+              aria-label="Delete expense"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
 
     <button
       *ngIf="filteredAusgaben.length > 5 && !showAllExpenses"

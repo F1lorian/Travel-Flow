@@ -14,6 +14,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -297,6 +299,76 @@ public class AusgabenControllerTest {
   }
 
   @Test
+  void exportAusgabenCsvGibtDownloadResponseZurueck() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    AusgabeService ausgabeService = mock(AusgabeService.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    AusgabeController ausgabeController =
+        new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
+    LocalDate start = LocalDate.of(2026, 5, 1);
+    LocalDate end = LocalDate.of(2026, 5, 10);
+    String csv = "Date,Title,Trip,Category,Amount\n";
+
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.exportAusgabenCsv(start, end, "maxmuster")).thenReturn(csv);
+
+    ResponseEntity<String> response =
+        ausgabeController.exportAusgabenCsv(start, end, authentication);
+
+    assertThat(response.getHeaders().getContentType().toString())
+        .isEqualTo("text/csv;charset=UTF-8");
+    assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+        .isEqualTo("attachment; filename=\"cashbook-export.csv\"");
+    assertThat(response.getBody()).isEqualTo(csv);
+    verify(ausgabeService).exportAusgabenCsv(start, end, "maxmuster");
+  }
+
+  @Test
+  void exportAusgabenTripCsvGibtDownloadResponseZurueck() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    AusgabeService ausgabeService = mock(AusgabeService.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    AusgabeController ausgabeController =
+        new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
+    String csv = "Date,Title,Trip,Category,Amount\n";
+
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.exportAusgabenTripCsv("London", "maxmuster")).thenReturn(csv);
+
+    ResponseEntity<String> response =
+        ausgabeController.exportAusgabenTripCsv("London", authentication);
+
+    assertThat(response.getHeaders().getContentType().toString())
+        .isEqualTo("text/csv;charset=UTF-8");
+    assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+        .isEqualTo("attachment; filename=\"cashbook-export.csv\"");
+    assertThat(response.getBody()).isEqualTo(csv);
+    verify(ausgabeService).exportAusgabenTripCsv("London", "maxmuster");
+  }
+
+  @Test
+  void exportAusgabenTripCsvWirftNotFoundWennTripNichtExistiert() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    AusgabeService ausgabeService = mock(AusgabeService.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    AusgabeController ausgabeController =
+        new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
+
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.exportAusgabenTripCsv("London", "maxmuster")).thenReturn(null);
+
+    assertThatThrownBy(() -> ausgabeController.exportAusgabenTripCsv("London", authentication))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("404 NOT_FOUND");
+  }
+
+  @Test
   void controllerEndpointsSindKorrektGemappt() throws NoSuchMethodException {
     // prufen ob die Endpunkte von Get und Post Mapping korrekt sind
     RequestMapping controllerMapping = AusgabeController.class.getAnnotation(RequestMapping.class);
@@ -350,5 +422,19 @@ public class AusgabenControllerTest {
         AusgabeController.class.getDeclaredMethod("verfuegbar", String.class, Authentication.class);
     GetMapping verfuegbarMapping = verfuegbarMethod.getAnnotation(GetMapping.class);
     assertThat(verfuegbarMapping.value()).containsExactly("/verfuegbar");
+
+    Method exportMethod =
+        AusgabeController.class.getDeclaredMethod(
+            "exportAusgabenCsv", LocalDate.class, LocalDate.class, Authentication.class);
+    GetMapping exportMapping = exportMethod.getAnnotation(GetMapping.class);
+    assertThat(exportMapping.value()).containsExactly("/ausgabenliste/export");
+    assertThat(exportMapping.produces()).containsExactly("text/csv");
+
+    Method tripExportMethod =
+        AusgabeController.class.getDeclaredMethod(
+            "exportAusgabenTripCsv", String.class, Authentication.class);
+    GetMapping tripExportMapping = tripExportMethod.getAnnotation(GetMapping.class);
+    assertThat(tripExportMapping.value()).containsExactly("/ausgabenlisteTrip/export");
+    assertThat(tripExportMapping.produces()).containsExactly("text/csv");
   }
 }

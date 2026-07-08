@@ -22,7 +22,8 @@ describe('TripSpendingOverviewComponent', () => {
       'getAvailable',
       'getExpensesByTrip',
       'getCategorySummaryTrip',
-      'deleteExpense'
+      'deleteExpense',
+      'exportExpensesByTrip'
     ]);
     tripServiceSpy = jasmine.createSpyObj<TripService>('TripService', ['getAllTrips', 'getTrip']);
     dialogSpy = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
@@ -34,6 +35,7 @@ describe('TripSpendingOverviewComponent', () => {
     expenseServiceSpy.getExpensesByTrip.and.returnValue(of([]));
     expenseServiceSpy.getCategorySummaryTrip.and.returnValue(of([]));
     expenseServiceSpy.deleteExpense.and.returnValue(of(undefined));
+    expenseServiceSpy.exportExpensesByTrip.and.returnValue(of(new Blob()));
     tripServiceSpy.getAllTrips.and.returnValue(of([]));
     tripServiceSpy.getTrip.and.returnValue(
       of({
@@ -78,5 +80,17 @@ describe('TripSpendingOverviewComponent', () => {
     expect(dialogSpy.open).toHaveBeenCalled();
     expect(expenseServiceSpy.deleteExpense).toHaveBeenCalledWith(42);
     expect(component.loadTripExpenses).toHaveBeenCalled();
+  });
+
+  it('should export trip expenses as csv', () => {
+    const blob = new Blob(['Date,Title,Trip,Category,Amount\n']);
+    expenseServiceSpy.exportExpensesByTrip.and.returnValue(of(blob));
+    spyOn<any>(component, 'downloadCsv');
+
+    component.tripname = 'London';
+    component.exportCsv();
+
+    expect(expenseServiceSpy.exportExpensesByTrip).toHaveBeenCalledWith('London');
+    expect((component as any).downloadCsv).toHaveBeenCalledWith(blob, 'London-expenses.csv');
   });
 });

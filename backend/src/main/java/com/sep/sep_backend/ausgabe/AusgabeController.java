@@ -262,6 +262,14 @@ public class AusgabeController {
     return result;
   }
 
+  /**
+   * Downloads the current user's expenses and event costs for a date interval as a CSV file.
+   *
+   * @param start first date of the interval
+   * @param end last date of the interval
+   * @param authentication current request authentication
+   * @return response containing CSV content and download headers
+   */
   @GetMapping(value = "/ausgabenliste/export", produces = "text/csv")
   public ResponseEntity<String> exportAusgabenCsv(@RequestParam LocalDate start,
                                                   @RequestParam LocalDate end,
@@ -273,6 +281,14 @@ public class AusgabeController {
             .body(csv);
   }
 
+  /**
+   * Downloads the current user's expenses and event costs for one trip as a CSV file.
+   *
+   * @param tripname name of the trip
+   * @param authentication current request authentication
+   * @return response containing CSV content and download headers
+   * @throws ResponseStatusException if the trip does not exist
+   */
   @GetMapping(value = "/ausgabenlisteTrip/export", produces = "text/csv")
   public ResponseEntity<String> exportAusgabenTripCsv(
       @RequestParam String tripname, Authentication authentication) {

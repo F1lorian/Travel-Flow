@@ -401,11 +401,26 @@ public class AusgabeService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
   }
 
+  /**
+   * Exports the current user's expenses and event costs within a date interval as CSV.
+   *
+   * @param start first date of the interval
+   * @param end last date of the interval
+   * @param username authenticated user's name or email
+   * @return CSV content containing the matching expenses and events
+   */
   public String exportAusgabenCsv(LocalDate start, LocalDate end, String username) {
     List<AusgabeResponseDTO> rows = ausgabenliste(start, end, username);
     return buildCsv(rows);
   }
 
+  /**
+   * Exports the current user's expenses and event costs for one trip as CSV.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return CSV content for the trip, or {@code null} if the trip does not exist
+   */
   public String exportAusgabenTripCsv(String tripname, String username) {
     List<AusgabeResponseDTO> rows = ausgabenlisteTrip(tripname, username);
     if (rows == null) {
@@ -414,6 +429,12 @@ public class AusgabeService {
     return buildCsv(rows);
   }
 
+  /**
+   * Builds CSV content from expense response rows.
+   *
+   * @param rows expenses and events that should be written to the CSV file
+   * @return CSV content with a header row and one line per expense or event
+   */
   public String buildCsv(List<AusgabeResponseDTO> rows) {
     StringBuilder csv = new StringBuilder();
     csv.append("Date,Title,Trip,Category,Amount\n");
@@ -432,7 +453,13 @@ public class AusgabeService {
     }
     return csv.toString();
   }
-  // we need escapeCsv(), because values can contain commas, for example trip name "Paris, France" would break the file unless we escape it
+
+  /**
+   * Escapes a value so it can be safely written as one CSV field.
+   *
+   * @param value field value to escape
+   * @return escaped CSV field, or an empty string for {@code null}
+   */
   public String escapeCsv(Object value) {
     if (value == null) {
       return "";

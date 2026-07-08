@@ -32,4 +32,22 @@ describe('ExpenseService', () => {
     expect(request.request.method).toBe('DELETE');
     request.flush(null);
   });
+
+  it('should export expenses by period as csv', () => {
+    service.exportExpensesByPeriod('2026-05-01', '2026-05-10').subscribe();
+
+    const request = httpMock.expectOne('/api/ausgabenliste/export?start=2026-05-01&end=2026-05-10');
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(new Blob(['Date,Title,Trip,Category,Amount\n']));
+  });
+
+  it('should export expenses by trip as csv', () => {
+    service.exportExpensesByTrip('Paris, France').subscribe();
+
+    const request = httpMock.expectOne('/api/ausgabenlisteTrip/export?tripname=Paris%2C%20France');
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('blob');
+    request.flush(new Blob(['Date,Title,Trip,Category,Amount\n']));
+  });
 });
