@@ -410,4 +410,35 @@ export class TripSpendingOverviewComponent implements OnInit {
       });
     });
   }
+
+  exportCsv(): void {
+    if (!this.tripname) {
+      return;
+    }
+
+    this.expenseService.exportExpensesByTrip(this.tripname).subscribe({
+      next: (blob) => {
+        this.downloadCsv(blob, `${this.tripname}-expenses.csv`);
+      },
+      error: (error) => {
+        console.error('Error while exporting trip expenses:', error);
+        this.errorMessage = 'Expenses could not be exported.';
+      }
+    });
+  }
+
+
+  private downloadCsv(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+  }
+
 }

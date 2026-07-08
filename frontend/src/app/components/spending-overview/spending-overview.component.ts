@@ -237,4 +237,26 @@ export class SpendingOverviewComponent implements OnInit {
       });
     });
   }
+  exportCsv(): void {
+    this.expenseService.exportExpensesByPeriod(this.startDate, this.endDate).subscribe({
+      next: (blob) => {
+        this.downloadCsv(blob, 'cashbook-export.csv');
+      },
+      error: (error) => {
+        console.error('Error while exporting expenses:', error);
+      }
+    });
+  }
+
+  private downloadCsv(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  }
+
 }

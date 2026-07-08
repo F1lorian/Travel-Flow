@@ -206,4 +206,19 @@ export class ExpenseService {
       cost: Number(cost)
     }));
   }
+
+  exportExpensesByPeriod(startDate: string, endDate: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenliste/export?start=${startDate}&end=${endDate}`,
+      { responseType: 'blob' }
+    );
+  }
+  exportExpensesByTrip(tripname: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenlisteTrip/export?tripname=${encodeURIComponent(tripname)}`,
+      { responseType: 'blob' }
+    );
+  }
+
+
 }
