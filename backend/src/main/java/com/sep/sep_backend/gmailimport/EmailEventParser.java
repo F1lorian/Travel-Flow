@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -617,10 +616,5 @@ public class EmailEventParser {
 
   private String blankToNull(String value) {
     return value == null || value.isBlank() ? null : value.trim();
-  }
-
-  /** Exposes the configured system default zone for callers that need a timezone fallback. */
-  public static String systemTimeZone() {
-    return ZoneId.systemDefault().getId();
   }
 }
