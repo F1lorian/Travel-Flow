@@ -83,6 +83,21 @@ public class EventController {
     return eventService.ParseMailFile(file.getInputStream());
   }
 
+  @PostMapping("event/import/imap/messages")
+  public List<ImapMailPreviewDTO> getImapMessages(
+      @RequestBody ImapMailboxRequestDTO request, Authentication authentication) throws Exception {
+    getCurrentUserId(authentication);
+    return eventService.getImapMailPreviews(request);
+  }
+
+  @PostMapping("event/import/imap/parse")
+  public EventResponseDTO parseSelectedImapMessage(
+      @RequestBody ImapMailSelectionRequestDTO request, Authentication authentication)
+      throws Exception {
+    getCurrentUserId(authentication);
+    return eventService.parseImapMessage(request);
+  }
+
   /**
    * Saves a previously parsed imported event and optionally assigns it to a trip.
    *

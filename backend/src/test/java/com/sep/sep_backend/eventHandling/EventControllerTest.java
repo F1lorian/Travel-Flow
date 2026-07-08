@@ -271,6 +271,71 @@ class EventControllerTest {
     verify(eventService).EditEvent(42L, request);
   }
 
+  @Test
+  void eventControllerHatDenImapMessagesEndpoint() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod(
+            "getImapMessages", ImapMailboxRequestDTO.class, Authentication.class);
+
+    PostMapping postMapping = method.getAnnotation(PostMapping.class);
+    assertThat(postMapping.value()).containsExactly("event/import/imap/messages");
+  }
+
+  @Test
+  void eventControllerHatDenImapParseEndpoint() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod(
+            "parseSelectedImapMessage", ImapMailSelectionRequestDTO.class, Authentication.class);
+
+    PostMapping postMapping = method.getAnnotation(PostMapping.class);
+    assertThat(postMapping.value()).containsExactly("event/import/imap/parse");
+  }
+
+  @Test
+  void getImapMessagesDelegatesToService() throws Exception {
+    EventService eventService = mock(EventService.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
+    ImapMailboxRequestDTO request =
+        new ImapMailboxRequestDTO(
+            "imap.example.com", 993, "mail@example.com", "secret", "INBOX", 50);
+    List<ImapMailPreviewDTO> previews =
+        List.of(new ImapMailPreviewDTO(123L, "Konzert", "tickets@example.com", null, null, ""));
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.getImapMailPreviews(request)).thenReturn(previews);
+
+    List<ImapMailPreviewDTO> response = eventController.getImapMessages(request, authentication);
+
+    assertThat(response).isSameAs(previews);
+    verify(eventService).getImapMailPreviews(request);
+  }
+
+  @Test
+  void parseSelectedImapMessageDelegatesToService() throws Exception {
+    EventService eventService = mock(EventService.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
+    ImapMailSelectionRequestDTO request =
+        new ImapMailSelectionRequestDTO(
+            "imap.example.com", 993, "mail@example.com", "secret", "INBOX", 123L);
+    EventResponseDTO parsedEvent = new EventResponseDTO("Konzert", 49, null, null);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.parseImapMessage(request)).thenReturn(parsedEvent);
+
+    EventResponseDTO response = eventController.parseSelectedImapMessage(request, authentication);
+
+    assertThat(response).isSameAs(parsedEvent);
+    verify(eventService).parseImapMessage(request);
+  }
+
   private Authentication authentication(String username) {
     Authentication authentication = mock(Authentication.class);
     when(authentication.getName()).thenReturn(username);
