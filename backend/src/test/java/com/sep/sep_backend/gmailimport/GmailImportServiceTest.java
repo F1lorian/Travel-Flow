@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.sep.sep_backend.entities.GmailAccount;
 import com.sep.sep_backend.eventHandling.EventResponseDTO;
 import com.sep.sep_backend.eventHandling.EventService;
+import com.sep.sep_backend.exception.EventDetectionException;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
 import com.sep.sep_backend.repos.GmailAccountRepository;
@@ -181,11 +183,41 @@ class GmailImportServiceTest {
               return content.equals("raw-1") ? Optional.of(event) : Optional.empty();
             });
 
-    List<EventResponseDTO> result = service.autoParse(USER_ID, List.of("m1", "m2"));
+    GmailAutoImportResultDTO result = service.autoParse(USER_ID, List.of("m1", "m2"));
 
-    assertThat(result).containsExactly(event);
+    assertThat(result.events()).containsExactly(event);
+    assertThat(result.failed()).isZero();
     verify(gmailClient).getRaw("access", "m1");
     verify(gmailClient).getRaw("access", "m2");
+  }
+
+  @Test
+  void autoParseCountsMessagesWhoseDetectionFailed() throws Exception {
+    GmailAccount account = new GmailAccount();
+    account.setEncryptedRefreshToken("enc-refresh");
+    when(gmailAccountRepository.findByUserId(USER_ID)).thenReturn(Optional.of(account));
+    when(tokenCipher.decrypt("enc-refresh")).thenReturn("refresh");
+    when(oAuthService.refreshAccessToken("refresh")).thenReturn("access");
+    when(gmailClient.getRaw("access", "m1")).thenReturn("raw-1".getBytes());
+    when(gmailClient.getRaw("access", "m2")).thenReturn("raw-2".getBytes());
+
+    EventResponseDTO event = new EventResponseDTO("Concert", 0, null, null);
+    // m1 has an event; m2's detection fails (e.g. Gemini error / rate limit).
+    when(eventService.parseMailFileIfEvent(any(InputStream.class)))
+        .thenAnswer(
+            invocation -> {
+              InputStream in = invocation.getArgument(0);
+              String content = new String(in.readAllBytes());
+              if (content.equals("raw-1")) {
+                return Optional.of(event);
+              }
+              throw new EventDetectionException("detection failed");
+            });
+
+    GmailAutoImportResultDTO result = service.autoParse(USER_ID, List.of("m1", "m2"));
+
+    assertThat(result.events()).containsExactly(event);
+    assertThat(result.failed()).isEqualTo(1);
   }
 
   @Test

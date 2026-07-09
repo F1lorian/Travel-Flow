@@ -18,6 +18,12 @@ export interface GmailMessagePreview {
   snippet: string;
 }
 
+/** Result of an automatic import: the events found and how many messages could not be checked. */
+export interface GmailAutoImportResult {
+  events: ParsedEvent[];
+  failed: number;
+}
+
 // Google OAuth Web client id, supplied at runtime via public/config.js
 // (regenerated from the GOOGLE_OAUTH_CLIENT_ID env var in Docker, see .env).
 const GOOGLE_CLIENT_ID =
@@ -52,11 +58,11 @@ export class GmailService {
   }
 
   /**
-   * Parses the given messages for automatic import and returns only those that actually contain an
-   * event (the backend uses Gemini to skip non-event mails).
+   * Parses the given messages for automatic import. The backend uses Gemini to keep only the ones
+   * that actually contain an event and reports how many messages could not be checked.
    */
-  autoParse(messageIds: string[]): Observable<ParsedEvent[]> {
-    return this.http.post<ParsedEvent[]>(`${this.apiUrl}/import/auto`, { messageIds });
+  autoParse(messageIds: string[]): Observable<GmailAutoImportResult> {
+    return this.http.post<GmailAutoImportResult>(`${this.apiUrl}/import/auto`, { messageIds });
   }
 
   /**

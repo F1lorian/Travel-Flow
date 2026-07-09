@@ -2,6 +2,7 @@ package com.sep.sep_backend.gmailimport;
 
 import com.sep.sep_backend.eventHandling.EventResponseDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportRequestDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
@@ -59,9 +60,8 @@ public class GmailImportController {
    * so non-event mails are not turned into calendar entries.
    */
   @PostMapping("/import/auto")
-  public List<EventResponseDTO> autoImport(
-      @RequestBody GmailAutoImportRequestDTO request, Authentication authentication)
-      throws Exception {
+  public GmailAutoImportResultDTO autoImport(
+      @RequestBody GmailAutoImportRequestDTO request, Authentication authentication) {
     return gmailImportService.autoParse(getCurrentUserId(authentication), request.messageIds());
   }
 

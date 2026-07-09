@@ -10,6 +10,7 @@ import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -48,6 +49,8 @@ import org.springframework.transaction.annotation.Transactional;
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
 public class EventService {
+
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EventService.class);
 
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
@@ -370,41 +373,70 @@ public class EventService {
     return detectEventWithGemini(message.getSubject(), body);
   }
 
+  /** How many times a throttled/failed Gemini detection call is retried before giving up. */
+  private static final int DETECTION_MAX_RETRIES = 2;
+
   /**
-   * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it. Returns
-   * empty when there is no event, no Gemini key, or the AI response is unusable — in automatic
-   * import it is safer to skip an uncertain mail than to create a bogus event.
+   * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
+   *
+   * <p>Returns empty for a mail that genuinely has no event (empty body or a {@code hasEvent:
+   * false} verdict). Throws {@link EventDetectionException} when detection could not run (no Gemini
+   * key, or the call keeps failing after retries) so the caller can report the message as "could
+   * not be checked" rather than silently treating a failure as "no event".
    */
   private Optional<EventResponseDTO> detectEventWithGemini(String subject, String mailText) {
-    if (geminiApiKey == null || geminiApiKey.isBlank() || mailText == null || mailText.isBlank()) {
+    if (mailText == null || mailText.isBlank()) {
       return Optional.empty();
     }
+    if (geminiApiKey == null || geminiApiKey.isBlank()) {
+      throw new EventDetectionException("Gemini API key is not configured");
+    }
 
-    try {
-      Client client = Client.builder().apiKey(geminiApiKey).build();
+    int attempt = 0;
+    while (true) {
+      try {
+        Client client = Client.builder().apiKey(geminiApiKey).build();
 
-      GenerateContentConfig config =
-          GenerateContentConfig.builder()
-              .responseMimeType("application/json")
-              .temperature(0.1f)
-              .build();
+        GenerateContentConfig config =
+            GenerateContentConfig.builder()
+                .responseMimeType("application/json")
+                .temperature(0.1f)
+                .build();
 
-      GenerateContentResponse response =
-          client.models.generateContent(
-              geminiModel, buildGeminiEventDetectionPrompt(subject, mailText), config);
+        GenerateContentResponse response =
+            client.models.generateContent(
+                geminiModel, buildGeminiEventDetectionPrompt(subject, mailText), config);
 
-      JsonNode node = objectMapper.readTree(response.text());
-      if (!node.path("hasEvent").asBoolean(false)) {
-        return Optional.empty();
+        String raw = response.text();
+        log.info("Gmail event detection for [{}] -> {}", subject, raw);
+        JsonNode node = objectMapper.readTree(raw);
+
+        String startText = node.path("startDate").asText("");
+        // Treat it as an event when the model flags one OR actually extracted a start date, so a
+        // conservative "hasEvent": false does not drop a mail that clearly contains an appointment.
+        boolean hasEvent = node.path("hasEvent").asBoolean(false) || !startText.isBlank();
+        if (!hasEvent) {
+          return Optional.empty();
+        }
+
+        String name = node.path("name").asText(subject);
+        int kosten = node.path("kosten").asInt(0);
+        LocalDateTime start = parseDatetime(startText);
+        LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
+        return Optional.of(new EventResponseDTO(name, kosten, start, end));
+      } catch (Exception exception) {
+        if (attempt++ >= DETECTION_MAX_RETRIES) {
+          log.warn("Gmail event detection failed for [{}] after {} attempts", subject, attempt);
+          throw new EventDetectionException("Gemini event detection failed", exception);
+        }
+        // Back off briefly before retrying a throttled/transient failure.
+        try {
+          Thread.sleep(400L * attempt);
+        } catch (InterruptedException interrupted) {
+          Thread.currentThread().interrupt();
+          throw new EventDetectionException("Event detection interrupted", interrupted);
+        }
       }
-
-      String name = node.path("name").asText(subject);
-      int kosten = node.path("kosten").asInt(0);
-      LocalDateTime start = parseDatetime(node.path("startDate").asText());
-      LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
-      return Optional.of(new EventResponseDTO(name, kosten, start, end));
-    } catch (Exception exception) {
-      return Optional.empty();
     }
   }
 

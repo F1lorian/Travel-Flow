@@ -277,17 +277,22 @@ export class EventTransferDialog implements OnInit {
 
   /**
    * Auto mode: asks the backend for the events among the selected messages (non-event mails are
-   * skipped there) and saves them directly.
+   * skipped there) and saves them directly. Messages the AI could not check are reported so they
+   * are never silently dropped nor mistaken for "no events".
    */
   private autoImportGmail(ids: string[]) {
     this.gmailService.autoParse(ids).subscribe({
-      next: events => {
+      next: ({ events, failed }) => {
         if (events.length === 0) {
           this.isImportingGmail = false;
-          this.showMessage('In den ausgewählten Nachrichten wurden keine Termine gefunden.');
+          this.showMessage(
+            failed > 0
+              ? `${failed} Nachricht(en) konnten nicht geprüft werden. Bitte erneut versuchen.`
+              : 'In den ausgewählten Nachrichten wurden keine Termine gefunden.',
+          );
           return;
         }
-        this.saveParsedEvents(events, 0);
+        this.saveParsedEvents(events, failed);
       },
       error: err => {
         this.isImportingGmail = false;
