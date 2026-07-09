@@ -28,6 +28,9 @@ dependencies {
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 	implementation 'com.google.genai:google-genai:1.53.0'
 	implementation 'com.google.api-client:google-api-client:2.7.2'
+	// Loads the repo-root .env into the Spring Environment so `./gradlew bootRun` picks up
+	// GOOGLE_OAUTH_*, GEMINI_*, etc. locally (Docker already feeds these via compose.yaml).
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-mail'
@@ -38,6 +41,13 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.named('bootRun') {
+	// The repo-root .env lives one directory above this module, but bootRun runs from `backend/`.
+	// Point spring-dotenv at the parent so `./gradlew bootRun` loads GOOGLE_OAUTH_*, GEMINI_*, etc.
+	// (Docker already supplies these via compose.yaml; a missing .env is ignored by default).
+	systemProperty 'springdotenv.directory', rootProject.projectDir.parentFile.absolutePath
 }
 
 spotless {
