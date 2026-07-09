@@ -8,8 +8,11 @@ import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
 import com.sep.sep_backend.repos.GmailAccountRepository;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,29 +99,53 @@ public class GmailImportService {
     return eventService.ParseMailFile(new ByteArrayInputStream(raw));
   }
 
+  /** How many messages are fetched and classified with Gemini in parallel during auto import. */
+  private static final int AUTO_IMPORT_PARALLELISM = 5;
+
   /**
    * Parses several messages for the "import automatically" mode and keeps only those that actually
-   * contain an event (Gemini-based detection). Non-event mails are silently skipped.
+   * contain an event (Gemini-based detection). Non-event mails are silently skipped. The messages
+   * are fetched and classified in parallel so a full selection does not exceed the request timeout.
    *
    * @param userId the current user
    * @param messageIds the selected message ids
    * @return the parsed events, one per message that contained an event
    */
-  public List<EventResponseDTO> autoParse(long userId, List<String> messageIds) throws Exception {
+  public List<EventResponseDTO> autoParse(long userId, List<String> messageIds) {
     if (messageIds == null || messageIds.isEmpty()) {
       throw new IllegalArgumentException("At least one message id is required");
     }
 
     String accessToken = accessTokenFor(userId);
-    List<EventResponseDTO> events = new ArrayList<>();
-    for (String messageId : messageIds) {
-      if (messageId == null || messageId.isBlank()) {
-        continue;
-      }
-      byte[] raw = gmailClient.getRaw(accessToken, messageId);
-      eventService.parseMailFileIfEvent(new ByteArrayInputStream(raw)).ifPresent(events::add);
+    List<String> ids =
+        messageIds.stream().filter(id -> id != null && !id.isBlank()).distinct().toList();
+    if (ids.isEmpty()) {
+      return List.of();
     }
-    return events;
+
+    ExecutorService executor =
+        Executors.newFixedThreadPool(Math.min(ids.size(), AUTO_IMPORT_PARALLELISM));
+    try {
+      List<CompletableFuture<Optional<EventResponseDTO>>> futures =
+          ids.stream()
+              .map(
+                  id ->
+                      CompletableFuture.supplyAsync(() -> parseIfEvent(accessToken, id), executor))
+              .toList();
+      return futures.stream().map(CompletableFuture::join).flatMap(Optional::stream).toList();
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  /** Fetches one message and returns its event if it has one; swallows per-message failures. */
+  private Optional<EventResponseDTO> parseIfEvent(String accessToken, String messageId) {
+    try {
+      byte[] raw = gmailClient.getRaw(accessToken, messageId);
+      return eventService.parseMailFileIfEvent(new ByteArrayInputStream(raw));
+    } catch (Exception exception) {
+      return Optional.empty();
+    }
   }
 
   /** Removes the stored Gmail connection for the user. */

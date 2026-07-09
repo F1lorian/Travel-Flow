@@ -171,10 +171,15 @@ class GmailImportServiceTest {
     when(gmailClient.getRaw("access", "m2")).thenReturn("raw-2".getBytes());
 
     EventResponseDTO event = new EventResponseDTO("Concert", 0, null, null);
-    // m1 has an event, m2 does not.
+    // m1 (raw-1) has an event, m2 (raw-2) does not. Keyed on content so the parallel, unordered
+    // execution stays deterministic.
     when(eventService.parseMailFileIfEvent(any(InputStream.class)))
-        .thenReturn(Optional.of(event))
-        .thenReturn(Optional.empty());
+        .thenAnswer(
+            invocation -> {
+              InputStream in = invocation.getArgument(0);
+              String content = new String(in.readAllBytes());
+              return content.equals("raw-1") ? Optional.of(event) : Optional.empty();
+            });
 
     List<EventResponseDTO> result = service.autoParse(USER_ID, List.of("m1", "m2"));
 
