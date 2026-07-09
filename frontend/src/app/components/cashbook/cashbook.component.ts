@@ -16,17 +16,20 @@ export class CashbookComponent implements OnInit {
   private readonly expenseService = inject(ExpenseService);
   private readonly tripService = inject(TripService);
 
-  // Available categories for expenses. The values must match the backend enum/category names.
-  categories = ['ESSEN', 'TRANSPORT', 'HOTEL', 'FREIZEIT', 'SONSTIGES'];
+  // Available categories for expenses. The values must match the seeded backend category names.
+  categories = ['FOOD', 'TRANSPORT', 'HOTEL', 'LEISURE', 'OTHER'];
 
-  // English labels for displaying backend category values in the UI.
-  // The stored values remain unchanged, only the visible label is translated.
+  // English labels for displaying category values in the UI.
+  // German keys are kept so older database rows still render cleanly.
   categoryLabels: Record<string, string> = {
-    ESSEN: 'FOOD',
-    TRANSPORT: 'TRANSPORT',
-    HOTEL: 'HOTEL',
-    FREIZEIT: 'LEISURE',
-    SONSTIGES: 'OTHER'
+    FOOD: 'Food',
+    TRANSPORT: 'Transport',
+    HOTEL: 'Hotel',
+    LEISURE: 'Leisure',
+    OTHER: 'Other',
+    ESSEN: 'Food',
+    FREIZEIT: 'Leisure',
+    SONSTIGES: 'Other'
   };
 
   // Form state for creating a new expense.

@@ -134,7 +134,7 @@ public class AusgabeService {
 
     for (Ausgabe ausgabe : ausgaben) {
       String kategorie =
-          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "SONSTIGES";
+          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "OTHER";
 
       double kosten = ausgabe.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -142,7 +142,7 @@ public class AusgabeService {
 
     for (Event event : events) {
       String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "SONSTIGES";
+          event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -227,7 +227,7 @@ public class AusgabeService {
 
     for (Ausgabe ausgabe : ausgaben) {
       String kategorie =
-          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "SONSTIGES";
+          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "OTHER";
 
       double kosten = ausgabe.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -235,7 +235,7 @@ public class AusgabeService {
 
     for (Event event : events) {
       String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "SONSTIGES";
+          event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);

@@ -46,7 +46,7 @@ export class ExpenseService {
    *   kosten: 100,
    *   trip: { name: 'Paris' },
    *   date: '2026-05-20',
-   *   kategorie: 'ESSEN'
+   *   kategorie: 'FOOD'
    * }
    */
   addExpense(expense: {
@@ -181,12 +181,12 @@ export class ExpenseService {
    *
    * 1. Array format:
    *    [
-   *      { category: 'ESSEN', cost: 100 }
+   *      { category: 'FOOD', cost: 100 }
    *    ]
    *
    * 2. Map/object format:
    *    {
-   *      ESSEN: 100
+   *      FOOD: 100
    *    }
    *
    * This makes the frontend more robust if the backend representation changes.

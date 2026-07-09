@@ -44,12 +44,15 @@ export class SpendingOverviewComponent implements OnInit {
   categories: string[] = [];
   selectedCategory: string = 'ALL';
 
-  // English labels for backend category values.
-  // Backend values stay unchanged, only the UI labels are translated.
+  // English labels for category values.
+  // German keys are kept so older database rows still render cleanly.
   categoryLabels: Record<string, string> = {
-    ESSEN: 'Food',
+    FOOD: 'Food',
     TRANSPORT: 'Transport',
     HOTEL: 'Hotel',
+    LEISURE: 'Leisure',
+    OTHER: 'Other',
+    ESSEN: 'Food',
     FREIZEIT: 'Leisure',
     SONSTIGES: 'Other'
   };

@@ -30,7 +30,7 @@ public class AusgabeResponseDTO {
     this.kosten = kosten;
     this.trip = trip != null ? trip.getName() : "";
     this.date = date;
-    this.kategorie = kategorie != null ? kategorie.getName() : "SONSTIGES";
+    this.kategorie = kategorie != null ? kategorie.getName() : "OTHER";
     this.sourceType = "EXPENSE";
     this.tripId = trip != null ? trip.getId() : null;
   }
@@ -40,7 +40,7 @@ public class AusgabeResponseDTO {
     this.kosten = event.getKosten();
     this.trip = event.getTrip() != null ? event.getTrip().getName() : "";
     this.date = event.getStartTime() != null ? event.getStartTime().toLocalDate() : null;
-    this.kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "SONSTIGES";
+    this.kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
     this.sourceType = "EVENT";
     this.eventName = event.getName();
     this.tripId = event.getTripId();
