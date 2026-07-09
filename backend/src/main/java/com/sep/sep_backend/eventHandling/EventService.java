@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -337,6 +338,107 @@ public class EventService {
     // 2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
     var body = extractText(message);
     return parseTextWithGemini(message.getSubject(), body);
+  }
+
+  /**
+   * Parses a mail into an event, but only when it actually describes one. A structured JSON-LD
+   * event always counts; otherwise Gemini decides whether the text contains a real appointment.
+   * Returns an empty {@link Optional} for messages without an event so bulk importers can skip
+   * them.
+   *
+   * @param inputStream raw RFC822 mail
+   * @return the parsed event, or empty when the mail contains no event
+   */
+  public Optional<EventResponseDTO> parseMailFileIfEvent(InputStream inputStream) throws Exception {
+    Session session = Session.getDefaultInstance(new Properties());
+    MimeMessage message = new MimeMessage(session, inputStream);
+
+    var jsonLdBlocks = extractJsonLd(message);
+    if (!jsonLdBlocks.isEmpty()) {
+      var jsonEvent =
+          jsonLdBlocks.stream()
+              .filter(this::isSchemaOrg)
+              .filter(this::isSchemaEvent)
+              .findFirst()
+              .orElse(null);
+      if (jsonEvent != null) {
+        return Optional.of(mapJsonLdToDTO(jsonEvent));
+      }
+    }
+
+    var body = extractText(message);
+    return detectEventWithGemini(message.getSubject(), body);
+  }
+
+  /**
+   * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it. Returns
+   * empty when there is no event, no Gemini key, or the AI response is unusable — in automatic
+   * import it is safer to skip an uncertain mail than to create a bogus event.
+   */
+  private Optional<EventResponseDTO> detectEventWithGemini(String subject, String mailText) {
+    if (geminiApiKey == null || geminiApiKey.isBlank() || mailText == null || mailText.isBlank()) {
+      return Optional.empty();
+    }
+
+    try {
+      Client client = Client.builder().apiKey(geminiApiKey).build();
+
+      GenerateContentConfig config =
+          GenerateContentConfig.builder()
+              .responseMimeType("application/json")
+              .temperature(0.1f)
+              .build();
+
+      GenerateContentResponse response =
+          client.models.generateContent(
+              geminiModel, buildGeminiEventDetectionPrompt(subject, mailText), config);
+
+      JsonNode node = objectMapper.readTree(response.text());
+      if (!node.path("hasEvent").asBoolean(false)) {
+        return Optional.empty();
+      }
+
+      String name = node.path("name").asText(subject);
+      int kosten = node.path("kosten").asInt(0);
+      LocalDateTime start = parseDatetime(node.path("startDate").asText());
+      LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
+      return Optional.of(new EventResponseDTO(name, kosten, start, end));
+    } catch (Exception exception) {
+      return Optional.empty();
+    }
+  }
+
+  private String buildGeminiEventDetectionPrompt(String subject, String mailText) {
+    return """
+                Prüfe, ob diese E-Mail eine konkrete Veranstaltung oder einen Termin beschreibt
+                (z. B. Meeting, Konzert, Reservierung, Arzttermin, Buchung mit Datum/Uhrzeit).
+                Werbung, Newsletter, Rechnungen ohne Termin und reine Benachrichtigungen sind KEIN Event.
+
+                Antworte nur mit JSON:
+                {
+                  "hasEvent": true,
+                  "name": "Eventname",
+                  "kosten": 0,
+                  "startDate": "2026-06-01T20:00:00",
+                  "endDate": "2026-06-01T22:00:00"
+                }
+
+                Regeln:
+                - hasEvent ist nur true, wenn ein echter Termin mit erkennbarem Datum vorhanden ist.
+                - Falls hasEvent false ist, sind die übrigen Felder egal.
+                - kosten ist eine ganze Zahl.
+                - startDate ist yyyy-MM-ddTHH:mm:ss.
+                - endDate ist yyyy-MM-ddTHH:mm:ss.
+                - Falls kein Eventname gefunden wird: Betreff nutzen.
+                - Erfinde keine Daten.
+
+                Betreff:
+                %s
+
+                Mailtext:
+                %s
+                """
+        .formatted(subject, mailText);
   }
 
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)

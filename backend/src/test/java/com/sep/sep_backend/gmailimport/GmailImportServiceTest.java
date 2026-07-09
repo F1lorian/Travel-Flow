@@ -159,4 +159,34 @@ class GmailImportServiceTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Message id");
   }
+
+  @Test
+  void autoParseKeepsOnlyMessagesThatContainAnEvent() throws Exception {
+    GmailAccount account = new GmailAccount();
+    account.setEncryptedRefreshToken("enc-refresh");
+    when(gmailAccountRepository.findByUserId(USER_ID)).thenReturn(Optional.of(account));
+    when(tokenCipher.decrypt("enc-refresh")).thenReturn("refresh");
+    when(oAuthService.refreshAccessToken("refresh")).thenReturn("access");
+    when(gmailClient.getRaw("access", "m1")).thenReturn("raw-1".getBytes());
+    when(gmailClient.getRaw("access", "m2")).thenReturn("raw-2".getBytes());
+
+    EventResponseDTO event = new EventResponseDTO("Concert", 0, null, null);
+    // m1 has an event, m2 does not.
+    when(eventService.parseMailFileIfEvent(any(InputStream.class)))
+        .thenReturn(Optional.of(event))
+        .thenReturn(Optional.empty());
+
+    List<EventResponseDTO> result = service.autoParse(USER_ID, List.of("m1", "m2"));
+
+    assertThat(result).containsExactly(event);
+    verify(gmailClient).getRaw("access", "m1");
+    verify(gmailClient).getRaw("access", "m2");
+  }
+
+  @Test
+  void autoParseRejectsEmptyMessageList() {
+    assertThatThrownBy(() -> service.autoParse(USER_ID, List.of()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("message id");
+  }
 }

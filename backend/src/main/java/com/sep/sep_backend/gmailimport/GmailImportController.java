@@ -1,6 +1,7 @@
 package com.sep.sep_backend.gmailimport;
 
 import com.sep.sep_backend.eventHandling.EventResponseDTO;
+import com.sep.sep_backend.gmailimport.dto.GmailAutoImportRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
@@ -51,6 +52,17 @@ public class GmailImportController {
   public EventResponseDTO parse(
       @RequestBody GmailParseRequestDTO request, Authentication authentication) throws Exception {
     return gmailImportService.parseMessage(getCurrentUserId(authentication), request.messageId());
+  }
+
+  /**
+   * Parses the selected messages for automatic import and returns only those that contain an event,
+   * so non-event mails are not turned into calendar entries.
+   */
+  @PostMapping("/import/auto")
+  public List<EventResponseDTO> autoImport(
+      @RequestBody GmailAutoImportRequestDTO request, Authentication authentication)
+      throws Exception {
+    return gmailImportService.autoParse(getCurrentUserId(authentication), request.messageIds());
   }
 
   /** Removes the stored Gmail connection for the current user. */

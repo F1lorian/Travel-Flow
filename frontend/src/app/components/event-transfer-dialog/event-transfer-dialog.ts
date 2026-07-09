@@ -254,8 +254,9 @@ export class EventTransferDialog implements OnInit {
   }
 
   /**
-   * Parses every selected Gmail message on the backend, then either saves the resulting events
-   * directly ('auto') or opens the review dialog so the user can pick which ones to keep ('review').
+   * Imports the selected Gmail messages. In 'auto' mode the backend keeps only messages that
+   * actually contain an event (Gemini detection) and those are saved directly; in 'review' mode
+   * every message is parsed and the user picks which ones to keep.
    */
   importSelectedGmailMessages() {
     const ids = [...this.selectedGmailIds];
@@ -267,6 +268,36 @@ export class EventTransferDialog implements OnInit {
 
     this.isImportingGmail = true;
 
+    if (this.gmailImportMode === 'auto') {
+      this.autoImportGmail(ids);
+    } else {
+      this.reviewImportGmail(ids);
+    }
+  }
+
+  /**
+   * Auto mode: asks the backend for the events among the selected messages (non-event mails are
+   * skipped there) and saves them directly.
+   */
+  private autoImportGmail(ids: string[]) {
+    this.gmailService.autoParse(ids).subscribe({
+      next: events => {
+        if (events.length === 0) {
+          this.isImportingGmail = false;
+          this.showMessage('In den ausgewählten Nachrichten wurden keine Termine gefunden.');
+          return;
+        }
+        this.saveParsedEvents(events, 0);
+      },
+      error: err => {
+        this.isImportingGmail = false;
+        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht importiert werden.');
+      },
+    });
+  }
+
+  /** Review mode: parses every selected message, then lets the user pick which ones to keep. */
+  private reviewImportGmail(ids: string[]) {
     const subjectById = new Map(this.gmailMessages.map(message => [message.id, message.subject]));
     const parseCalls = ids.map(id =>
       this.gmailService.parseMessage(id).pipe(
@@ -277,21 +308,16 @@ export class EventTransferDialog implements OnInit {
 
     forkJoin(parseCalls).subscribe({
       next: results => {
+        this.isImportingGmail = false;
         const parsed = results.filter((item): item is ReviewItem => item !== null);
         const failedToParse = results.length - parsed.length;
 
         if (parsed.length === 0) {
-          this.isImportingGmail = false;
           this.showMessage('Keine der ausgewählten Nachrichten konnte gelesen werden.');
           return;
         }
 
-        if (this.gmailImportMode === 'review') {
-          this.isImportingGmail = false;
-          this.reviewThenSave(parsed, failedToParse);
-        } else {
-          this.saveParsedEvents(parsed.map(item => item.event), failedToParse);
-        }
+        this.reviewThenSave(parsed, failedToParse);
       },
       error: err => {
         this.isImportingGmail = false;

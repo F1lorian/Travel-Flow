@@ -8,6 +8,7 @@ import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
 import com.sep.sep_backend.repos.GmailAccountRepository;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,31 @@ public class GmailImportService {
     String accessToken = accessTokenFor(userId);
     byte[] raw = gmailClient.getRaw(accessToken, messageId);
     return eventService.ParseMailFile(new ByteArrayInputStream(raw));
+  }
+
+  /**
+   * Parses several messages for the "import automatically" mode and keeps only those that actually
+   * contain an event (Gemini-based detection). Non-event mails are silently skipped.
+   *
+   * @param userId the current user
+   * @param messageIds the selected message ids
+   * @return the parsed events, one per message that contained an event
+   */
+  public List<EventResponseDTO> autoParse(long userId, List<String> messageIds) throws Exception {
+    if (messageIds == null || messageIds.isEmpty()) {
+      throw new IllegalArgumentException("At least one message id is required");
+    }
+
+    String accessToken = accessTokenFor(userId);
+    List<EventResponseDTO> events = new ArrayList<>();
+    for (String messageId : messageIds) {
+      if (messageId == null || messageId.isBlank()) {
+        continue;
+      }
+      byte[] raw = gmailClient.getRaw(accessToken, messageId);
+      eventService.parseMailFileIfEvent(new ByteArrayInputStream(raw)).ifPresent(events::add);
+    }
+    return events;
   }
 
   /** Removes the stored Gmail connection for the user. */

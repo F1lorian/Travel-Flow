@@ -52,6 +52,14 @@ export class GmailService {
   }
 
   /**
+   * Parses the given messages for automatic import and returns only those that actually contain an
+   * event (the backend uses Gemini to skip non-event mails).
+   */
+  autoParse(messageIds: string[]): Observable<ParsedEvent[]> {
+    return this.http.post<ParsedEvent[]>(`${this.apiUrl}/import/auto`, { messageIds });
+  }
+
+  /**
    * Builds the Google consent URL for read-only Gmail access. `state` is echoed back to the
    * redirect and must be verified there to guard against CSRF. The redirect URI is derived from the
    * current origin and must match the backend's configured google.oauth.redirect-uri.
