@@ -143,6 +143,54 @@
           </label>
         }
       }
+
+      @if(importSource === 'gmail'){
+        <div
+          role="button"
+          tabindex="0"
+          class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
+           text-center transition
+           hover:border-blue-500 hover:bg-blue-50/40"
+
+          (click)="gmailFileInput.click()"
+          (keydown.enter)="gmailFileInput.click()"
+          (dragover)="onDragOver($event)"
+          (drop)="onFileDrop($event)">
+
+          @if (!fileName){
+            <p class="text-base font-semibold text-slate-800">
+              Drop the Gmail .eml file here
+            </p>
+
+            <p class="mt-1 text-sm text-slate-500">
+              or click to upload
+            </p>
+          }
+
+          @if(fileName){
+            <p class="text-base font-semibold text-slate-800">
+              {{ fileName }}
+            </p>
+          }
+        </div>
+
+        <input
+          #gmailFileInput
+          id="gmail-file"
+          hidden
+          type="file"
+          accept=".eml"
+          (change)="onFileSelected($event)">
+
+        <button
+          (click)="uploadGmailFile()"
+          [disabled]="!file || isImportingGmail"
+          class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+           transition hover:bg-slate-700 active:scale-[0.99]
+           disabled:cursor-not-allowed disabled:bg-slate-400">
+          {{ isImportingGmail ? 'Importing...' : 'Import from Gmail' }}
+        </button>
+      }
     </div>
 
     <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>

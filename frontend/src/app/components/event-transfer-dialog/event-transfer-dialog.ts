@@ -45,6 +45,7 @@ export class EventTransferDialog implements OnInit {
   imapMessages: ImapMailPreview[] = [];
   selectedImapUid?: number;
   isLoadingImapMessages = false;
+  isImportingGmail = false;
 
   constructor() {
     if (this.data) {
@@ -134,6 +135,33 @@ export class EventTransferDialog implements OnInit {
         this.handleParsedEvent(parsedEvent);
       },
       error: (err) => {
+        this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
+      }
+    });
+  }
+
+  /**
+   * Imports an event from a Gmail-exported .eml file by parsing it on the backend
+   * and routing the result through the existing conflict-resolution flow.
+   */
+  uploadGmailFile() {
+    if (!this.file) {
+      this.showMessage('Keine .eml-Datei ausgewählt');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('MailFile', this.file);
+
+    this.isImportingGmail = true;
+
+    this.eventService.parseEvent(formData, this.tripId).subscribe({
+      next: (parsedEvent) => {
+        this.isImportingGmail = false;
+        this.handleParsedEvent(parsedEvent);
+      },
+      error: (err) => {
+        this.isImportingGmail = false;
         this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
       }
     });
