@@ -19,7 +19,11 @@ services:
       SPRING_MAIL_STARTTLS: ${SPRING_MAIL_STARTTLS:-true}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
-      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-0ede0s968df42p8h5fkr8fajod9gju5k.apps.googleusercontent.com}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-6m14kai5lfd4jaeek0o3g4mq54nuo9ci.apps.googleusercontent.com}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-http://localhost:4200/gmail-import}
+      GMAIL_IMPORT_MAX_MESSAGES: ${GMAIL_IMPORT_MAX_MESSAGES:-10}
+      GMAIL_TOKEN_ENCRYPTION_SECRET: ${GMAIL_TOKEN_ENCRYPTION_SECRET}
     depends_on:
       - db
 
@@ -30,7 +34,7 @@ services:
     ports:
       - 4200:80
     environment:
-      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-0ede0s968df42p8h5fkr8fajod9gju5k.apps.googleusercontent.com}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-1025057911520-6m14kai5lfd4jaeek0o3g4mq54nuo9ci.apps.googleusercontent.com}
     depends_on:
       - backend
 
