@@ -2,6 +2,7 @@ package com.sep.sep_backend.eventHandling;
 
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.eventHandling.dto.*;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -221,6 +222,21 @@ public class EventController {
   public ResponseEntity<List<UserEventDTO>> getParticipants(@PathVariable Long eventId) {
     List<UserEventDTO> dtos =
         eventService.getParticipants(eventId).stream().map(UserEventDTO::from).toList();
+    return ResponseEntity.ok(dtos);
+  }
+
+  /**
+   * returns the open invites to events a user has
+   *
+   * @param authentication
+   * @return
+   */
+  @GetMapping("event/invites/incoming")
+  public ResponseEntity<List<EventInviteDTO>> getIncomingEventInvites(
+      Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    List<EventInviteDTO> dtos =
+        eventService.getIncomingEventInvites(userId).stream().map(EventInviteDTO::from).toList();
     return ResponseEntity.ok(dtos);
   }
 

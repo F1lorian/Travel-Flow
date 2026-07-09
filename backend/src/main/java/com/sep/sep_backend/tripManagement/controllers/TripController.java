@@ -95,6 +95,12 @@ public class TripController {
     }
   }
 
+  /**
+   * returns the userid from the user currently logged in
+   *
+   * @param authentication
+   * @return
+   */
   private Long getCurrentUserId(Authentication authentication) {
     User user =
         userRepository

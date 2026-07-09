@@ -6,6 +6,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.eventHandling.dto.DeleteEventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
+import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.repos.UserRepository;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
