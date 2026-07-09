@@ -43,6 +43,14 @@ describe('EventTransferDialog (Gmail import)', () => {
     snippet: 'snippet',
   };
 
+  const preview2: GmailMessagePreview = {
+    id: 'm2',
+    subject: 'Meeting',
+    from: 'other@example.com',
+    date: 'today',
+    snippet: 'snippet',
+  };
+
   beforeEach(async () => {
     eventServiceSpy = jasmine.createSpyObj<EventService>('EventService', [
       'parseEvent',
@@ -129,71 +137,94 @@ describe('EventTransferDialog (Gmail import)', () => {
     expect(redirect).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/v2/auth?x=1');
   });
 
-  it('loads recent messages and preselects the first when connected', () => {
-    gmailServiceSpy.getMessages.and.returnValue(of([preview]));
+  it('loads recent messages and selects them all by default', () => {
+    gmailServiceSpy.getMessages.and.returnValue(of([preview, preview2]));
 
     component.loadGmailMessages();
 
-    expect(component.gmailMessages).toEqual([preview]);
-    expect(component.selectedGmailMessageId).toBe('m1');
+    expect(component.gmailMessages).toEqual([preview, preview2]);
+    expect(component.selectedGmailCount).toBe(2);
+    expect(component.allGmailSelected).toBeTrue();
     expect(component.isLoadingGmailMessages).toBeFalse();
   });
 
-  it('imports the selected Gmail message and saves it when there is no conflict', () => {
+  it('toggles a single message and the select-all control', () => {
+    gmailServiceSpy.getMessages.and.returnValue(of([preview, preview2]));
+    component.loadGmailMessages();
+
+    component.toggleGmailSelection('m1');
+    expect(component.isGmailSelected('m1')).toBeFalse();
+    expect(component.selectedGmailCount).toBe(1);
+    expect(component.allGmailSelected).toBeFalse();
+
+    component.toggleSelectAllGmail();
+    expect(component.selectedGmailCount).toBe(2);
+
+    component.toggleSelectAllGmail();
+    expect(component.selectedGmailCount).toBe(0);
+  });
+
+  it('auto mode: parses and saves every selected message, then closes with the saved events', () => {
     gmailServiceSpy.parseMessage.and.returnValue(of(parsedEvent));
-    eventServiceSpy.getConflictEvents.and.returnValue(of([]));
     eventServiceSpy.saveParsedEvent.and.returnValue(of(savedEvent));
 
     component.tripId = 1;
-    component.selectedGmailMessageId = 'm1';
-    component.importSelectedGmailMessage();
+    component.gmailImportMode = 'auto';
+    component.gmailMessages = [preview, preview2];
+    component.selectedGmailIds = new Set(['m1', 'm2']);
+
+    component.importSelectedGmailMessages();
 
     expect(gmailServiceSpy.parseMessage).toHaveBeenCalledWith('m1');
-    expect(eventServiceSpy.getConflictEvents).toHaveBeenCalledWith(
-      parsedEvent.start,
-      parsedEvent.end,
-    );
-    expect(dialogSpy.open).not.toHaveBeenCalled();
+    expect(gmailServiceSpy.parseMessage).toHaveBeenCalledWith('m2');
+    expect(eventServiceSpy.saveParsedEvent).toHaveBeenCalledTimes(2);
     expect(eventServiceSpy.saveParsedEvent).toHaveBeenCalledWith(parsedEvent, 1);
-    expect(dialogRefSpy.close).toHaveBeenCalledWith(savedEvent);
+    expect(dialogSpy.open).not.toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith([savedEvent, savedEvent]);
     expect(component.isImportingGmail).toBeFalse();
   });
 
-  it('routes the parsed Gmail event into the conflict dialog and saves when confirmed', () => {
+  it('review mode: opens the review dialog and saves the confirmed events', () => {
     gmailServiceSpy.parseMessage.and.returnValue(of(parsedEvent));
-    eventServiceSpy.getConflictEvents.and.returnValue(of([savedEvent]));
     eventServiceSpy.saveParsedEvent.and.returnValue(of(savedEvent));
-    dialogSpy.open.and.returnValue({ afterClosed: () => of(true) } as never);
+    dialogSpy.open.and.returnValue({ afterClosed: () => of([parsedEvent]) } as never);
 
-    component.selectedGmailMessageId = 'm1';
-    component.importSelectedGmailMessage();
+    component.gmailImportMode = 'review';
+    component.gmailMessages = [preview];
+    component.selectedGmailIds = new Set(['m1']);
+
+    component.importSelectedGmailMessages();
 
     expect(dialogSpy.open).toHaveBeenCalled();
     expect(eventServiceSpy.saveParsedEvent).toHaveBeenCalledWith(parsedEvent, undefined);
-    expect(dialogRefSpy.close).toHaveBeenCalledWith(savedEvent);
+    expect(dialogRefSpy.close).toHaveBeenCalledWith([savedEvent]);
   });
 
-  it('does not save when the user cancels the conflict dialog', () => {
+  it('review mode: saves nothing when the review dialog is cancelled', () => {
     gmailServiceSpy.parseMessage.and.returnValue(of(parsedEvent));
-    eventServiceSpy.getConflictEvents.and.returnValue(of([savedEvent]));
     eventServiceSpy.saveParsedEvent.and.returnValue(of(savedEvent));
-    dialogSpy.open.and.returnValue({ afterClosed: () => of(false) } as never);
+    dialogSpy.open.and.returnValue({ afterClosed: () => of(undefined) } as never);
 
-    component.selectedGmailMessageId = 'm1';
-    component.importSelectedGmailMessage();
+    component.gmailImportMode = 'review';
+    component.gmailMessages = [preview];
+    component.selectedGmailIds = new Set(['m1']);
+
+    component.importSelectedGmailMessages();
 
     expect(eventServiceSpy.saveParsedEvent).not.toHaveBeenCalled();
     expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 
-  it('keeps the loading state active while the parse request is pending', () => {
+  it('keeps the loading state active while parsing is pending', () => {
     const pending = new Subject<ParsedEvent>();
     gmailServiceSpy.parseMessage.and.returnValue(pending.asObservable());
-    eventServiceSpy.getConflictEvents.and.returnValue(of([]));
     eventServiceSpy.saveParsedEvent.and.returnValue(of(savedEvent));
 
-    component.selectedGmailMessageId = 'm1';
-    component.importSelectedGmailMessage();
+    component.gmailImportMode = 'auto';
+    component.gmailMessages = [preview];
+    component.selectedGmailIds = new Set(['m1']);
+
+    component.importSelectedGmailMessages();
     expect(component.isImportingGmail).toBeTrue();
 
     pending.next(parsedEvent);
@@ -201,11 +232,13 @@ describe('EventTransferDialog (Gmail import)', () => {
     expect(component.isImportingGmail).toBeFalse();
   });
 
-  it('clears the loading state and shows a message when parsing fails', () => {
+  it('shows a message and saves nothing when every selected message fails to parse', () => {
     gmailServiceSpy.parseMessage.and.returnValue(throwError(() => ({ error: 'kaputt' })));
 
-    component.selectedGmailMessageId = 'm1';
-    component.importSelectedGmailMessage();
+    component.gmailMessages = [preview];
+    component.selectedGmailIds = new Set(['m1']);
+
+    component.importSelectedGmailMessages();
 
     expect(component.isImportingGmail).toBeFalse();
     expect(eventServiceSpy.saveParsedEvent).not.toHaveBeenCalled();
@@ -213,9 +246,9 @@ describe('EventTransferDialog (Gmail import)', () => {
   });
 
   it('does not call the backend when no message is selected', () => {
-    component.selectedGmailMessageId = undefined;
+    component.selectedGmailIds = new Set();
 
-    component.importSelectedGmailMessage();
+    component.importSelectedGmailMessages();
 
     expect(gmailServiceSpy.parseMessage).not.toHaveBeenCalled();
     expect(dialogSpy.open).toHaveBeenCalled();

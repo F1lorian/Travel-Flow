@@ -174,19 +174,47 @@
           </button>
 
           @if(gmailMessages.length > 0){
-            <label class="mt-2 flex flex-col gap-1 text-sm font-semibold text-slate-700">
-              Message
-              <select
-                [(ngModel)]="selectedGmailMessageId"
-                class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900 outline-none
-                 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-                @for(message of gmailMessages; track message.id){
-                  <option [ngValue]="message.id">
-                    {{ message.subject || '(No subject)' }} - {{ message.from }}
-                  </option>
-                }
-              </select>
-            </label>
+            <div class="mt-2 flex items-center justify-between">
+              <span class="text-sm font-semibold text-slate-700">Messages</span>
+              <button
+                type="button"
+                (click)="toggleSelectAllGmail()"
+                class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
+                {{ allGmailSelected ? 'Deselect all' : 'Select all' }}
+              </button>
+            </div>
+
+            <div class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+              @for(message of gmailMessages; track message.id){
+                <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2">
+                  <input
+                    type="checkbox"
+                    [checked]="isGmailSelected(message.id)"
+                    (change)="toggleGmailSelection(message.id)"
+                    class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-semibold text-slate-800">
+                      {{ message.subject || '(No subject)' }}
+                    </span>
+                    <span class="block truncate text-xs text-slate-500">
+                      {{ message.from }}
+                    </span>
+                  </span>
+                </label>
+              }
+            </div>
+
+            <fieldset class="mt-3 flex flex-col gap-1">
+              <legend class="mb-1 text-sm font-semibold text-slate-700">Import mode</legend>
+              <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input type="radio" name="gmailImportMode" value="auto" [(ngModel)]="gmailImportMode">
+                Import automatically
+              </label>
+              <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input type="radio" name="gmailImportMode" value="review" [(ngModel)]="gmailImportMode">
+                Review before importing
+              </label>
+            </fieldset>
           }
         }
       }
@@ -250,15 +278,15 @@
       </button>
     }
 
-    @if(importSource === 'gmail' && selectedGmailMessageId){
+    @if(importSource === 'gmail' && selectedGmailCount > 0){
       <button
-        (click)="importSelectedGmailMessage()"
+        (click)="importSelectedGmailMessages()"
         [disabled]="isImportingGmail"
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]
          disabled:cursor-not-allowed disabled:bg-slate-400">
 
-        {{ isImportingGmail ? 'Importing...' : 'Import' }}
+        {{ isImportingGmail ? 'Importing...' : 'Import ' + selectedGmailCount + ' selected' }}
       </button>
     }
 

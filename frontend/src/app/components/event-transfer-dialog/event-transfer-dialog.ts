@@ -1,6 +1,8 @@
 import {Component, inject, OnInit} from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import {
   EventService,
   ImapMailPreview,
@@ -11,8 +13,13 @@ import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
+import { AddEventResponse } from '../../../event-adding-manual/models/AddEventResponse';
 import { GmailMessagePreview, GmailService } from '../../services/gmail.service';
+import { EventImportReview, ReviewItem } from '../event-import-review/event-import-review';
 import { GMAIL_OAUTH_STATE_KEY } from '../gmail-import/gmail-import';
+
+/** Whether imported Gmail events are saved directly or reviewed first. */
+type GmailImportMode = 'auto' | 'review';
 
 interface EventTransferDialogData {
   mode: 'import' | 'export';
@@ -53,7 +60,8 @@ export class EventTransferDialog implements OnInit {
   gmailStatusChecked = false;
   isCheckingGmailStatus = false;
   gmailMessages: GmailMessagePreview[] = [];
-  selectedGmailMessageId?: string;
+  selectedGmailIds = new Set<string>();
+  gmailImportMode: GmailImportMode = 'review';
   isLoadingGmailMessages = false;
   isImportingGmail = false;
 
@@ -196,12 +204,13 @@ export class EventTransferDialog implements OnInit {
   loadGmailMessages() {
     this.isLoadingGmailMessages = true;
     this.gmailMessages = [];
-    this.selectedGmailMessageId = undefined;
+    this.selectedGmailIds.clear();
 
     this.gmailService.getMessages().subscribe({
       next: messages => {
         this.gmailMessages = messages;
-        this.selectedGmailMessageId = messages[0]?.id;
+        // Preselect everything so the common "import all" case is one click.
+        this.selectedGmailIds = new Set(messages.map(message => message.id));
         this.isLoadingGmailMessages = false;
       },
       error: err => {
@@ -211,27 +220,132 @@ export class EventTransferDialog implements OnInit {
     });
   }
 
+  /** Whether the given message is currently checked for import. */
+  isGmailSelected(id: string): boolean {
+    return this.selectedGmailIds.has(id);
+  }
+
+  /** Toggles a single message in/out of the import selection. */
+  toggleGmailSelection(id: string) {
+    if (this.selectedGmailIds.has(id)) {
+      this.selectedGmailIds.delete(id);
+    } else {
+      this.selectedGmailIds.add(id);
+    }
+  }
+
+  /** Number of messages currently selected for import. */
+  get selectedGmailCount(): number {
+    return this.selectedGmailIds.size;
+  }
+
+  /** True when every loaded message is selected. */
+  get allGmailSelected(): boolean {
+    return this.gmailMessages.length > 0 && this.selectedGmailIds.size === this.gmailMessages.length;
+  }
+
+  /** Selects all loaded messages, or clears the selection when all are already selected. */
+  toggleSelectAllGmail() {
+    if (this.allGmailSelected) {
+      this.selectedGmailIds.clear();
+    } else {
+      this.selectedGmailIds = new Set(this.gmailMessages.map(message => message.id));
+    }
+  }
+
   /**
-   * Parses the selected Gmail message on the backend and routes the result through the existing
-   * conflict-resolution flow.
+   * Parses every selected Gmail message on the backend, then either saves the resulting events
+   * directly ('auto') or opens the review dialog so the user can pick which ones to keep ('review').
    */
-  importSelectedGmailMessage() {
-    if (!this.selectedGmailMessageId) {
-      this.showMessage('Bitte zuerst eine Gmail-Nachricht auswählen.');
+  importSelectedGmailMessages() {
+    const ids = [...this.selectedGmailIds];
+
+    if (ids.length === 0) {
+      this.showMessage('Bitte zuerst mindestens eine Gmail-Nachricht auswählen.');
       return;
     }
 
     this.isImportingGmail = true;
 
-    this.gmailService.parseMessage(this.selectedGmailMessageId).subscribe({
-      next: parsedEvent => {
-        this.isImportingGmail = false;
-        this.handleParsedEvent(parsedEvent);
+    const subjectById = new Map(this.gmailMessages.map(message => [message.id, message.subject]));
+    const parseCalls = ids.map(id =>
+      this.gmailService.parseMessage(id).pipe(
+        map((event): ReviewItem => ({ subject: subjectById.get(id) ?? '', event })),
+        catchError(() => of(null)),
+      ),
+    );
+
+    forkJoin(parseCalls).subscribe({
+      next: results => {
+        const parsed = results.filter((item): item is ReviewItem => item !== null);
+        const failedToParse = results.length - parsed.length;
+
+        if (parsed.length === 0) {
+          this.isImportingGmail = false;
+          this.showMessage('Keine der ausgewählten Nachrichten konnte gelesen werden.');
+          return;
+        }
+
+        if (this.gmailImportMode === 'review') {
+          this.isImportingGmail = false;
+          this.reviewThenSave(parsed, failedToParse);
+        } else {
+          this.saveParsedEvents(parsed.map(item => item.event), failedToParse);
+        }
       },
       error: err => {
         this.isImportingGmail = false;
-        this.showMessage(err.error || 'Gmail-Nachricht konnte nicht gelesen werden.');
+        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht gelesen werden.');
+      },
+    });
+  }
+
+  /** Opens the review dialog and saves whatever the user confirms. */
+  private reviewThenSave(items: ReviewItem[], failedToParse: number) {
+    const dialogRef = this.dialog.open(EventImportReview, {
+      maxWidth: '600px',
+      data: { items },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: ParsedEvent[] | undefined) => {
+      if (confirmed && confirmed.length > 0) {
+        this.saveParsedEvents(confirmed, failedToParse);
       }
+    });
+  }
+
+  /**
+   * Saves several parsed events, then closes the dialog with the saved events so the calendar can
+   * add them. Surfaces a summary when some messages failed to parse or save.
+   */
+  private saveParsedEvents(events: ParsedEvent[], failedToParse: number) {
+    this.isImportingGmail = true;
+
+    const saveCalls = events.map(event =>
+      this.eventService.saveParsedEvent(event, this.tripId).pipe(catchError(() => of(null))),
+    );
+
+    forkJoin(saveCalls).subscribe({
+      next: results => {
+        this.isImportingGmail = false;
+        const saved = results.filter((event): event is AddEventResponse => event !== null);
+        const failed = failedToParse + (results.length - saved.length);
+
+        if (saved.length === 0) {
+          this.showMessage('Kein Event konnte importiert werden.');
+          return;
+        }
+
+        if (failed > 0) {
+          this.showMessage(`${saved.length} Event(s) importiert, ${failed} fehlgeschlagen.`);
+        }
+
+        this.dialogRef.close(saved);
+      },
+      error: err => {
+        this.isImportingGmail = false;
+        this.showMessage(err.error || 'Events konnten nicht importiert werden.');
+      },
     });
   }
 
