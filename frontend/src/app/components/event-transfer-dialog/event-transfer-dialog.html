@@ -1,97 +1,201 @@
 <div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
   @if(mode === 'import'){
     <h2 class="mb-1 text-3xl font-bold tracking-tight text-slate-900">Event Import</h2>
-    <div class="flex flex-col gap-2">
 
+    <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="import-source">
+      Import method
+    </label>
+    <select
+      id="import-source"
+      [(ngModel)]="importSource"
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+       text-slate-900 outline-none transition
+       focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+      <option value="drag-drop">Drag and drop</option>
+      <option value="imap">IMAP</option>
+      <option value="gmail">Gmail</option>
+    </select>
+
+    <div class="mt-4 flex flex-col gap-2">
       <label class="font-semibold text-sm" for="event-file">
         Import event file
       </label>
 
-      <div
-        role="button"
-        tabindex="0"
-        class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
-         text-center transition
-         hover:border-blue-500 hover:bg-blue-50/40"
+      @if(importSource === 'drag-drop'){
+        <div
+          role="button"
+          tabindex="0"
+          class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
+           text-center transition
+           hover:border-blue-500 hover:bg-blue-50/40"
 
-        (click)="fileInput.click()"
-        (keydown.enter)="fileInput.click()"
-        (dragover)="onDragOver($event)"
-        (drop)="onFileDrop($event)">
+          (click)="fileInput.click()"
+          (keydown.enter)="fileInput.click()"
+          (dragover)="onDragOver($event)"
+          (drop)="onFileDrop($event)">
 
-        @if (!fileName){
-          <p class="text-base font-semibold text-slate-800">
-            Drop the file here
-          </p>
+          @if (!fileName){
+            <p class="text-base font-semibold text-slate-800">
+              Drop the file here
+            </p>
 
-          <p class="mt-1 text-sm text-slate-500">
-            or click to upload
-          </p>
+            <p class="mt-1 text-sm text-slate-500">
+              or click to upload
+            </p>
 
+          }
+
+          @if(fileName){
+            <p class="text-base font-semibold text-slate-800">
+              {{ fileName }}
+            </p>
+          }
+        </div>
+
+        <input
+          #fileInput
+          id="event-file"
+          hidden
+          type="file"
+          accept=".eml"
+          (change)="onFileSelected($event)">
+      }
+
+      @if(importSource === 'imap'){
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Host
+            <input
+              [(ngModel)]="imapHost"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+              placeholder="imap.example.com">
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Port
+            <input
+              [(ngModel)]="imapPort"
+              type="number"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Username
+            <input
+              [(ngModel)]="imapUsername"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Password
+            <input
+              [(ngModel)]="imapPassword"
+              type="password"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Folder
+            <input
+              [(ngModel)]="imapFolder"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Limit
+            <input
+              [(ngModel)]="imapLimit"
+              type="number"
+              min="1"
+              max="50"
+              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          </label>
+        </div>
+
+        <button
+          (click)="loadImapMessages()"
+          [disabled]="isLoadingImapMessages"
+          class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+           transition hover:bg-slate-700 active:scale-[0.99]
+           disabled:cursor-not-allowed disabled:bg-slate-400">
+          {{ isLoadingImapMessages ? 'Loading...' : 'Load mails' }}
+        </button>
+
+        @if(imapMessages.length > 0){
+          <label class="mt-2 flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            Message
+            <select
+              [(ngModel)]="selectedImapUid"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900 outline-none
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+              @for(message of imapMessages; track message.uid){
+                <option [ngValue]="message.uid">
+                  {{ message.subject || '(No subject)' }} - {{ message.from }}
+                </option>
+              }
+            </select>
+          </label>
         }
-
-        @if(fileName){
-          <p
-          class="text-base font-semibold text-slate-800">
-          {{ fileName }}
-          </p>
-        }
-
-      </div>
-
-      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
-      <select
-        id="tripId"
-        [(ngModel)]="tripId"
-        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 outline-none transition
-         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-
-        <option [ngValue]="undefined" disabled>
-          Please choose a trip
-        </option>
-
-        <option [ngValue]="undefined">
-          The Event doesn´t belong to a trip
-        </option>
-
-        @for (trip of trips; track trip.id) {
-
-          <option [ngValue]="trip.id">
-            {{ trip.name }}
-          </option>
-
-        }
-      </select>
-
-      <input
-        #fileInput
-        id="event-file"
-        hidden
-        type="file"
-        accept=".eml"
-        (change)="onFileSelected($event)">
-
-
+      }
     </div>
-  }
 
+    <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
+    <select
+      id="tripId"
+      [(ngModel)]="tripId"
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+       text-slate-900 outline-none transition
+       focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+
+      <option [ngValue]="undefined" disabled>
+        Please choose a trip
+      </option>
+
+      <option [ngValue]="undefined">
+        The Event doesnÂ´t belong to a trip
+      </option>
+
+      @for (trip of trips; track trip.id) {
+
+        <option [ngValue]="trip.id">
+          {{ trip.name }}
+        </option>
+
+      }
+    </select>
+  }
 
   @if(mode === 'export'){
     <h1 class="text-2xl font-bold mb-4">Event Export</h1>
     <button
       (click)="downloadEvents()"
       class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
+       transition hover:bg-slate-700 active:scale-[0.99]">
 
       Download
     </button>
   }
-  <div class="flex justify-end gap-2">
 
-    @if(file){
+  <div class="mt-6 flex justify-end gap-2">
+    @if(importSource === 'drag-drop' && file){
       <button
         (click)="uploadFile()"
+        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]">
+
+        Import
+      </button>
+    }
+
+    @if(importSource === 'imap' && selectedImapUid !== undefined){
+      <button
+        (click)="importSelectedImapMessage()"
         class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
          transition hover:bg-slate-700 active:scale-[0.99]">
 
@@ -102,11 +206,9 @@
     <button
       (click)="close()"
       class="rounded-lg border border-slate-300 bg-white px-5 py-3
-         font-semibold text-slate-700
-         transition hover:bg-slate-100">
+       font-semibold text-slate-700
+       transition hover:bg-slate-100">
       Close
     </button>
   </div>
-
-
 </div>

@@ -56,11 +56,12 @@
                 } @else {
                   <button
                     type="button"
-                    (click)="addFriend(user.id)"
+                    (click)="sendFriendRequest(user.id)"
+                    [disabled]="requestSent[user.id]"
                     class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
-                             transition hover:bg-slate-700 active:scale-[0.99]"
+             transition hover:bg-slate-700"
                   >
-                    Add to friends
+                    {{ requestSent[user.id] ? 'Request sent' : 'Send friend request' }}
                   </button>
                 }
               </li>
@@ -68,6 +69,50 @@
           </ul>
         }
       </div>
+    }
+  </section>
+
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Friend requests</h2>
+
+    @if (incomingRequests.length === 0) {
+      <p class="text-slate-500">No open friend requests.</p>
+    } @else {
+      <ul class="divide-y divide-slate-200">
+        @for (request of incomingRequests; track request.id) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p>
+                <span class="font-semibold text-slate-900">
+                {{ request.senderUsername }}
+                </span>
+                <span class="text-slate-500">
+                  wants to be your friend
+                </span>
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="acceptRequest(request.id)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                       transition hover:bg-blue-700 active:scale-[0.99]"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                (click)="declineRequest(request.id)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Decline
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
     }
   </section>
 

@@ -26,14 +26,37 @@ public class FriendsController {
     return friendsService.searchUsers(getCurrentUsername(authentication), name);
   }
 
-  @PostMapping("/{userId}")
-  public FriendDTO addFriend(@PathVariable long userId, Authentication authentication) {
-    return friendsService.addFriend(getCurrentUsername(authentication), userId);
-  }
-
   @DeleteMapping("/{userId}")
   public void removeFriend(@PathVariable long userId, Authentication authentication) {
     friendsService.removeFriend(getCurrentUsername(authentication), userId);
+  }
+
+  @PostMapping("/requests/{userId}")
+  public FriendRequestDTO sendFriendRequest(
+      @PathVariable long userId, Authentication authentication) {
+    return friendsService.sendFriendRequest(getCurrentUsername(authentication), userId);
+  }
+
+  @PostMapping("/requests/{requestId}/accept")
+  public FriendRequestDTO acceptFriendRequest(
+      @PathVariable long requestId, Authentication authentication) {
+    return friendsService.acceptFriendRequest(getCurrentUsername(authentication), requestId);
+  }
+
+  @PostMapping("/requests/{requestId}/decline")
+  public FriendRequestDTO declineFriendRequest(
+      @PathVariable long requestId, Authentication authentication) {
+    return friendsService.declineFriendRequest(getCurrentUsername(authentication), requestId);
+  }
+
+  @GetMapping("/requests/incoming")
+  public List<FriendRequestDTO> getIncomingRequests(Authentication authentication) {
+    return friendsService.getIncomingRequests(getCurrentUsername(authentication));
+  }
+
+  @GetMapping("/requests/outgoing")
+  public List<FriendRequestDTO> getOutgoingRequests(Authentication authentication) {
+    return friendsService.getOutgoingRequests(getCurrentUsername(authentication));
   }
 
   private String getCurrentUsername(Authentication authentication) {

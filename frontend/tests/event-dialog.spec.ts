@@ -1,10 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { authenticate, mockCalendarEvents, mockFriends, mockTrips } from './helpers';
+import {
+  authenticate,
+  calendarDate,
+  mockCalendarEvents,
+  mockEventParticipants,
+  mockFriends,
+  mockTrips,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
   await mockFriends(page);
   await mockTrips(page);
+  await mockEventParticipants(page);
 });
 
 test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
@@ -20,12 +28,14 @@ test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
 });
 
 test('Alle Elemente werden angezeigt wenn mode = edit', async ({ page }) => {
+  const eventDate = calendarDate();
+
   await mockCalendarEvents(page, [
     {
       id: '1',
       title: 'Test Event',
-      start: '2026-06-15T10:00:00',
-      end: '2026-06-15T11:00:00',
+      start: `${eventDate}T10:00:00`,
+      end: `${eventDate}T11:00:00`,
       kosten: 20,
     },
   ]);

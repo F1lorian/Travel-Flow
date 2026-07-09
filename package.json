@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "docker:dev": "docker compose up",
+    "docker:test-users": "powershell -NoProfile -Command \"$env:SPRING_PROFILES_ACTIVE='test-users'; docker compose up\""
+  },
   "dependencies": {
     "@angular/forms": "^21.2.12",
     "@angular/router": "^21.2.12",
