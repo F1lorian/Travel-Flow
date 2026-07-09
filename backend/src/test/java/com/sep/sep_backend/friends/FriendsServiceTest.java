@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.UserRepository;
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +23,11 @@ class FriendsServiceTest {
 
   @Mock private UserRepository userRepository;
 
+  @Mock private EmailNotificationService emailNotificationService;
+
   @Test
   void getFriendsReturnsConnectedFriendsOfCurrentUser() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
     User friend = user(2L, "anna", "Anna", "Beispiel");
     currentUser.getFriends().add(friend);
@@ -39,7 +42,7 @@ class FriendsServiceTest {
 
   @Test
   void searchUsersExcludesCurrentUserAndMarksExistingFriends() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
     User friend = user(2L, "anna", "Anna", "Beispiel");
     User stranger = user(3L, "berta", "Berta", "Beispiel");
@@ -62,7 +65,7 @@ class FriendsServiceTest {
 
   @Test
   void addFriendCreatesBidirectionalConnection() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
     User friend = user(2L, "anna", "Anna", "Beispiel");
 
@@ -81,7 +84,7 @@ class FriendsServiceTest {
 
   @Test
   void addFriendDoesNotSaveWhenAlreadyConnected() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
     User friend = user(2L, "anna", "Anna", "Beispiel");
     currentUser.getFriends().add(friend);
@@ -99,7 +102,7 @@ class FriendsServiceTest {
 
   @Test
   void addFriendRejectsSelfConnection() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
@@ -114,7 +117,7 @@ class FriendsServiceTest {
 
   @Test
   void removeFriendRemovesBidirectionalConnection() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
     User friend = user(2L, "anna", "Anna", "Beispiel");
     currentUser.getFriends().add(friend);
@@ -134,7 +137,7 @@ class FriendsServiceTest {
 
   @Test
   void throwsUnauthorizedWhenCurrentUserDoesNotExist() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("missing", "missing"))
         .thenReturn(Optional.empty());
@@ -147,7 +150,7 @@ class FriendsServiceTest {
 
   @Test
   void throwsNotFoundWhenFriendDoesNotExist() {
-    FriendsService friendsService = new FriendsService(userRepository);
+    FriendsService friendsService = new FriendsService(userRepository, emailNotificationService);
     User currentUser = user(1L, "max", "Max", "Muster");
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))

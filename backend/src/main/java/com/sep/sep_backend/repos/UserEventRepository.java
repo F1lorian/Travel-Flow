@@ -17,6 +17,10 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
 
   List<UserEvent> findByUser_Id(Long userId);
 
+  List<UserEvent> findByCreator_Id(Long userId);
+
+  boolean existsByEvent_Id(Long eventId);
+
   Optional<UserEvent> findByEvent_IdAndUser_Id(Long eventId, Long userId);
 
   boolean existsByEvent_IdAndUser_Id(Long eventId, Long userId);

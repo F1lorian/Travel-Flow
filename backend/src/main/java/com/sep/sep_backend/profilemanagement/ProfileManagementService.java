@@ -5,6 +5,7 @@ import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
@@ -126,6 +127,25 @@ public class ProfileManagementService {
     }
     user.getFriends().clear();
 
+    // Event participations also reference the user. Invites this user sent to others stay valid
+    // for the invitee (the row is re-anchored on them), the user's own participation rows are
+    // removed, and personal events (no trip) left without any participant are deleted with them.
+    for (UserEvent sentInvite : userEventRepository.findByCreator_Id(user.getId())) {
+      if (sentInvite.getUser().getId() != user.getId()) {
+        sentInvite.setCreator(sentInvite.getUser());
+        userEventRepository.save(sentInvite);
+      }
+    }
+    List<UserEvent> participations = userEventRepository.findByUser_Id(user.getId());
+    List<Event> participatedEvents = participations.stream().map(UserEvent::getEvent).toList();
+    userEventRepository.deleteAll(participations);
+    userEventRepository.flush();
+    for (Event event : participatedEvents) {
+      if (event.getTrip() == null && !userEventRepository.existsByEvent_Id(event.getId())) {
+        eventRepository.delete(event);
+      }
+    }
+
     // Clear the inviter reference on other members' trips so deleting the user leaves no dangling
     // invited_by_id, then drop the user's own trip memberships and expenses (neither cascades).
     for (UserTrip invited : userTripRepository.findByInvitedBy(user)) {
@@ -145,6 +165,9 @@ public class ProfileManagementService {
     }
 
     userRepository.delete(user);
+    // Force the DELETE to hit the database now, so a constraint problem aborts the request
+    // before the "account deleted" confirmation below can go out for a rolled-back deletion.
+    userRepository.flush();
 
     // Final confirmation to the address on file; sent best-effort since the account is gone.
     emailNotificationService.sendBestEffort(

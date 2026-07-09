@@ -1,6 +1,8 @@
 import {Component, inject, OnInit} from '@angular/core';
 import {Friend, FriendSearchResult, FriendsService} from '../../services/friends.service';
 import {FormsModule} from '@angular/forms';
+import {NotificationService} from '../notification-menu/notification.service';
+import {FeedbackService, apiErrorMessage} from '../../services/feedback.service';
 
 @Component({
   selector: 'app-friends',
@@ -12,6 +14,8 @@ import {FormsModule} from '@angular/forms';
 
 export class Friends implements OnInit {
   private readonly friendsService = inject(FriendsService);
+  private readonly feedback = inject(FeedbackService);
+  private readonly notificationService = inject(NotificationService);
 
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
@@ -19,13 +23,14 @@ export class Friends implements OnInit {
   hasSearched = false;
 
   ngOnInit() {
-    this.friendsService.getFriends().subscribe((data) => {
+    this.friendsService.getFriends().subscribe({
+      next: (data) => {
         this.friends = data;
       },
-      (error) => {
-        console.error('Error while loading friends:', error);
+      error: (error) => {
+        this.feedback.error(apiErrorMessage(error, 'Friends could not be loaded'));
       }
-    )
+    });
   }
 
   searchUsers(){
@@ -37,15 +42,18 @@ export class Friends implements OnInit {
     }
 
     this.hasSearched = true;
-    this.friendsService.searchUsers(name).subscribe((data) => {
-      this.searchResults = data;
-    },
-      (error) => {
-        console.error('Error while searching for this user:', error);
-      })
+    this.friendsService.searchUsers(name).subscribe({
+      next: (data) => {
+        this.searchResults = data;
+      },
+      error: (error) => {
+        this.feedback.error(apiErrorMessage(error, 'User search failed'));
+      }
+    });
   }
 
   addFriend(userId: number): void {
+    const friendName = this.displayName(userId);
     this.friendsService.addFriend(userId).subscribe({
       next: () => {
         // updates the friend-list
@@ -56,14 +64,19 @@ export class Friends implements OnInit {
         this.searchResults = this.searchResults.map((user) =>
           user.id === userId ? { ...user, connected: true } : user
         );
+        this.feedback.success(`${friendName} added as friend`);
+        this.notificationService.add(`${friendName} was added to your friends`);
       },
       error: (error) => {
-        console.error('Error while adding friend:', error);
+        this.feedback.error(
+          `Friend can't be added: ${apiErrorMessage(error, 'server not reachable')}`
+        );
       }
     });
   }
 
   removeFriend(userId: number): void {
+    const friendName = this.displayName(userId);
     this.friendsService.removeFriend(userId).subscribe({
       next: () => {
         // updates the friend-list
@@ -74,10 +87,22 @@ export class Friends implements OnInit {
         this.searchResults = this.searchResults.map((user) =>
           user.id === userId ? {...user, connected: false} : user
         );
+        this.feedback.success(`${friendName} removed from friends`);
+        this.notificationService.add(`${friendName} was removed from your friends`);
       },
       error: (error) => {
-        console.error('Error while removing friend:', error);
+        this.feedback.error(
+          `Friend can't be removed: ${apiErrorMessage(error, 'server not reachable')}`
+        );
       }
     });
+  }
+
+  // The acted-on user is in the friend list or in the current search results.
+  private displayName(userId: number): string {
+    const user =
+      this.friends.find((friend) => friend.id === userId) ??
+      this.searchResults.find((result) => result.id === userId);
+    return user?.username ?? 'Friend';
   }
 }

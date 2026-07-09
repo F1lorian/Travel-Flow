@@ -11,6 +11,7 @@ import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.exception.EventOutsideTripException;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
@@ -41,6 +42,7 @@ public class EventService {
   private final UserRepository userRepository;
   private final ObjectMapper objectMapper;
   private final UserEventRepository userEventRepository;
+  private final EmailNotificationService emailNotificationService;
 
   @Value("${gemini.api-key}")
   private String geminiApiKey;
@@ -63,13 +65,15 @@ public class EventService {
       AusgabeService ausgabeService,
       UserRepository userRepository,
       ObjectMapper objectMapper,
-      UserEventRepository userEventRepository) {
+      UserEventRepository userEventRepository,
+      EmailNotificationService emailNotificationService) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
     this.userRepository = userRepository;
     this.objectMapper = objectMapper;
     this.userEventRepository = userEventRepository;
+    this.emailNotificationService = emailNotificationService;
   }
 
   /**
@@ -259,6 +263,20 @@ public class EventService {
 
     UserEvent invite = new UserEvent(event, friend, requestingUser);
     userEventRepository.save(invite);
+
+    // The invited friend learns about the event even while logged out.
+    emailNotificationService.sendBestEffort(
+        friend.getEmail(),
+        "You were invited to the event \"" + event.getName() + "\"",
+        requestingUser.getName()
+            + " invited you to the event \""
+            + event.getName()
+            + "\". Log in to SEP to see the details.");
+    // The inviter's in-app notification is mirrored to their inbox as well.
+    emailNotificationService.sendBestEffort(
+        requestingUser.getEmail(),
+        "Invite sent for event \"" + event.getName() + "\"",
+        "You invited " + friend.getName() + " to the event \"" + event.getName() + "\".");
   }
 
   /**
@@ -279,6 +297,22 @@ public class EventService {
             .orElseThrow(() -> new IllegalArgumentException("Invite not found"));
     userEvent.setStatus(status);
     userEventRepository.save(userEvent);
+
+    // Tell the inviter how their invite was answered (skip self-created participant rows).
+    User invitee = userEvent.getUser();
+    User inviter = userEvent.getCreator();
+    if (inviter != null && invitee != null && inviter.getId() != invitee.getId()) {
+      String answer = status == UserEvent.InviteStatus.ACCEPTED ? "accepted" : "declined";
+      emailNotificationService.sendBestEffort(
+          inviter.getEmail(),
+          "Your invite to \"" + userEvent.getEvent().getName() + "\" was " + answer,
+          invitee.getName()
+              + " "
+              + answer
+              + " your invitation to the event \""
+              + userEvent.getEvent().getName()
+              + "\".");
+    }
   }
 
   /**

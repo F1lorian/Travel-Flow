@@ -15,6 +15,7 @@ import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.exception.EventOutsideTripException;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
@@ -49,6 +50,8 @@ class EventServiceTest {
   @Mock private UserRepository userRepository;
 
   @Mock private ObjectMapper objectMapper;
+
+  @Mock private EmailNotificationService emailNotificationService;
 
   @InjectMocks private EventService eventService;
 
@@ -491,7 +494,8 @@ class EventServiceTest {
         ausgabeService,
         userRepository,
         new ObjectMapper(),
-        userEventRepository);
+        userEventRepository,
+        emailNotificationService);
   }
 
   private User userWithEvents(long id) {
