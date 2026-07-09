@@ -141,8 +141,7 @@ public class AusgabeService {
     }
 
     for (Event event : events) {
-      String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
+      String kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -234,8 +233,7 @@ public class AusgabeService {
     }
 
     for (Event event : events) {
-      String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
+      String kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -440,16 +438,15 @@ public class AusgabeService {
     csv.append("Date,Title,Trip,Category,Amount\n");
     for (AusgabeResponseDTO row : rows) {
       csv.append(escapeCsv(row.getDate()))
-              .append(",")
-              .append(escapeCsv(row.getEventName() != null ? row.getEventName() : "Expense"))
-              .append(",")
-              .append(escapeCsv(row.getTrip()))
-              .append(",")
-              .append(escapeCsv(row.getKategorie()))
-              .append(",")
-              .append(row.getKosten())
-              .append("\n");
-
+          .append(",")
+          .append(escapeCsv(row.getEventName() != null ? row.getEventName() : "Expense"))
+          .append(",")
+          .append(escapeCsv(row.getTrip()))
+          .append(",")
+          .append(escapeCsv(row.getKategorie()))
+          .append(",")
+          .append(row.getKosten())
+          .append("\n");
     }
     return csv.toString();
   }
@@ -472,5 +469,4 @@ public class AusgabeService {
 
     return text;
   }
-
 }

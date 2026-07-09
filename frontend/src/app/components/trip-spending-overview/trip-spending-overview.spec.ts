@@ -7,6 +7,10 @@ import { TripSpendingOverviewComponent } from './trip-spending-overview';
 import { ExpenseService } from '../../services/expense.service';
 import { TripService } from '../../TripManagement/services/trip.service';
 
+interface CsvDownloadHost {
+  downloadCsv(blob: Blob, filename: string): void;
+}
+
 describe('TripSpendingOverviewComponent', () => {
   let component: TripSpendingOverviewComponent;
   let fixture: ComponentFixture<TripSpendingOverviewComponent>;
@@ -85,12 +89,12 @@ describe('TripSpendingOverviewComponent', () => {
   it('should export trip expenses as csv', () => {
     const blob = new Blob(['Date,Title,Trip,Category,Amount\n']);
     expenseServiceSpy.exportExpensesByTrip.and.returnValue(of(blob));
-    spyOn<any>(component, 'downloadCsv');
+    const downloadCsvSpy = spyOn(component as unknown as CsvDownloadHost, 'downloadCsv');
 
     component.tripname = 'London';
     component.exportCsv();
 
     expect(expenseServiceSpy.exportExpensesByTrip).toHaveBeenCalledWith('London');
-    expect((component as any).downloadCsv).toHaveBeenCalledWith(blob, 'London-expenses.csv');
+    expect(downloadCsvSpy).toHaveBeenCalledWith(blob, 'London-expenses.csv');
   });
 });

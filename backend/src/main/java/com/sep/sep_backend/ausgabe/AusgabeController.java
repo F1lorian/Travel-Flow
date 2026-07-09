@@ -3,7 +3,6 @@ package com.sep.sep_backend.ausgabe;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.TripRepository;
-
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
@@ -271,14 +270,13 @@ public class AusgabeController {
    * @return response containing CSV content and download headers
    */
   @GetMapping(value = "/ausgabenliste/export", produces = "text/csv")
-  public ResponseEntity<String> exportAusgabenCsv(@RequestParam LocalDate start,
-                                                  @RequestParam LocalDate end,
-                                                  Authentication authentication) {
+  public ResponseEntity<String> exportAusgabenCsv(
+      @RequestParam LocalDate start, @RequestParam LocalDate end, Authentication authentication) {
     String csv = ausgabeService.exportAusgabenCsv(start, end, getCurrentUsername(authentication));
     return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
-            .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-            .body(csv);
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
+        .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+        .body(csv);
   }
 
   /**
@@ -299,9 +297,8 @@ public class AusgabeController {
     }
 
     return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
-            .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-            .body(csv);
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cashbook-export.csv\"")
+        .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+        .body(csv);
   }
-
 }
