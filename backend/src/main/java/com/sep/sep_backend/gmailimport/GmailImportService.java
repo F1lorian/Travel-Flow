@@ -66,7 +66,7 @@ public class GmailImportService {
       UserEventRepository userEventRepository,
       TripRepository tripRepository,
       ImportedGmailMessageRepository importedGmailMessageRepository,
-      @org.springframework.beans.factory.annotation.Value("${gmail.import.max-messages:15}")
+      @org.springframework.beans.factory.annotation.Value("${gmail.import.max-messages:10}")
           int maxMessages,
       @org.springframework.beans.factory.annotation.Value("${gmail.import.scan-concurrency:5}")
           int scanConcurrency,

@@ -108,7 +108,7 @@ de-duplicated by title + date + start time during a scan.
   `EventService` is covered by tests that pin its constructor, so instead of refactoring it, the
   Gmail feature introduces `EmailEventParser` as the reusable parser producing the richer field set.
 - **Read-only Gmail scope** and a scan of the most recent inbox messages
-  (`GMAIL_IMPORT_MAX_MESSAGES`, default 20). No mail is modified or sent.
+  (`GMAIL_IMPORT_MAX_MESSAGES`, default 10). No mail is modified or sent.
 - **Redirect URI points at the frontend** (`/gmail-import`); the Angular page forwards the code to
   the backend, which does the token exchange. The OAuth `state` is generated but not persisted; the
   callback is JWT-authenticated, which is the primary protection.
