@@ -8,6 +8,7 @@
     <select
       id="import-source"
       [(ngModel)]="importSource"
+      (ngModelChange)="onImportSourceChange()"
       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
        text-slate-900 outline-none transition
        focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
@@ -145,51 +146,49 @@
       }
 
       @if(importSource === 'gmail'){
-        <div
-          role="button"
-          tabindex="0"
-          class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
-           text-center transition
-           hover:border-blue-500 hover:bg-blue-50/40"
+        @if(isCheckingGmailStatus){
+          <p class="text-sm text-slate-500">Checking Gmail connection…</p>
+        } @else if(!gmailConnected){
+          <p class="text-sm text-slate-600">
+            Connect your Gmail account to import events from your inbox.
+          </p>
 
-          (click)="gmailFileInput.click()"
-          (keydown.enter)="gmailFileInput.click()"
-          (dragover)="onDragOver($event)"
-          (drop)="onFileDrop($event)">
+          <button
+            (click)="connectGmail()"
+            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+             transition hover:bg-slate-700 active:scale-[0.99]">
+            Connect Gmail
+          </button>
+        } @else {
+          <p class="text-sm text-slate-600">
+            Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
+          </p>
 
-          @if (!fileName){
-            <p class="text-base font-semibold text-slate-800">
-              Drop the Gmail .eml file here
-            </p>
+          <button
+            (click)="loadGmailMessages()"
+            [disabled]="isLoadingGmailMessages"
+            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+             transition hover:bg-slate-700 active:scale-[0.99]
+             disabled:cursor-not-allowed disabled:bg-slate-400">
+            {{ isLoadingGmailMessages ? 'Loading...' : 'Load messages' }}
+          </button>
 
-            <p class="mt-1 text-sm text-slate-500">
-              or click to upload
-            </p>
+          @if(gmailMessages.length > 0){
+            <label class="mt-2 flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Message
+              <select
+                [(ngModel)]="selectedGmailMessageId"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900 outline-none
+                 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                @for(message of gmailMessages; track message.id){
+                  <option [ngValue]="message.id">
+                    {{ message.subject || '(No subject)' }} - {{ message.from }}
+                  </option>
+                }
+              </select>
+            </label>
           }
-
-          @if(fileName){
-            <p class="text-base font-semibold text-slate-800">
-              {{ fileName }}
-            </p>
-          }
-        </div>
-
-        <input
-          #gmailFileInput
-          id="gmail-file"
-          hidden
-          type="file"
-          accept=".eml"
-          (change)="onFileSelected($event)">
-
-        <button
-          (click)="uploadGmailFile()"
-          [disabled]="!file || isImportingGmail"
-          class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-           transition hover:bg-slate-700 active:scale-[0.99]
-           disabled:cursor-not-allowed disabled:bg-slate-400">
-          {{ isImportingGmail ? 'Importing...' : 'Import from Gmail' }}
-        </button>
+        }
       }
     </div>
 
@@ -248,6 +247,18 @@
          transition hover:bg-slate-700 active:scale-[0.99]">
 
         Import
+      </button>
+    }
+
+    @if(importSource === 'gmail' && selectedGmailMessageId){
+      <button
+        (click)="importSelectedGmailMessage()"
+        [disabled]="isImportingGmail"
+        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
+         transition hover:bg-slate-700 active:scale-[0.99]
+         disabled:cursor-not-allowed disabled:bg-slate-400">
+
+        {{ isImportingGmail ? 'Importing...' : 'Import' }}
       </button>
     }
 

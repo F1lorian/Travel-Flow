@@ -11,6 +11,8 @@ import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
+import { GmailMessagePreview, GmailService } from '../../services/gmail.service';
+import { GMAIL_OAUTH_STATE_KEY } from '../gmail-import/gmail-import';
 
 interface EventTransferDialogData {
   mode: 'import' | 'export';
@@ -45,6 +47,14 @@ export class EventTransferDialog implements OnInit {
   imapMessages: ImapMailPreview[] = [];
   selectedImapUid?: number;
   isLoadingImapMessages = false;
+  gmailService = inject(GmailService);
+  gmailConnected = false;
+  gmailEmail: string | null = null;
+  gmailStatusChecked = false;
+  isCheckingGmailStatus = false;
+  gmailMessages: GmailMessagePreview[] = [];
+  selectedGmailMessageId?: string;
+  isLoadingGmailMessages = false;
   isImportingGmail = false;
 
   constructor() {
@@ -141,30 +151,92 @@ export class EventTransferDialog implements OnInit {
   }
 
   /**
-   * Imports an event from a Gmail-exported .eml file by parsing it on the backend
-   * and routing the result through the existing conflict-resolution flow.
+   * When the user switches to the Gmail source, check (once) whether a Gmail account is already
+   * connected so the correct controls are shown.
    */
-  uploadGmailFile() {
-    if (!this.file) {
-      this.showMessage('Keine .eml-Datei ausgewählt');
+  onImportSourceChange() {
+    if (this.importSource === 'gmail' && !this.gmailStatusChecked) {
+      this.checkGmailStatus();
+    }
+  }
+
+  /** Loads the current Gmail connection status for the logged-in user. */
+  checkGmailStatus() {
+    this.isCheckingGmailStatus = true;
+    this.gmailService.getStatus().subscribe({
+      next: status => {
+        this.gmailConnected = status.connected;
+        this.gmailEmail = status.email;
+        this.gmailStatusChecked = true;
+        this.isCheckingGmailStatus = false;
+      },
+      error: err => {
+        this.isCheckingGmailStatus = false;
+        this.showMessage(err.error || 'Gmail-Status konnte nicht geladen werden.');
+      }
+    });
+  }
+
+  /**
+   * Starts the Google OAuth consent flow. A random state is stored so the /gmail-import redirect
+   * can verify it, then the browser is sent to Google.
+   */
+  connectGmail() {
+    const state = this.createOAuthState();
+    sessionStorage.setItem(GMAIL_OAUTH_STATE_KEY, state);
+    this.redirectTo(this.gmailService.buildConsentUrl(state));
+  }
+
+  /** Seam around the top-level navigation so it can be stubbed in tests. */
+  protected redirectTo(url: string) {
+    window.location.href = url;
+  }
+
+  /** Loads the most recent messages from the connected mailbox into the picker. */
+  loadGmailMessages() {
+    this.isLoadingGmailMessages = true;
+    this.gmailMessages = [];
+    this.selectedGmailMessageId = undefined;
+
+    this.gmailService.getMessages().subscribe({
+      next: messages => {
+        this.gmailMessages = messages;
+        this.selectedGmailMessageId = messages[0]?.id;
+        this.isLoadingGmailMessages = false;
+      },
+      error: err => {
+        this.isLoadingGmailMessages = false;
+        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht geladen werden.');
+      }
+    });
+  }
+
+  /**
+   * Parses the selected Gmail message on the backend and routes the result through the existing
+   * conflict-resolution flow.
+   */
+  importSelectedGmailMessage() {
+    if (!this.selectedGmailMessageId) {
+      this.showMessage('Bitte zuerst eine Gmail-Nachricht auswählen.');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('MailFile', this.file);
-
     this.isImportingGmail = true;
 
-    this.eventService.parseEvent(formData, this.tripId).subscribe({
-      next: (parsedEvent) => {
+    this.gmailService.parseMessage(this.selectedGmailMessageId).subscribe({
+      next: parsedEvent => {
         this.isImportingGmail = false;
         this.handleParsedEvent(parsedEvent);
       },
-      error: (err) => {
+      error: err => {
         this.isImportingGmail = false;
-        this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
+        this.showMessage(err.error || 'Gmail-Nachricht konnte nicht gelesen werden.');
       }
     });
+  }
+
+  private createOAuthState(): string {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   }
 
   loadImapMessages() {

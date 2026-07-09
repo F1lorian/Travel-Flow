@@ -28,6 +28,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 	implementation 'com.google.genai:google-genai:1.53.0'
 	implementation 'com.google.api-client:google-api-client:2.7.2'
+	implementation 'com.google.apis:google-api-services-gmail:v1-rev20260525-2.0.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-mail'
