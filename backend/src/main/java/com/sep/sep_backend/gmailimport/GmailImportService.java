@@ -104,10 +104,11 @@ public class GmailImportService {
   }
 
   /**
-   * How many messages are fetched and classified with Gemini in parallel during auto import. Kept
-   * low so a burst of parallel calls does not trip Gemini's rate limit.
+   * How many messages are fetched and classified with Gemini in parallel during auto import. The
+   * detector's retry/backoff absorbs the occasional rate-limit hit, so this stays high to keep a
+   * full selection fast.
    */
-  private static final int AUTO_IMPORT_PARALLELISM = 2;
+  private static final int AUTO_IMPORT_PARALLELISM = 6;
 
   /** Outcome of processing one message: its event (if any) and whether detection failed. */
   private record ParseOutcome(Optional<EventResponseDTO> event, boolean failed) {}
