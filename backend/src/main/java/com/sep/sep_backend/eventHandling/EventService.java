@@ -377,12 +377,6 @@ public class EventService {
   private static final int DETECTION_MAX_RETRIES = 2;
 
   /**
-   * Upper bound on the mail text sent to Gemini for event detection. Appointment details sit near
-   * the top of a mail, so trimming long bodies keeps each call fast without hurting accuracy.
-   */
-  private static final int DETECTION_MAX_CHARS = 4000;
-
-  /**
    * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
    *
    * <p>Returns empty for a mail that genuinely has no event (empty body or a {@code hasEvent:
@@ -398,11 +392,6 @@ public class EventService {
       throw new EventDetectionException("Gemini API key is not configured");
     }
 
-    String trimmedText =
-        mailText.length() > DETECTION_MAX_CHARS
-            ? mailText.substring(0, DETECTION_MAX_CHARS)
-            : mailText;
-
     int attempt = 0;
     while (true) {
       try {
@@ -416,7 +405,7 @@ public class EventService {
 
         GenerateContentResponse response =
             client.models.generateContent(
-                geminiModel, buildGeminiEventDetectionPrompt(subject, trimmedText), config);
+                geminiModel, buildGeminiEventDetectionPrompt(subject, mailText), config);
 
         String raw = response.text();
         log.info("Gmail event detection for [{}] -> {}", subject, raw);
