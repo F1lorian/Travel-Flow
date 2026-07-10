@@ -1,5 +1,5 @@
 import {Component, inject, OnInit} from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogContent, MatDialogActions} from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import {
   EventService,
@@ -11,6 +11,8 @@ import {Trip, TripService} from '../../TripManagement/services/trip.service';
 import {MessageDialog} from '../message-dialog/message-dialog';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
+import {MatIcon} from '@angular/material/icon';
+import {MatButton} from '@angular/material/button';
 
 interface EventTransferDialogData {
   mode: 'import' | 'export';
@@ -20,7 +22,7 @@ type ImportSource = 'drag-drop' | 'imap' | 'gmail';
 
 @Component({
   selector: 'app-event-transfer-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, MatDialogContent, MatDialogActions, MatIcon, MatButton],
   templateUrl: './event-transfer-dialog.html',
   styleUrl: './event-transfer-dialog.css',
 })

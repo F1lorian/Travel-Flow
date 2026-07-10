@@ -1,7 +1,7 @@
 import {Component, inject, OnInit} from '@angular/core';
 import {Friend, FriendsService} from '../../services/friends.service';
 import { FormsModule } from '@angular/forms';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
+import {MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef} from '@angular/material/dialog';
 import {MatIcon} from '@angular/material/icon';
 import {SlicePipe} from '@angular/common';
 import {forkJoin} from 'rxjs';
@@ -11,7 +11,7 @@ interface InviteDialogData {
 }
 @Component({
   selector: 'app-invite-dialog',
-  imports: [FormsModule, MatIcon, SlicePipe],
+  imports: [FormsModule, MatIcon, SlicePipe, MatDialogContent, MatDialogActions],
   standalone: true,
   templateUrl: './invite-dialog.html',
   styleUrl: './invite-dialog.css',

@@ -80,16 +80,40 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc .fc-button {
-  @apply rounded-lg border border-slate-300 bg-white px-4 py-2
-  font-semibold text-slate-700 shadow-sm transition;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  text-transform: capitalize;
+  box-shadow: none;
 }
 
 .fc .fc-button:hover {
-  @apply bg-slate-100;
+  @apply bg-slate-100 font-semibold text-slate-700 shadow-sm transition;
 }
 
-.fc .fc-button-active {
-  @apply border-blue-600 bg-blue-600 text-white;
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.fc .fc-today-button.fc-button-primary {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.fc .fc-today-button.fc-button-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.fc .fc-today-button:disabled {
+  opacity: 0.6;
 }
 
 .fc .fc-daygrid-day {
@@ -157,6 +181,19 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   border: none !important;
   color: white !important;
   cursor: pointer;
+}
+
+.rounded-2xl-dialog .mat-mdc-dialog-surface {
+  border-radius: 1rem !important;
+}
+
+.invite-dialog-panel .mat-mdc-dialog-content {
+  padding: 0 !important;
+}
+
+.invite-dialog-panel .mat-mdc-dialog-actions {
+  min-height: 0 !important;
+  padding: 0 !important;
 }
 
 @media (max-width: 700px) {

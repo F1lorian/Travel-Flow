@@ -254,6 +254,11 @@ export class CalendarComponent implements OnInit {
    */
   importEvent(){
     const dialogRef = this.dialog.open(EventTransferDialog, {
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      height: 'auto',
+      panelClass: 'rounded-2xl-dialog',
       data: {mode: 'import',}
     })
 
@@ -269,6 +274,7 @@ export class CalendarComponent implements OnInit {
    */
   exportEvents(){
     this.dialog.open(EventTransferDialog, {
+      panelClass: 'rounded-2xl-dialog',
       data: {mode: 'export'}
     })
   }

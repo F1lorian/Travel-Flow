@@ -92,6 +92,7 @@ export class TripDetail implements OnInit {
     this.dialog.open(InviteDialog, {
       maxWidth: '480px',
       width: '90vw',
+      panelClass: 'invite-dialog-panel',
       data: { tripId }
     });
   }
