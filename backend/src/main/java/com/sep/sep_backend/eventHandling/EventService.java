@@ -343,93 +343,65 @@ public class EventService {
     return parseTextWithGemini(message.getSubject(), body);
   }
 
+  /**
+   * Parses a mail into an event, but only when it actually describes one. A structured JSON-LD
+   * event always counts; otherwise Gemini decides whether the text contains a real appointment.
+   * Returns an empty {@link Optional} for messages without an event so bulk importers can skip
+   * them.
+   *
+   * @param inputStream raw RFC822 mail
+   * @return the parsed event, or empty when the mail contains no event
+   */
+  public Optional<EventResponseDTO> parseMailFileIfEvent(InputStream inputStream) throws Exception {
+    Session session = Session.getDefaultInstance(new Properties());
+    MimeMessage message = new MimeMessage(session, inputStream);
+
+    var jsonLdBlocks = extractJsonLd(message);
+    if (!jsonLdBlocks.isEmpty()) {
+      var jsonEvent =
+          jsonLdBlocks.stream()
+              .filter(this::isSchemaOrg)
+              .filter(this::isSchemaEvent)
+              .findFirst()
+              .orElse(null);
+      if (jsonEvent != null) {
+        return Optional.of(mapJsonLdToDTO(jsonEvent));
+      }
+    }
+
+    var body = extractText(message);
+    return detectEventWithGemini(message.getSubject(), body);
+  }
+
   /** How many times a throttled/failed Gemini detection call is retried before giving up. */
   private static final int DETECTION_MAX_RETRIES = 2;
 
   /**
-   * Upper bound on the mail text sent to Gemini per mail. Appointment details sit near the top of a
-   * mail, so trimming long bodies keeps the batched call fast without hurting accuracy.
+   * Upper bound on the mail text sent to Gemini for event detection. Appointment details sit near
+   * the top of a mail, so trimming long bodies keeps each call fast without hurting accuracy.
    */
   private static final int DETECTION_MAX_CHARS = 4000;
 
-  /** One mail's subject and (trimmed) body, as sent to the batched Gemini detection. */
-  private record MailContent(String subject, String text) {}
-
   /**
-   * Classifies several raw mails for automatic import in a single batched Gemini call. Structured
-   * JSON-LD events are kept directly; the remaining mails are sent to Gemini together. Results are
-   * aligned with the input order — each is an extracted event, a genuine "no event", or a failure
-   * (detection could not run) so the caller can report messages that could not be checked.
+   * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
    *
-   * @param rawMails raw RFC822 mails, in the order results should be returned
-   * @return one {@link MailEventResult} per input mail
+   * <p>Returns empty for a mail that genuinely has no event (empty body or a {@code hasEvent:
+   * false} verdict). Throws {@link EventDetectionException} when detection could not run (no Gemini
+   * key, or the call keeps failing after retries) so the caller can report the message as "could
+   * not be checked" rather than silently treating a failure as "no event".
    */
-  public List<MailEventResult> detectEvents(List<byte[]> rawMails) {
-    Session session = Session.getDefaultInstance(new Properties());
-    MailEventResult[] results = new MailEventResult[rawMails.size()];
-    List<Integer> pendingIndexes = new ArrayList<>();
-    List<MailContent> pendingInputs = new ArrayList<>();
-
-    for (int i = 0; i < rawMails.size(); i++) {
-      try {
-        MimeMessage message = new MimeMessage(session, new ByteArrayInputStream(rawMails.get(i)));
-
-        var jsonEvent =
-            extractJsonLd(message).stream()
-                .filter(this::isSchemaOrg)
-                .filter(this::isSchemaEvent)
-                .findFirst()
-                .orElse(null);
-        if (jsonEvent != null) {
-          results[i] = MailEventResult.ofEvent(mapJsonLdToDTO(jsonEvent));
-          continue;
-        }
-
-        String body = extractText(message);
-        if (body == null || body.isBlank()) {
-          results[i] = MailEventResult.noEvent();
-          continue;
-        }
-
-        String trimmed =
-            body.length() > DETECTION_MAX_CHARS ? body.substring(0, DETECTION_MAX_CHARS) : body;
-        pendingIndexes.add(i);
-        pendingInputs.add(new MailContent(message.getSubject(), trimmed));
-      } catch (Exception exception) {
-        log.warn("Auto-import: could not read a selected mail", exception);
-        results[i] = MailEventResult.failure();
-      }
+  private Optional<EventResponseDTO> detectEventWithGemini(String subject, String mailText) {
+    if (mailText == null || mailText.isBlank()) {
+      return Optional.empty();
     }
-
-    if (!pendingInputs.isEmpty()) {
-      try {
-        List<Optional<EventResponseDTO>> verdicts = classifyEventsWithGemini(pendingInputs);
-        for (int k = 0; k < pendingIndexes.size(); k++) {
-          Optional<EventResponseDTO> verdict =
-              k < verdicts.size() ? verdicts.get(k) : Optional.empty();
-          results[pendingIndexes.get(k)] =
-              verdict.map(MailEventResult::ofEvent).orElseGet(MailEventResult::noEvent);
-        }
-      } catch (RuntimeException exception) {
-        log.warn("Batch event detection failed for {} mails", pendingInputs.size(), exception);
-        for (int index : pendingIndexes) {
-          results[index] = MailEventResult.failure();
-        }
-      }
-    }
-
-    return Arrays.asList(results);
-  }
-
-  /**
-   * Runs one Gemini call classifying all given mails and returns a per-mail verdict aligned to the
-   * input order (present = event, empty = no event). Throws {@link EventDetectionException} when
-   * the call cannot run after retries so all batched mails are reported as "could not be checked".
-   */
-  private List<Optional<EventResponseDTO>> classifyEventsWithGemini(List<MailContent> mails) {
     if (geminiApiKey == null || geminiApiKey.isBlank()) {
       throw new EventDetectionException("Gemini API key is not configured");
     }
+
+    String trimmedText =
+        mailText.length() > DETECTION_MAX_CHARS
+            ? mailText.substring(0, DETECTION_MAX_CHARS)
+            : mailText;
 
     int attempt = 0;
     while (true) {
@@ -443,43 +415,30 @@ public class EventService {
                 .build();
 
         GenerateContentResponse response =
-            client.models.generateContent(geminiModel, buildBatchDetectionPrompt(mails), config);
+            client.models.generateContent(
+                geminiModel, buildGeminiEventDetectionPrompt(subject, trimmedText), config);
 
         String raw = response.text();
-        log.info("Gmail batch event detection for {} mails -> {}", mails.size(), raw);
-        JsonNode root = objectMapper.readTree(raw);
-        JsonNode array = root.isArray() ? root : root.path("events");
-        if (!array.isArray()) {
-          throw new IllegalStateException("Expected a JSON array from Gemini");
+        log.info("Gmail event detection for [{}] -> {}", subject, raw);
+        JsonNode node = objectMapper.readTree(raw);
+
+        String startText = node.path("startDate").asText("");
+        // Treat it as an event when the model flags one OR actually extracted a start date, so a
+        // conservative "hasEvent": false does not drop a mail that clearly contains an appointment.
+        boolean hasEvent = node.path("hasEvent").asBoolean(false) || !startText.isBlank();
+        if (!hasEvent) {
+          return Optional.empty();
         }
 
-        List<Optional<EventResponseDTO>> results =
-            new ArrayList<>(java.util.Collections.nCopies(mails.size(), Optional.empty()));
-
-        int position = 0;
-        for (JsonNode node : array) {
-          int index = node.path("index").asInt(position);
-          position++;
-          if (index < 0 || index >= mails.size()) {
-            continue;
-          }
-          String startText = node.path("startDate").asText("");
-          // An event when the model flags one OR actually returned a start date, so a conservative
-          // "hasEvent": false does not drop a mail that clearly contains an appointment.
-          boolean hasEvent = node.path("hasEvent").asBoolean(false) || !startText.isBlank();
-          if (!hasEvent) {
-            continue;
-          }
-          String name = node.path("name").asText(mails.get(index).subject());
-          int kosten = node.path("kosten").asInt(0);
-          LocalDateTime start = parseDatetime(startText);
-          LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
-          results.set(index, Optional.of(new EventResponseDTO(name, kosten, start, end)));
-        }
-        return results;
+        String name = node.path("name").asText(subject);
+        int kosten = node.path("kosten").asInt(0);
+        LocalDateTime start = parseDatetime(startText);
+        LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
+        return Optional.of(new EventResponseDTO(name, kosten, start, end));
       } catch (Exception exception) {
         if (attempt++ >= DETECTION_MAX_RETRIES) {
-          throw new EventDetectionException("Gemini batch event detection failed", exception);
+          log.warn("Gmail event detection failed for [{}] after {} attempts", subject, attempt);
+          throw new EventDetectionException("Gemini event detection failed", exception);
         }
         // Back off briefly before retrying a throttled/transient failure.
         try {
@@ -492,44 +451,37 @@ public class EventService {
     }
   }
 
-  private String buildBatchDetectionPrompt(List<MailContent> mails) {
-    StringBuilder listing = new StringBuilder();
-    for (int i = 0; i < mails.size(); i++) {
-      listing
-          .append("=== E-Mail ")
-          .append(i)
-          .append(" ===\nBetreff: ")
-          .append(mails.get(i).subject() == null ? "" : mails.get(i).subject())
-          .append("\nText:\n")
-          .append(mails.get(i).text())
-          .append("\n\n");
-    }
-
+  private String buildGeminiEventDetectionPrompt(String subject, String mailText) {
     return """
-                Prüfe für JEDE der folgenden E-Mails, ob sie eine konkrete Veranstaltung oder einen
-                Termin mit Datum beschreibt (z. B. Meeting, Konzert, Reservierung, Arzttermin,
-                Buchung). Werbung, Newsletter, Rechnungen ohne Termin und reine Benachrichtigungen
-                sind KEIN Event.
+                Prüfe, ob diese E-Mail eine konkrete Veranstaltung oder einen Termin beschreibt
+                (z. B. Meeting, Konzert, Reservierung, Arzttermin, Buchung mit Datum/Uhrzeit).
+                Werbung, Newsletter, Rechnungen ohne Termin und reine Benachrichtigungen sind KEIN Event.
 
-                Antworte nur mit einem JSON-Array — genau ein Objekt pro E-Mail, in derselben
-                Reihenfolge und mit passendem index:
-                [
-                  {"index": 0, "hasEvent": true, "name": "Eventname", "kosten": 0,
-                   "startDate": "2026-06-01T20:00:00", "endDate": "2026-06-01T22:00:00"}
-                ]
+                Antworte nur mit JSON:
+                {
+                  "hasEvent": true,
+                  "name": "Eventname",
+                  "kosten": 0,
+                  "startDate": "2026-06-01T20:00:00",
+                  "endDate": "2026-06-01T22:00:00"
+                }
 
                 Regeln:
-                - Genau ein Objekt pro E-Mail; index ist die E-Mail-Nummer.
-                - hasEvent ist nur true bei einem echten Termin mit erkennbarem Datum.
+                - hasEvent ist nur true, wenn ein echter Termin mit erkennbarem Datum vorhanden ist.
+                - Falls hasEvent false ist, sind die übrigen Felder egal.
                 - kosten ist eine ganze Zahl.
-                - startDate und endDate im Format yyyy-MM-ddTHH:mm:ss.
+                - startDate ist yyyy-MM-ddTHH:mm:ss.
+                - endDate ist yyyy-MM-ddTHH:mm:ss.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
                 - Erfinde keine Daten.
 
-                E-Mails:
+                Betreff:
+                %s
+
+                Mailtext:
                 %s
                 """
-        .formatted(listing.toString());
+        .formatted(subject, mailText);
   }
 
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
