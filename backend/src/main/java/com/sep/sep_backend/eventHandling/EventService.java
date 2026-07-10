@@ -55,6 +55,9 @@ public class EventService {
 
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EventService.class);
 
+  /** Placeholder name for an event whose real name could not be determined. */
+  private static final String UNKNOWN_EVENT_NAME = "Unbekanntes Event";
+
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
   private final AusgabeService ausgabeService;
@@ -186,7 +189,7 @@ public class EventService {
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId, Long UserID) {
     Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
-        dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
+        dto.getName() == null || dto.getName().isBlank() ? UNKNOWN_EVENT_NAME : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
@@ -360,6 +363,7 @@ public class EventService {
     MimeMessage message = new MimeMessage(session, inputStream);
 
     var jsonLdBlocks = extractJsonLd(message);
+    Optional<EventResponseDTO> event = Optional.empty();
     if (!jsonLdBlocks.isEmpty()) {
       var jsonEvent =
           jsonLdBlocks.stream()
@@ -368,12 +372,24 @@ public class EventService {
               .findFirst()
               .orElse(null);
       if (jsonEvent != null) {
-        return Optional.of(mapJsonLdToDTO(jsonEvent));
+        event = Optional.of(mapJsonLdToDTO(jsonEvent));
       }
     }
 
-    var body = extractText(message);
-    return detectEventWithGemini(message.getSubject(), body, resolveSentDate(message));
+    if (event.isEmpty()) {
+      var body = extractText(message);
+      event = detectEventWithGemini(message.getSubject(), body, resolveSentDate(message));
+    }
+
+    // Ein Event ohne echten Namen ("Unbekanntes Event") wird beim automatischen Import nicht
+    // übernommen — der Nutzer soll keine namenlosen Platzhalter im Kalender bekommen.
+    return event.filter(this::hasRealName);
+  }
+
+  /** True when the event has a real name; a blank or "Unbekanntes Event" placeholder is dropped. */
+  private boolean hasRealName(EventResponseDTO event) {
+    String name = event.getName();
+    return name != null && !name.isBlank() && !name.equals(UNKNOWN_EVENT_NAME);
   }
 
   /** How many times a throttled/failed Gemini detection call is retried before giving up. */
@@ -780,7 +796,7 @@ public class EventService {
   }
 
   private EventResponseDTO mapTextToDTO(String text) {
-    var name = text == null || text.isBlank() ? "Unbekanntes Event" : text;
+    var name = text == null || text.isBlank() ? UNKNOWN_EVENT_NAME : text;
     LocalDateTime start = LocalDateTime.now();
     return new EventResponseDTO(name, 0, start, resolveEndTime(null, start));
   }
@@ -801,7 +817,7 @@ public class EventService {
     var price = eventNode.path("offers").path("price").asInt();
     var start = parseDatetime(eventNode.path("startDate").asText());
     var end = parseEndDatetime(eventNode.path("endDate").asText(), start);
-    var name = eventNode.path("name").asText("Unbekanntes Event");
+    var name = eventNode.path("name").asText(UNKNOWN_EVENT_NAME);
     return new EventResponseDTO(name, price, start, end);
   }
 

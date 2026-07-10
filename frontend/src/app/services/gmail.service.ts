@@ -53,13 +53,9 @@ export class GmailService {
     return this.http.get<GmailMessagePreview[]>(`${this.apiUrl}/messages`);
   }
 
-  parseMessage(messageId: string): Observable<ParsedEvent> {
-    return this.http.post<ParsedEvent>(`${this.apiUrl}/import/parse`, { messageId });
-  }
-
   /**
    * Parses the given messages for automatic import. The backend uses Gemini to keep only the ones
-   * that actually contain an event and reports how many messages could not be checked.
+   * that actually contain a real, named event and reports how many messages could not be checked.
    */
   autoParse(messageIds: string[]): Observable<GmailAutoImportResult> {
     return this.http.post<GmailAutoImportResult>(`${this.apiUrl}/import/auto`, { messageIds });

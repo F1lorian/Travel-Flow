@@ -2,7 +2,7 @@ import {Component, inject, OnInit} from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import {
   EventService,
   ImapMailPreview,
@@ -15,11 +15,7 @@ import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import { ParsedEvent } from '../../../event-adding-manual/models/ParsedEvent';
 import { AddEventResponse } from '../../../event-adding-manual/models/AddEventResponse';
 import { GmailMessagePreview, GmailService } from '../../services/gmail.service';
-import { EventImportReview, ReviewItem } from '../event-import-review/event-import-review';
 import { GMAIL_OAUTH_STATE_KEY } from '../gmail-import/gmail-import';
-
-/** Whether imported Gmail events are saved directly or reviewed first. */
-type GmailImportMode = 'auto' | 'review';
 
 interface EventTransferDialogData {
   mode: 'import' | 'export';
@@ -61,7 +57,6 @@ export class EventTransferDialog implements OnInit {
   isCheckingGmailStatus = false;
   gmailMessages: GmailMessagePreview[] = [];
   selectedGmailIds = new Set<string>();
-  gmailImportMode: GmailImportMode = 'review';
   isLoadingGmailMessages = false;
   isImportingGmail = false;
 
@@ -254,9 +249,9 @@ export class EventTransferDialog implements OnInit {
   }
 
   /**
-   * Imports the selected Gmail messages. In 'auto' mode the backend keeps only messages that
-   * actually contain an event (Gemini detection) and those are saved directly; in 'review' mode
-   * every message is parsed and the user picks which ones to keep.
+   * Imports the selected Gmail messages. The backend keeps only messages that actually contain an
+   * event (Gemini detection) and skips anything without a real, named event; those found are saved
+   * directly. Messages the AI could not check are reported so they are never silently dropped.
    */
   importSelectedGmailMessages() {
     const ids = [...this.selectedGmailIds];
@@ -267,16 +262,11 @@ export class EventTransferDialog implements OnInit {
     }
 
     this.isImportingGmail = true;
-
-    if (this.gmailImportMode === 'auto') {
-      this.autoImportGmail(ids);
-    } else {
-      this.reviewImportGmail(ids);
-    }
+    this.autoImportGmail(ids);
   }
 
   /**
-   * Auto mode: asks the backend for the events among the selected messages (non-event mails are
+   * Asks the backend for the events among the selected messages (non-event and unnamed mails are
    * skipped there) and saves them directly. Messages the AI could not check are reported so they
    * are never silently dropped nor mistaken for "no events".
    */
@@ -298,50 +288,6 @@ export class EventTransferDialog implements OnInit {
         this.isImportingGmail = false;
         this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht importiert werden.');
       },
-    });
-  }
-
-  /** Review mode: parses every selected message, then lets the user pick which ones to keep. */
-  private reviewImportGmail(ids: string[]) {
-    const subjectById = new Map(this.gmailMessages.map(message => [message.id, message.subject]));
-    const parseCalls = ids.map(id =>
-      this.gmailService.parseMessage(id).pipe(
-        map((event): ReviewItem => ({ subject: subjectById.get(id) ?? '', event })),
-        catchError(() => of(null)),
-      ),
-    );
-
-    forkJoin(parseCalls).subscribe({
-      next: results => {
-        this.isImportingGmail = false;
-        const parsed = results.filter((item): item is ReviewItem => item !== null);
-        const failedToParse = results.length - parsed.length;
-
-        if (parsed.length === 0) {
-          this.showMessage('Keine der ausgewählten Nachrichten konnte gelesen werden.');
-          return;
-        }
-
-        this.reviewThenSave(parsed, failedToParse);
-      },
-      error: err => {
-        this.isImportingGmail = false;
-        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht gelesen werden.');
-      },
-    });
-  }
-
-  /** Opens the review dialog and saves whatever the user confirms. */
-  private reviewThenSave(items: ReviewItem[], failedToParse: number) {
-    const dialogRef = this.dialog.open(EventImportReview, {
-      maxWidth: '600px',
-      data: { items },
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed: ParsedEvent[] | undefined) => {
-      if (confirmed && confirmed.length > 0) {
-        this.saveParsedEvents(confirmed, failedToParse);
-      }
     });
   }
 

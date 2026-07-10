@@ -563,6 +563,22 @@ class EventServiceTest {
     assertThat(event20.getStart().toLocalDate()).isNotEqualTo(LocalDate.now());
   }
 
+  @Test
+  void parseMailFileIfEventUeberspringtEventOhneNamen() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "startDate": "2026-07-20T09:30:00"
+        }
+        """;
+
+    // Ohne "name" fällt mapJsonLdToDTO auf den Platzhalter zurück -> darf nicht importiert werden.
+    assertThat(serviceWithObjectMapper.parseMailFileIfEvent(jsonLdMail(json))).isEmpty();
+  }
+
   private ByteArrayInputStream reiseEventMail(String name, String startDate) {
     String json =
         """
