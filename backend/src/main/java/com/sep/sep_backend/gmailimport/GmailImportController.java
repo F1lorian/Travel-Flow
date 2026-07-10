@@ -1,6 +1,7 @@
 package com.sep.sep_backend.gmailimport;
 
 import com.sep.sep_backend.eventHandling.EventResponseDTO;
+import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectRequestDTO;
@@ -86,6 +87,11 @@ public class GmailImportController {
 
   @ExceptionHandler(IllegalStateException.class)
   public ResponseEntity<String> handleUpstreamFailure(IllegalStateException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(exception.getMessage());
+  }
+
+  @ExceptionHandler(EventDetectionException.class)
+  public ResponseEntity<String> handleDetectionFailure(EventDetectionException exception) {
     return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(exception.getMessage());
   }
 }

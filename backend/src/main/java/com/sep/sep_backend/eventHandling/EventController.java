@@ -2,9 +2,11 @@ package com.sep.sep_backend.eventHandling;
 
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -235,5 +237,14 @@ public class EventController {
         .findByNameIgnoreCaseOrEmailIgnoreCase(authentication.getName(), "")
         .orElseThrow(() -> new IllegalArgumentException("User not found"))
         .getId();
+  }
+
+  /**
+   * A failed AI extraction (e.g. Gemini 429 quota) is reported as an upstream error instead of
+   * silently importing an event with a wrong (today's) date.
+   */
+  @ExceptionHandler(EventDetectionException.class)
+  public ResponseEntity<String> handleDetectionFailure(EventDetectionException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(exception.getMessage());
   }
 }

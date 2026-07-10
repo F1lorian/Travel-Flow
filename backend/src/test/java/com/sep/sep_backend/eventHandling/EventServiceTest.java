@@ -484,6 +484,99 @@ class EventServiceTest {
     assertThat(result.getEnd()).isEqualTo(result.getStart().plusDays(1));
   }
 
+  @Test
+  void parseMailFileHaeltDateOnlyStartDatumStattHeuteZuNutzen() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "Sommerfest",
+          "startDate": "2026-07-20",
+          "offers": { "price": 0 }
+        }
+        """;
+
+    EventResponseDTO result = serviceWithObjectMapper.ParseMailFile(jsonLdMail(json));
+
+    assertThat(result.getName()).isEqualTo("Sommerfest");
+    assertThat(result.getStart()).isEqualTo(LocalDate.of(2026, 7, 20).atStartOfDay());
+    assertThat(result.getEnd()).isEqualTo(LocalDate.of(2026, 7, 21).atStartOfDay());
+  }
+
+  @Test
+  void parseMailFileParstStartDatumMitZeitzone() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "Zoned Konzert",
+          "startDate": "2026-07-20T20:00:00Z",
+          "endDate": "2026-07-20T22:00:00+02:00"
+        }
+        """;
+
+    EventResponseDTO result = serviceWithObjectMapper.ParseMailFile(jsonLdMail(json));
+
+    assertThat(result.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 20, 20, 0));
+    assertThat(result.getEnd()).isEqualTo(LocalDateTime.of(2026, 7, 20, 22, 0));
+  }
+
+  @Test
+  void parseMailFileIfEventLiefertJsonLdEventMitKorrektemDatum() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "Messe",
+          "startDate": "2026-07-20T09:30:00"
+        }
+        """;
+
+    Optional<EventResponseDTO> result =
+        serviceWithObjectMapper.parseMailFileIfEvent(jsonLdMail(json));
+
+    assertThat(result).isPresent();
+    assertThat(result.get().getName()).isEqualTo("Messe");
+    assertThat(result.get().getStart()).isEqualTo(LocalDateTime.of(2026, 7, 20, 9, 30));
+  }
+
+  @Test
+  void parseMailFileErzeugtUnterschiedlicheDatenFuerUnterschiedlicheMails() throws Exception {
+    EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
+
+    EventResponseDTO event11 =
+        serviceWithObjectMapper.ParseMailFile(reiseEventMail("Reise Frankreich", "2026-07-11T13:00:00"));
+    EventResponseDTO event20 =
+        serviceWithObjectMapper.ParseMailFile(reiseEventMail("Reise Frankreich", "2026-07-20T13:00:00"));
+
+    assertThat(event11.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 11, 13, 0));
+    assertThat(event20.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 20, 13, 0));
+    // The two mails must not collapse onto the same (import) day — the original bug.
+    assertThat(event11.getStart().toLocalDate()).isNotEqualTo(event20.getStart().toLocalDate());
+    assertThat(event11.getStart().toLocalDate()).isNotEqualTo(LocalDate.now());
+    assertThat(event20.getStart().toLocalDate()).isNotEqualTo(LocalDate.now());
+  }
+
+  private ByteArrayInputStream reiseEventMail(String name, String startDate) {
+    String json =
+        """
+        {
+          "@context": "https://schema.org",
+          "@type": "Event",
+          "name": "%s",
+          "startDate": "%s"
+        }
+        """
+            .formatted(name, startDate);
+    return jsonLdMail(json);
+  }
+
   private EventService serviceWithRealObjectMapper() {
     return new EventService(
         eventRepository,
