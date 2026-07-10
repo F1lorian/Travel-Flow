@@ -14,6 +14,7 @@ import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -37,6 +38,7 @@ class ProfileManagementServiceTest {
   @Mock private TripRepository tripRepository;
   @Mock private EventRepository eventRepository;
   @Mock private UserEventRepository userEventRepository;
+  @Mock private FriendRequestRepository friendRequestRepository;
   @Mock private EmailNotificationService emailNotificationService;
   @Mock private GoogleTokenVerifier googleTokenVerifier;
 
@@ -55,6 +57,7 @@ class ProfileManagementServiceTest {
             tripRepository,
             eventRepository,
             userEventRepository,
+            friendRequestRepository,
             emailNotificationService,
             ENCODER,
             googleTokenVerifier);

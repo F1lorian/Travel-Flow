@@ -9,6 +9,27 @@ import {EditEventResponse} from '../models/EditEventResponse';
 import { ParsedEvent } from '../models/ParsedEvent';
 import { UserEventDTO } from '../models/UserEventDTO';
 
+export interface ImapMailboxRequest {
+  host: string;
+  port?: number;
+  username: string;
+  password: string;
+  folder?: string;
+  limit?: number;
+}
+
+export interface ImapMailSelectionRequest extends ImapMailboxRequest {
+  uid: number;
+}
+
+export interface ImapMailPreview {
+  uid: number;
+  subject: string;
+  from: string;
+  sentDate: string | null;
+  receivedDate: string | null;
+  snippet: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -64,6 +85,14 @@ export class EventService {
       params = {tripId: tripId.toString()};
     }
     return this.http.post<ParsedEvent>('/api/event/import/parse', formData, { params });
+  }
+
+  getImapMessages(request: ImapMailboxRequest): Observable<ImapMailPreview[]> {
+    return this.http.post<ImapMailPreview[]>('/api/event/import/imap/messages', request);
+  }
+
+  parseImapMessage(request: ImapMailSelectionRequest): Observable<ParsedEvent> {
+    return this.http.post<ParsedEvent>('/api/event/import/imap/parse', request);
   }
 
   /**

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   authenticate,
+  calendarDate,
   mockCalendarEvents,
   mockConflictEvents,
   mockFriends,
@@ -34,6 +35,8 @@ test('Alle Elemente werden angezeigt', async ({ page }) => {
 });
 
 test('Event wird über Dialog erstellt', async ({ page }) => {
+  const eventDate = calendarDate();
+
   await mockJson(
     page,
     '**/api/event/create/manual',
@@ -41,8 +44,8 @@ test('Event wird über Dialog erstellt', async ({ page }) => {
       id: '42',
       name: 'Mein Test Event',
       kosten: 0,
-      start: '2026-06-15T00:00:00',
-      end: '2026-06-15T01:00:00',
+      start: `${eventDate}T00:00:00`,
+      end: `${eventDate}T01:00:00`,
     },
     'POST',
   );
@@ -57,13 +60,15 @@ test('Event wird über Dialog erstellt', async ({ page }) => {
 });
 
 test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
+  const eventDate = calendarDate();
+
   await mockFriends(page, [{ id: 2, username: 'bob', firstName: 'Bob', surname: 'Friend' }]);
   await mockCalendarEvents(page, [
     {
       id: '1',
       title: 'Friend Event',
-      start: '2026-06-15T10:00:00',
-      end: '2026-06-15T11:00:00',
+      start: `${eventDate}T10:00:00`,
+      end: `${eventDate}T11:00:00`,
       kosten: 20,
       creatorId: 2,
     },
@@ -75,12 +80,14 @@ test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
 });
 
 test('Eingeladener Trip bekommt eigene CSS-Klasse', async ({ page }) => {
+  const tripDate = calendarDate();
+
   await mockTrips(page, [
     {
       id: 7,
       name: 'Invited Trip',
-      startDate: '2026-06-15',
-      endDate: '2026-06-16',
+      startDate: tripDate,
+      endDate: tripDate,
       events: [],
       invitedByUserId: 2,
       invitedByUsername: 'bob',

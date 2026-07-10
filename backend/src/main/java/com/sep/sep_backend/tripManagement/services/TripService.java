@@ -56,14 +56,14 @@ public class TripService {
     this.emailNotificationService = emailNotificationService;
   }
 
-  /** Returns only the trips the given user is a member of. */
+  /** Returns the trips the given user has accepted or pending membership on. */
   public List<Trip> getAllTrips(Long userId) {
     return tripRepository.findAllByUserId(userId);
   }
 
   /**
-   * Returns a trip if it exists (404 otherwise) and the given user is a member (403 otherwise). All
-   * trip-scoped operations go through this so access rules live in one place.
+   * Returns a trip if it exists (404 otherwise) and the given user has accepted membership (403
+   * otherwise). All trip-scoped operations go through this so access rules live in one place.
    */
   public Trip getTripForMember(Long tripId, Long userId) {
     Trip trip =
@@ -76,17 +76,25 @@ public class TripService {
     return trip;
   }
 
-  /** Rejects users who are not members of the trip, so trip ids cannot simply be guessed. */
+  /**
+   * Rejects users without an accepted membership on the trip, so trip ids cannot simply be guessed
+   * and a still-pending invite doesn't grant full access.
+   */
   public void requireMember(Long tripId, Long userId) {
-    if (!userTripRepository.existsByIdUserIdAndIdTripId(userId, tripId)) {
+    boolean isAcceptedMember =
+        userTripRepository
+            .findByIdUserIdAndIdTripId(userId, tripId)
+            .filter(entry -> entry.getStatus() == UserTrip.InviteStatus.ACCEPTED)
+            .isPresent();
+    if (!isAcceptedMember) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this trip");
     }
   }
 
   /**
-   * Creates a trip and makes the creating user its first member. The name is required and, when
-   * both dates are given, the trip may not end before it starts; violations become readable 400
-   * responses for the frontend.
+   * Creates a trip and makes the creating user its first, already-accepted member. The name is
+   * required and, when both dates are given, the trip may not end before it starts; violations
+   * become readable 400 responses for the frontend.
    */
   public Trip createTrip(String name, LocalDate startDate, LocalDate endDate, Long userId) {
     if (name == null || name.isBlank()) {
@@ -106,7 +114,7 @@ public class TripService {
     trip.setStartDate(startDate);
     trip.setEndDate(endDate);
     Trip savedTrip = tripRepository.save(trip);
-    userTripRepository.save(new UserTrip(user, savedTrip, null));
+    userTripRepository.save(new UserTrip(user, savedTrip, null, UserTrip.InviteStatus.ACCEPTED));
 
     // Mirror the in-app confirmation by email; a mail failure never fails the creation itself.
     emailNotificationService.sendBestEffort(
@@ -118,9 +126,9 @@ public class TripService {
   }
 
   /**
-   * Deletes a trip and all of its events, expenses, and memberships. Only members may delete a
-   * trip. @Transactional makes all deletions succeed or fail together, so a trip is never left with
-   * orphaned events.
+   * Deletes a trip and all of its events, expenses, and memberships. Only accepted members may
+   * delete a trip. @Transactional makes all deletions succeed or fail together, so a trip is never
+   * left with orphaned events.
    */
   @Transactional
   public void deleteTrip(Long id, Long userId) {

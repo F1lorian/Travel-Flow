@@ -10,6 +10,7 @@ import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -35,6 +36,7 @@ public class ProfileManagementService {
   private final TripRepository tripRepository;
   private final EventRepository eventRepository;
   private final UserEventRepository userEventRepository;
+  private final FriendRequestRepository friendRequestRepository;
   private final EmailNotificationService emailNotificationService;
   private final PasswordEncoder passwordEncoder;
   private final GoogleTokenVerifier googleTokenVerifier;
@@ -47,6 +49,7 @@ public class ProfileManagementService {
       TripRepository tripRepository,
       EventRepository eventRepository,
       UserEventRepository userEventRepository,
+      FriendRequestRepository friendRequestRepository,
       EmailNotificationService emailNotificationService,
       PasswordEncoder passwordEncoder,
       GoogleTokenVerifier googleTokenVerifier) {
@@ -56,6 +59,7 @@ public class ProfileManagementService {
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.userEventRepository = userEventRepository;
+    this.friendRequestRepository = friendRequestRepository;
     this.emailNotificationService = emailNotificationService;
     this.passwordEncoder = passwordEncoder;
     this.googleTokenVerifier = googleTokenVerifier;
@@ -126,6 +130,9 @@ public class ProfileManagementService {
       userRepository.save(friend);
     }
     user.getFriends().clear();
+
+    // Pending/answered friend requests also reference the user on either side.
+    friendRequestRepository.deleteAll(friendRequestRepository.findBySenderOrReceiver(user, user));
 
     // Event participations also reference the user. Invites this user sent to others stay valid
     // for the invitee (the row is re-anchored on them), the user's own participation rows are

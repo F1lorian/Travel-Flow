@@ -110,7 +110,8 @@ class TripServiceTest {
   void getTripForMember_returnsTrip_whenUserIsMember() {
     Trip trip = new Trip("Paris");
     when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
-    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(acceptedMembership()));
 
     Trip result = tripService.getTripForMember(1L, 7L);
 
@@ -130,7 +131,7 @@ class TripServiceTest {
   @Test
   void getTripForMember_throws403_whenUserIsNotAMember() {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(false);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L)).thenReturn(Optional.empty());
 
     ResponseStatusException exception =
         assertThrows(ResponseStatusException.class, () -> tripService.getTripForMember(1L, 7L));
@@ -141,7 +142,8 @@ class TripServiceTest {
   @Test
   void deleteTrip_deletesRelatedDataBeforeTrip() {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(acceptedMembership()));
 
     tripService.deleteTrip(1L, 7L);
 
@@ -173,7 +175,8 @@ class TripServiceTest {
   @Test
   void deleteTrip_emailsTheUserAboutTheDeletion() {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(true);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(acceptedMembership()));
     User user = userWithId(7L);
     user.setEmail("max@example.com");
     when(userRepository.findById(7L)).thenReturn(Optional.of(user));
@@ -187,7 +190,7 @@ class TripServiceTest {
   @Test
   void deleteTrip_throws403_whenUserIsNotAMember() {
     when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.existsByIdUserIdAndIdTripId(7L, 1L)).thenReturn(false);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L)).thenReturn(Optional.empty());
 
     ResponseStatusException exception =
         assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(1L, 7L));
@@ -204,5 +207,11 @@ class TripServiceTest {
     User user = new User();
     user.setId(id);
     return user;
+  }
+
+  private UserTrip acceptedMembership() {
+    UserTrip membership = new UserTrip();
+    membership.setStatus(UserTrip.InviteStatus.ACCEPTED);
+    return membership;
   }
 }

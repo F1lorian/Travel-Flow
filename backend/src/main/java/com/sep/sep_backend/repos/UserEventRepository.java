@@ -17,6 +17,8 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
 
   List<UserEvent> findByUser_Id(Long userId);
 
+  List<UserEvent> findByUser_IdAndStatus(Long userId, UserEvent.InviteStatus status);
+
   List<UserEvent> findByCreator_Id(Long userId);
 
   boolean existsByEvent_Id(Long eventId);
@@ -28,10 +30,11 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
   @Query(
 """
     SELECT DISTINCT e FROM Event e
-    LEFT JOIN UserEvent ue ON ue.event.id = e.id
-    LEFT JOIN e.trip t
-    LEFT JOIN t.userTrips ut
-    WHERE ue.user.id = :userId OR ut.user.id = :userId
+        LEFT JOIN UserEvent ue ON ue.event.id = e.id
+        LEFT JOIN e.trip t
+        LEFT JOIN t.userTrips ut
+        WHERE (ue.user.id = :userId AND ue.status = 'ACCEPTED')
+           OR (ut.user.id = :userId AND ut.status = 'ACCEPTED')
 """)
   List<Event> findAllByUserId(@Param("userId") Long userId);
 }

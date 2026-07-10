@@ -1,7 +1,9 @@
 package com.sep.sep_backend.friends;
 
+import com.sep.sep_backend.entities.FriendRequest;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.notification.EmailNotificationService;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -12,11 +14,18 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class FriendsService {
   private final UserRepository userRepository;
+  private final FriendRequestRepository friendRequestRepository;
+  private final FriendRequestNotificationService notificationService;
   private final EmailNotificationService emailNotificationService;
 
   public FriendsService(
-      UserRepository userRepository, EmailNotificationService emailNotificationService) {
+      UserRepository userRepository,
+      FriendRequestRepository friendRequestRepository,
+      FriendRequestNotificationService notificationService,
+      EmailNotificationService emailNotificationService) {
     this.userRepository = userRepository;
+    this.friendRequestRepository = friendRequestRepository;
+    this.notificationService = notificationService;
     this.emailNotificationService = emailNotificationService;
   }
 
@@ -39,34 +48,149 @@ public class FriendsService {
   }
 
   @Transactional
-  public FriendDTO addFriend(String currentUsername, long friendId) {
+  public FriendRequestDTO sendFriendRequest(String currentUsername, long receiverId) {
+    User sender = getCurrentUserOrThrow(currentUsername);
+    User receiver = getUserOrThrow(receiverId);
+
+    if (sender.getId() == receiver.getId()) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Users cannot send a friend request to themselves");
+    }
+
+    if (isConnected(sender, receiver)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Users are already friends");
+    }
+
+    friendRequestRepository
+        .findBySenderAndReceiverAndStatus(sender, receiver, FriendRequestStatus.PENDING)
+        .ifPresent(
+            r -> {
+              throw new ResponseStatusException(HttpStatus.CONFLICT, "Friend request already sent");
+            });
+
+    // Falls der Empfänger dem Sender bereits eine offene Anfrage geschickt hat,
+    // nehmen wir diese direkt an, statt eine zweite Anfrage anzulegen.
+    var reverseRequest =
+        friendRequestRepository.findBySenderAndReceiverAndStatus(
+            receiver, sender, FriendRequestStatus.PENDING);
+
+    if (reverseRequest.isPresent()) {
+      FriendRequestDTO dto = acceptInternal(reverseRequest.get());
+      notificationService.notifyRequestAnswered(dto);
+      sendFriendsNowEmails(sender, receiver);
+      return dto;
+    }
+
+    FriendRequest request = new FriendRequest(sender, receiver);
+    friendRequestRepository.save(request);
+
+    FriendRequestDTO dto = toFriendRequestDTO(request);
+    notificationService.notifyNewRequest(dto);
+
+    // The receiver learns about the request even while logged out.
+    emailNotificationService.sendBestEffort(
+        receiver.getEmail(),
+        "New friend request on SEP",
+        sender.getName() + " sent you a friend request on SEP.");
+    return dto;
+  }
+
+  @Transactional
+  public FriendRequestDTO acceptFriendRequest(String currentUsername, long requestId) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
-    User friend = getUserOrThrow(friendId);
 
-    if (currentUser.getId() == friend.getId()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Users cannot add themselves");
+    FriendRequest request =
+        friendRequestRepository
+            .findByIdAndReceiver(requestId, currentUser)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+
+    if (request.getStatus() != FriendRequestStatus.PENDING) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
-    if (!isConnected(currentUser, friend)) {
-      currentUser.getFriends().add(friend);
-      friend.getFriends().add(currentUser);
+    FriendRequestDTO dto = acceptInternal(request);
+    notificationService.notifyRequestAnswered(dto);
+    sendFriendsNowEmails(request.getSender(), request.getReceiver());
+    return dto;
+  }
 
-      userRepository.save(currentUser);
-      userRepository.save(friend);
+  @Transactional
+  public FriendRequestDTO declineFriendRequest(String currentUsername, long requestId) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
 
-      // Friendship is symmetric, so the other user learns about it even while logged out.
-      emailNotificationService.sendBestEffort(
-          friend.getEmail(),
-          "You have a new friend on SEP",
-          currentUser.getName() + " added you as a friend on SEP.");
-      // The acting user's in-app notification is mirrored to their inbox as well.
-      emailNotificationService.sendBestEffort(
-          currentUser.getEmail(),
-          "Friend added",
-          "You added " + friend.getName() + " as a friend on SEP.");
+    FriendRequest request =
+        friendRequestRepository
+            .findByIdAndReceiver(requestId, currentUser)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Friend request not found"));
+
+    if (request.getStatus() != FriendRequestStatus.PENDING) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Friend request has already been answered");
     }
 
-    return toFriendDTO(friend, true);
+    request.setStatus(FriendRequestStatus.DECLINED);
+    friendRequestRepository.save(request);
+
+    FriendRequestDTO dto = toFriendRequestDTO(request);
+    notificationService.notifyRequestAnswered(dto);
+
+    // The sender learns their request was turned down; the receiver made an explicit choice
+    // so they don't need a confirmation email for their own action.
+    emailNotificationService.sendBestEffort(
+        request.getSender().getEmail(),
+        "Friend request declined",
+        request.getReceiver().getName() + " declined your friend request on SEP.");
+    return dto;
+  }
+
+  public List<FriendRequestDTO> getIncomingRequests(String currentUsername) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
+    return friendRequestRepository
+        .findByReceiverAndStatus(currentUser, FriendRequestStatus.PENDING)
+        .stream()
+        .map(this::toFriendRequestDTO)
+        .toList();
+  }
+
+  public List<FriendRequestDTO> getOutgoingRequests(String currentUsername) {
+    User currentUser = getCurrentUserOrThrow(currentUsername);
+    return friendRequestRepository
+        .findBySenderAndStatus(currentUser, FriendRequestStatus.PENDING)
+        .stream()
+        .map(this::toFriendRequestDTO)
+        .toList();
+  }
+
+  private FriendRequestDTO acceptInternal(FriendRequest request) {
+    User sender = request.getSender();
+    User receiver = request.getReceiver();
+
+    sender.getFriends().add(receiver);
+    receiver.getFriends().add(sender);
+    userRepository.save(sender);
+    userRepository.save(receiver);
+
+    request.setStatus(FriendRequestStatus.ACCEPTED);
+    friendRequestRepository.save(request);
+
+    return toFriendRequestDTO(request);
+  }
+
+  // Both sides of a newly formed friendship get an email; who clicked "accept" doesn't matter.
+  private void sendFriendsNowEmails(User sender, User receiver) {
+    emailNotificationService.sendBestEffort(
+        sender.getEmail(),
+        "You have a new friend on SEP",
+        receiver.getName() + " is now your friend on SEP.");
+    emailNotificationService.sendBestEffort(
+        receiver.getEmail(),
+        "You have a new friend on SEP",
+        sender.getName() + " is now your friend on SEP.");
   }
 
   @Transactional
@@ -74,20 +198,27 @@ public class FriendsService {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     User friend = getUserOrThrow(friendId);
 
-    boolean wasConnected = isConnected(currentUser, friend);
     currentUser.getFriends().removeIf(existingFriend -> existingFriend.getId() == friend.getId());
     friend.getFriends().removeIf(existingFriend -> existingFriend.getId() == currentUser.getId());
 
     userRepository.save(currentUser);
     userRepository.save(friend);
 
+    // alte accepted friendrequests entfernen
+    friendRequestRepository
+        .findBySenderAndReceiverAndStatus(currentUser, friend, FriendRequestStatus.ACCEPTED)
+        .ifPresent(friendRequestRepository::delete);
+    friendRequestRepository
+        .findBySenderAndReceiverAndStatus(friend, currentUser, FriendRequestStatus.ACCEPTED)
+        .ifPresent(friendRequestRepository::delete);
+
+    notificationService.notifyFriendRemoved(friend.getName(), currentUser.getId());
+
     // Only the acting user is emailed; the removed friend is deliberately not notified.
-    if (wasConnected) {
-      emailNotificationService.sendBestEffort(
-          currentUser.getEmail(),
-          "Friend removed",
-          "You removed " + friend.getName() + " from your friends on SEP.");
-    }
+    emailNotificationService.sendBestEffort(
+        currentUser.getEmail(),
+        "Friend removed",
+        "You removed " + friend.getName() + " from your friends on SEP.");
   }
 
   private User getCurrentUserOrThrow(String username) {
@@ -110,5 +241,15 @@ public class FriendsService {
   private FriendDTO toFriendDTO(User user, boolean connected) {
     return new FriendDTO(
         user.getId(), user.getName(), user.getFirstName(), user.getSurname(), connected);
+  }
+
+  private FriendRequestDTO toFriendRequestDTO(FriendRequest request) {
+    return new FriendRequestDTO(
+        request.getId(),
+        request.getSender().getId(),
+        request.getSender().getName(),
+        request.getReceiver().getId(),
+        request.getReceiver().getName(),
+        request.getStatus());
   }
 }
