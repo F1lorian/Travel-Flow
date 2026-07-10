@@ -91,28 +91,29 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc .fc-button:hover {
-  background-color: #f1f5f9;
+  @apply bg-slate-100 font-semibold text-slate-700 shadow-sm transition;
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
-  background-color: #0f172a; /* slate-900, aktiver Button wie "month" im Screenshot */
+  background-color: #0f172a;
   border-color: #0f172a;
   color: #ffffff;
 }
 
-.fc .fc-today-button {
-  background-color: #94a3b8; /* slate-400, wie dein "today" Button */
-  color: #ffffff;
-  border: none;
+.fc .fc-today-button.fc-button-primary {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.fc .fc-today-button.fc-button-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
 }
 
 .fc .fc-today-button:disabled {
   opacity: 0.6;
-}
-
-.fc .fc-button-active {
-  @apply border-blue-600 bg-blue-600 text-white;
 }
 
 .fc .fc-daygrid-day {
@@ -184,6 +185,15 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 .rounded-2xl-dialog .mat-mdc-dialog-surface {
   border-radius: 1rem !important;
+}
+
+.invite-dialog-panel .mat-mdc-dialog-content {
+  padding: 0 !important;
+}
+
+.invite-dialog-panel .mat-mdc-dialog-actions {
+  min-height: 0 !important;
+  padding: 0 !important;
 }
 
 @media (max-width: 700px) {
