@@ -7,10 +7,16 @@ import { Observable, map } from 'rxjs';
  * The field names match the backend DTOs.
  */
 export interface Expense {
+  id: number;
   kosten: number;
   trip: string;
   date: string;
   kategorie: string;
+  sourceType: 'EXPENSE' | 'EVENT';
+  eventName?: string;
+  tripId?: number;
+  start?: string;
+  end?: string;
 }
 
 /**
@@ -40,7 +46,7 @@ export class ExpenseService {
    *   kosten: 100,
    *   trip: { name: 'Paris' },
    *   date: '2026-05-20',
-   *   kategorie: 'ESSEN'
+   *   kategorie: 'FOOD'
    * }
    */
   addExpense(expense: {
@@ -50,6 +56,13 @@ export class ExpenseService {
     kategorie: string;
   }): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/ausgabe`, expense);
+  }
+
+  /**
+   * Deletes a manually created expense.
+   */
+  deleteExpense(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/ausgabe/${id}`);
   }
 
   /**
@@ -168,12 +181,12 @@ export class ExpenseService {
    *
    * 1. Array format:
    *    [
-   *      { category: 'ESSEN', cost: 100 }
+   *      { category: 'FOOD', cost: 100 }
    *    ]
    *
    * 2. Map/object format:
    *    {
-   *      ESSEN: 100
+   *      FOOD: 100
    *    }
    *
    * This makes the frontend more robust if the backend representation changes.
@@ -193,4 +206,19 @@ export class ExpenseService {
       cost: Number(cost)
     }));
   }
+
+  exportExpensesByPeriod(startDate: string, endDate: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenliste/export?start=${startDate}&end=${endDate}`,
+      { responseType: 'blob' }
+    );
+  }
+  exportExpensesByTrip(tripname: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenlisteTrip/export?tripname=${encodeURIComponent(tripname)}`,
+      { responseType: 'blob' }
+    );
+  }
+
+
 }

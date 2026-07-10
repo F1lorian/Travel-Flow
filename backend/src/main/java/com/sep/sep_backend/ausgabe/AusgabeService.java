@@ -103,15 +103,13 @@ public class AusgabeService {
     for (int i = 0; i < ausgaben.size(); i++) {
       Ausgabe x = ausgaben.get(i);
       AusgabeResponseDTO y =
-          new AusgabeResponseDTO(x.getKosten(), x.getTrip(), x.getDate(), x.getKategorie());
+          new AusgabeResponseDTO(
+              x.getId(), x.getKosten(), x.getTrip(), x.getDate(), x.getKategorie());
       ausgabenDTOs.add(y);
     }
     for (int i = 0; i < events.size(); i++) {
       Event x = events.get(i);
-      AusgabeResponseDTO y =
-          new AusgabeResponseDTO(
-              x.getKosten(), x.getTrip(), x.getStartTime().toLocalDate(), x.getCategorie());
-      ausgabenDTOs.add(y);
+      ausgabenDTOs.add(new AusgabeResponseDTO(x));
     }
     return ausgabenDTOs;
   }
@@ -136,15 +134,14 @@ public class AusgabeService {
 
     for (Ausgabe ausgabe : ausgaben) {
       String kategorie =
-          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "SONSTIGES";
+          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "OTHER";
 
       double kosten = ausgabe.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
     }
 
     for (Event event : events) {
-      String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "SONSTIGES";
+      String kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -178,16 +175,34 @@ public class AusgabeService {
     for (Ausgabe ausgabe : ausgaben) {
       AusgabeResponseDTO dto =
           new AusgabeResponseDTO(
-              ausgabe.getKosten(), trip, ausgabe.getDate(), ausgabe.getKategorie());
+              ausgabe.getId(),
+              ausgabe.getKosten(),
+              trip,
+              ausgabe.getDate(),
+              ausgabe.getKategorie());
       ausgabenDTOs.add(dto);
     }
     for (Event event : events) {
-      AusgabeResponseDTO dto =
-          new AusgabeResponseDTO(
-              event.getKosten(), trip, event.getStartTime().toLocalDate(), event.getCategorie());
-      ausgabenDTOs.add(dto);
+      ausgabenDTOs.add(new AusgabeResponseDTO(event));
     }
     return ausgabenDTOs;
+  }
+
+  /**
+   * Deletes a manually created expense owned by the current user.
+   *
+   * @param id expense identifier
+   * @param username authenticated user's name or email
+   * @throws ResponseStatusException if the expense does not exist for the current user
+   */
+  public void ausgabeLoeschen(Long id, String username) {
+    User user = this.getCurrentUserOrThrow(username);
+    Ausgabe ausgabe =
+        repo.findByIdAndUser(id, user)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
+
+    repo.delete(ausgabe);
   }
 
   /**
@@ -211,15 +226,14 @@ public class AusgabeService {
 
     for (Ausgabe ausgabe : ausgaben) {
       String kategorie =
-          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "SONSTIGES";
+          ausgabe.getKategorie() != null ? ausgabe.getKategorie().getName() : "OTHER";
 
       double kosten = ausgabe.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
     }
 
     for (Event event : events) {
-      String kategorie =
-          event.getCategorie() != null ? event.getCategorie().getName() : "SONSTIGES";
+      String kategorie = event.getCategorie() != null ? event.getCategorie().getName() : "OTHER";
 
       double kosten = event.getKosten();
       summen.put(kategorie, summen.getOrDefault(kategorie, 0.0) + kosten);
@@ -383,5 +397,76 @@ public class AusgabeService {
     return userRepository
         .findByNameIgnoreCaseOrEmailIgnoreCase(username, username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+  }
+
+  /**
+   * Exports the current user's expenses and event costs within a date interval as CSV.
+   *
+   * @param start first date of the interval
+   * @param end last date of the interval
+   * @param username authenticated user's name or email
+   * @return CSV content containing the matching expenses and events
+   */
+  public String exportAusgabenCsv(LocalDate start, LocalDate end, String username) {
+    List<AusgabeResponseDTO> rows = ausgabenliste(start, end, username);
+    return buildCsv(rows);
+  }
+
+  /**
+   * Exports the current user's expenses and event costs for one trip as CSV.
+   *
+   * @param tripname name of the trip
+   * @param username authenticated user's name or email
+   * @return CSV content for the trip, or {@code null} if the trip does not exist
+   */
+  public String exportAusgabenTripCsv(String tripname, String username) {
+    List<AusgabeResponseDTO> rows = ausgabenlisteTrip(tripname, username);
+    if (rows == null) {
+      return null;
+    }
+    return buildCsv(rows);
+  }
+
+  /**
+   * Builds CSV content from expense response rows.
+   *
+   * @param rows expenses and events that should be written to the CSV file
+   * @return CSV content with a header row and one line per expense or event
+   */
+  public String buildCsv(List<AusgabeResponseDTO> rows) {
+    StringBuilder csv = new StringBuilder();
+    csv.append("Date,Title,Trip,Category,Amount\n");
+    for (AusgabeResponseDTO row : rows) {
+      csv.append(escapeCsv(row.getDate()))
+          .append(",")
+          .append(escapeCsv(row.getEventName() != null ? row.getEventName() : "Expense"))
+          .append(",")
+          .append(escapeCsv(row.getTrip()))
+          .append(",")
+          .append(escapeCsv(row.getKategorie()))
+          .append(",")
+          .append(row.getKosten())
+          .append("\n");
+    }
+    return csv.toString();
+  }
+
+  /**
+   * Escapes a value so it can be safely written as one CSV field.
+   *
+   * @param value field value to escape
+   * @return escaped CSV field, or an empty string for {@code null}
+   */
+  public String escapeCsv(Object value) {
+    if (value == null) {
+      return "";
+    }
+
+    String text = value.toString();
+    if (text.contains(",") || text.contains("\"") || text.contains("\n")) {
+      return "\"" + text.replace("\"", "\"\"") + "\"";
+    }
+
+    return text;
   }
 }
