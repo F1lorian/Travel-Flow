@@ -80,12 +80,35 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc .fc-button {
-  @apply rounded-lg border border-slate-300 bg-white px-4 py-2
-  font-semibold text-slate-700 shadow-sm transition;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  text-transform: capitalize;
+  box-shadow: none;
 }
 
 .fc .fc-button:hover {
-  @apply bg-slate-100;
+  background-color: #f1f5f9;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: #0f172a; /* slate-900, aktiver Button wie "month" im Screenshot */
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.fc .fc-today-button {
+  background-color: #94a3b8; /* slate-400, wie dein "today" Button */
+  color: #ffffff;
+  border: none;
+}
+
+.fc .fc-today-button:disabled {
+  opacity: 0.6;
 }
 
 .fc .fc-button-active {
@@ -157,6 +180,10 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   border: none !important;
   color: white !important;
   cursor: pointer;
+}
+
+.rounded-2xl-dialog .mat-mdc-dialog-surface {
+  border-radius: 1rem !important;
 }
 
 @media (max-width: 700px) {
