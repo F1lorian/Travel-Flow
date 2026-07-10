@@ -3,6 +3,7 @@ package com.sep.sep_backend.gmailimport;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,7 +11,7 @@ import static org.mockito.Mockito.when;
 import com.sep.sep_backend.entities.GmailAccount;
 import com.sep.sep_backend.eventHandling.EventResponseDTO;
 import com.sep.sep_backend.eventHandling.EventService;
-import com.sep.sep_backend.exception.EventDetectionException;
+import com.sep.sep_backend.eventHandling.MailEventResult;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailConnectionDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
@@ -163,7 +164,7 @@ class GmailImportServiceTest {
   }
 
   @Test
-  void autoParseKeepsOnlyMessagesThatContainAnEvent() throws Exception {
+  void autoParseKeepsOnlyMessagesThatContainAnEvent() {
     GmailAccount account = new GmailAccount();
     account.setEncryptedRefreshToken("enc-refresh");
     when(gmailAccountRepository.findByUserId(USER_ID)).thenReturn(Optional.of(account));
@@ -173,15 +174,9 @@ class GmailImportServiceTest {
     when(gmailClient.getRaw("access", "m2")).thenReturn("raw-2".getBytes());
 
     EventResponseDTO event = new EventResponseDTO("Concert", 0, null, null);
-    // m1 (raw-1) has an event, m2 (raw-2) does not. Keyed on content so the parallel, unordered
-    // execution stays deterministic.
-    when(eventService.parseMailFileIfEvent(any(InputStream.class)))
-        .thenAnswer(
-            invocation -> {
-              InputStream in = invocation.getArgument(0);
-              String content = new String(in.readAllBytes());
-              return content.equals("raw-1") ? Optional.of(event) : Optional.empty();
-            });
+    // The batched detector reports an event for the first mail and none for the second.
+    when(eventService.detectEvents(anyList()))
+        .thenReturn(List.of(MailEventResult.ofEvent(event), MailEventResult.noEvent()));
 
     GmailAutoImportResultDTO result = service.autoParse(USER_ID, List.of("m1", "m2"));
 
@@ -192,7 +187,7 @@ class GmailImportServiceTest {
   }
 
   @Test
-  void autoParseCountsMessagesWhoseDetectionFailed() throws Exception {
+  void autoParseCountsMessagesWhoseDetectionFailed() {
     GmailAccount account = new GmailAccount();
     account.setEncryptedRefreshToken("enc-refresh");
     when(gmailAccountRepository.findByUserId(USER_ID)).thenReturn(Optional.of(account));
@@ -202,17 +197,9 @@ class GmailImportServiceTest {
     when(gmailClient.getRaw("access", "m2")).thenReturn("raw-2".getBytes());
 
     EventResponseDTO event = new EventResponseDTO("Concert", 0, null, null);
-    // m1 has an event; m2's detection fails (e.g. Gemini error / rate limit).
-    when(eventService.parseMailFileIfEvent(any(InputStream.class)))
-        .thenAnswer(
-            invocation -> {
-              InputStream in = invocation.getArgument(0);
-              String content = new String(in.readAllBytes());
-              if (content.equals("raw-1")) {
-                return Optional.of(event);
-              }
-              throw new EventDetectionException("detection failed");
-            });
+    // m1 has an event; m2 could not be checked (e.g. Gemini error / rate limit).
+    when(eventService.detectEvents(anyList()))
+        .thenReturn(List.of(MailEventResult.ofEvent(event), MailEventResult.failure()));
 
     GmailAutoImportResultDTO result = service.autoParse(USER_ID, List.of("m1", "m2"));
 
