@@ -108,7 +108,7 @@ public class GmailImportService {
    * detector's retry/backoff absorbs the occasional rate-limit hit, so this stays high to keep a
    * full selection fast.
    */
-  private static final int AUTO_IMPORT_PARALLELISM = 6;
+  private static final int AUTO_IMPORT_PARALLELISM = 10;
 
   /** Outcome of processing one message: its event (if any) and whether detection failed. */
   private record ParseOutcome(Optional<EventResponseDTO> event, boolean failed) {}
