@@ -8,7 +8,6 @@
     <select
       id="import-source"
       [(ngModel)]="importSource"
-      (ngModelChange)="onImportSourceChange()"
       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
        text-slate-900 outline-none transition
        focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
@@ -144,68 +143,6 @@
           </label>
         }
       }
-
-      @if(importSource === 'gmail'){
-        @if(isCheckingGmailStatus){
-          <p class="text-sm text-slate-500">Checking Gmail connection…</p>
-        } @else if(!gmailConnected){
-          <p class="text-sm text-slate-600">
-            Connect your Gmail account to import events from your inbox.
-          </p>
-
-          <button
-            (click)="connectGmail()"
-            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-             transition hover:bg-slate-700 active:scale-[0.99]">
-            Connect Gmail
-          </button>
-        } @else {
-          <p class="text-sm text-slate-600">
-            Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
-          </p>
-
-          <button
-            (click)="loadGmailMessages()"
-            [disabled]="isLoadingGmailMessages"
-            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-             transition hover:bg-slate-700 active:scale-[0.99]
-             disabled:cursor-not-allowed disabled:bg-slate-400">
-            {{ isLoadingGmailMessages ? 'Loading...' : 'Load messages' }}
-          </button>
-
-          @if(gmailMessages.length > 0){
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-sm font-semibold text-slate-700">Messages</span>
-              <button
-                type="button"
-                (click)="toggleSelectAllGmail()"
-                class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
-                {{ allGmailSelected ? 'Deselect all' : 'Select all' }}
-              </button>
-            </div>
-
-            <div class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
-              @for(message of gmailMessages; track message.id){
-                <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2">
-                  <input
-                    type="checkbox"
-                    [checked]="isGmailSelected(message.id)"
-                    (change)="toggleGmailSelection(message.id)"
-                    class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                  <span class="min-w-0">
-                    <span class="block truncate text-sm font-semibold text-slate-800">
-                      {{ message.subject || '(No subject)' }}
-                    </span>
-                    <span class="block truncate text-xs text-slate-500">
-                      {{ message.from }}
-                    </span>
-                  </span>
-                </label>
-              }
-            </div>
-          }
-        }
-      }
     </div>
 
     <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
@@ -263,18 +200,6 @@
          transition hover:bg-slate-700 active:scale-[0.99]">
 
         Import
-      </button>
-    }
-
-    @if(importSource === 'gmail' && selectedGmailCount > 0){
-      <button
-        (click)="importSelectedGmailMessages()"
-        [disabled]="isImportingGmail"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]
-         disabled:cursor-not-allowed disabled:bg-slate-400">
-
-        {{ isImportingGmail ? 'Importing...' : 'Import ' + selectedGmailCount + ' selected' }}
       </button>
     }
 

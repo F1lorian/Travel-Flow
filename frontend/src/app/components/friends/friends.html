@@ -116,7 +116,7 @@
     }
   </section>
 
-  <section class="rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Your friends</h2>
 
     @if (friends.length === 0) {
@@ -142,6 +142,78 @@
             >
               Remove
             </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Incoming Invitations</h2>
+
+    @if (incomingTripInvites.length === 0 && incomingEventInvites.length === 0) {
+      <p class="text-slate-500">No open invitations.</p>
+    } @else {
+      <ul class="divide-y divide-slate-200">
+        @for (invite of incomingTripInvites; track invite.tripId) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p>
+                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
+                <span class="text-slate-500"> invited you to the trip </span>
+                <span class="font-semibold text-slate-900">{{ invite.tripName }}</span>
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="acceptTripInvite(invite.tripId)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                     transition hover:bg-blue-700 active:scale-[0.99]"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                (click)="declineTripInvite(invite.tripId)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                     font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Decline
+              </button>
+            </div>
+          </li>
+        }
+
+        @for (invite of incomingEventInvites; track invite.eventId) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p>
+                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
+                <span class="text-slate-500"> invited you to the event </span>
+                <span class="font-semibold text-slate-900">{{ invite.eventName }}</span>
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="acceptEventInvite(invite.eventId)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                     transition hover:bg-blue-700 active:scale-[0.99]"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                (click)="declineEventInvite(invite.eventId)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                     font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Decline
+              </button>
+            </div>
           </li>
         }
       </ul>

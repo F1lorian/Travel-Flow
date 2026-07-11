@@ -14,6 +14,9 @@ import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
+import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -49,6 +52,8 @@ class EventServiceTest {
   @Mock private UserRepository userRepository;
 
   @Mock private ObjectMapper objectMapper;
+
+  @Mock private EventInviteNotificationService notificationService;
 
   @InjectMocks private EventService eventService;
 
@@ -602,7 +607,8 @@ class EventServiceTest {
         ausgabeService,
         userRepository,
         new ObjectMapper(),
-        userEventRepository);
+        userEventRepository,
+        notificationService);
   }
 
   private User userWithEvents(long id) {
@@ -630,5 +636,113 @@ class EventServiceTest {
         """
             .formatted(contentType, body);
     return new ByteArrayInputStream(rawMail.getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Test
+  void inviteFriendToEventCreatesPendingInviteAndNotifies() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User requester = userWithEvents(7L);
+    User friend = userWithEvents(8L);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(false);
+    when(userRepository.findById(8L)).thenReturn(Optional.of(friend));
+    when(userRepository.findById(7L)).thenReturn(Optional.of(requester));
+
+    eventService.inviteFriendToEvent(42L, 8L, 7L);
+
+    ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(captor.capture());
+    assertThat(captor.getValue().getUser()).isSameAs(friend);
+    assertThat(captor.getValue().getCreator()).isSameAs(requester);
+    assertThat(captor.getValue().getStatus()).isEqualTo(UserEvent.InviteStatus.PENDING);
+    verify(notificationService).notifyNewInvite(friend, event, requester);
+  }
+
+  @Test
+  void inviteFriendToEventRejectsWhenRequesterNotParticipant() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
+
+    assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Only participants can invite friends");
+
+    verify(userEventRepository, never()).save(any(UserEvent.class));
+  }
+
+  @Test
+  void inviteFriendToEventRejectsWhenFriendAlreadyInvited() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
+
+    assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("User already invited");
+
+    verify(userEventRepository, never()).save(any(UserEvent.class));
+  }
+
+  @Test
+  void respondToInviteUpdatesStatusAndNotifiesCreator() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User creator = userWithEvents(7L);
+    User invitee = userWithEvents(8L);
+    UserEvent userEvent = new UserEvent(event, invitee, creator);
+
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L)).thenReturn(Optional.of(userEvent));
+
+    eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.ACCEPTED);
+
+    assertThat(userEvent.getStatus()).isEqualTo(UserEvent.InviteStatus.ACCEPTED);
+    verify(userEventRepository).save(userEvent);
+    verify(notificationService).notifyInviteAnswered(userEvent);
+  }
+
+  @Test
+  void respondToInviteRejectsSettingStatusBackToPending() {
+    assertThatThrownBy(() -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.PENDING))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot set status back to pending");
+
+    verify(userEventRepository, never()).save(any(UserEvent.class));
+  }
+
+  @Test
+  void respondToInviteThrowsWhenInviteNotFound() {
+    when(userEventRepository.findByEvent_IdAndUser_Id(42L, 8L)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> eventService.respondToInvite(42L, 8L, UserEvent.InviteStatus.ACCEPTED))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invite not found");
+  }
+
+  @Test
+  void getIncomingEventInvitesReturnsOnlyPendingInvitesForUser() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    UserEvent pendingInvite = new UserEvent(event, userWithEvents(8L), userWithEvents(7L));
+
+    when(userEventRepository.findByUser_IdAndStatus(8L, UserEvent.InviteStatus.PENDING))
+        .thenReturn(List.of(pendingInvite));
+
+    List<UserEvent> result = eventService.getIncomingEventInvites(8L);
+
+    assertThat(result).containsExactly(pendingInvite);
   }
 }

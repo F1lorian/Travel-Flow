@@ -5,6 +5,13 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "user_trips")
 public class UserTrip {
+
+  public enum InviteStatus {
+    PENDING,
+    ACCEPTED,
+    DECLINED
+  }
+
   @EmbeddedId private UserTripId id;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -21,6 +28,10 @@ public class UserTrip {
   @JoinColumn(name = "invited_by_id")
   private User invitedBy;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private InviteStatus status = InviteStatus.PENDING;
+
   @Column(nullable = false, columnDefinition = "double precision default 0")
   private double budget = 0;
 
@@ -34,6 +45,11 @@ public class UserTrip {
     this.trip = trip;
     this.invitedBy = invitedBy;
     this.id = new UserTripId(user.getId(), trip.getId());
+  }
+
+  public UserTrip(User user, Trip trip, User invitedBy, InviteStatus status) {
+    this(user, trip, invitedBy);
+    this.status = status;
   }
 
   public UserTripId getId() {
@@ -82,5 +98,13 @@ public class UserTrip {
 
   public void setWarningRange(double warningRange) {
     this.warningRange = warningRange;
+  }
+
+  public InviteStatus getStatus() {
+    return status;
+  }
+
+  public void setStatus(InviteStatus status) {
+    this.status = status;
   }
 }

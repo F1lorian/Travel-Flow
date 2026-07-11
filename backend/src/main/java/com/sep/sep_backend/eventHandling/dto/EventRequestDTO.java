@@ -1,44 +1,29 @@
-package com.sep.sep_backend.eventHandling;
+package com.sep.sep_backend.eventHandling.dto;
 
 import java.time.LocalDateTime;
 
-/** Response data transfer object containing event values returned to clients. */
-public class EventResponseDTO {
-  private String id;
+/** Request data transfer object for manually creating or editing an event. */
+public class EventRequestDTO {
   private String name;
   private double kosten;
   private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
 
-  /** Creates an empty event response DTO for serialization and deserialization. */
-  public EventResponseDTO() {}
+  /** Creates an empty event request DTO for serialization and deserialization. */
+  public EventRequestDTO() {}
 
   /**
-   * Creates an event response DTO without an event identifier or trip identifier.
+   * Creates an event request DTO with all editable event values.
    *
    * @param name name of the event
    * @param kosten costs assigned to the event
-   * @param start start date and time of the event
-   * @param end end date and time of the event
-   */
-  public EventResponseDTO(String name, double kosten, LocalDateTime start, LocalDateTime end) {
-    this(null, name, kosten, start, end, null);
-  }
-
-  /**
-   * Creates an event response DTO with all event values returned by the API.
-   *
-   * @param id event identifier
-   * @param name name of the event
-   * @param kosten costs assigned to the event
-   * @param start start date and time of the event
-   * @param end end date and time of the event
    * @param tripId identifier of the trip the event belongs to
+   * @param start start date and time of the event
+   * @param end end date and time of the event
    */
-  public EventResponseDTO(
-      String id, String name, double kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
-    this.id = id;
+  public EventRequestDTO(
+      String name, double kosten, Long tripId, LocalDateTime start, LocalDateTime end) {
     this.name = name;
     this.kosten = kosten;
     this.tripId = tripId;
@@ -47,21 +32,14 @@ public class EventResponseDTO {
   }
 
   /**
-   * Returns the event identifier.
+   * Creates an event request DTO without explicit start and end dates.
    *
-   * @return event identifier
+   * @param name name of the event
+   * @param kosten costs assigned to the event
+   * @param tripId identifier of the trip the event belongs to
    */
-  public String getId() {
-    return id;
-  }
-
-  /**
-   * Sets the event identifier.
-   *
-   * @param id event identifier
-   */
-  public void setId(String id) {
-    this.id = id;
+  public EventRequestDTO(String name, double kosten, Long tripId) {
+    this(name, kosten, tripId, null, null);
   }
 
   /**
