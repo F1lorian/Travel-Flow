@@ -90,6 +90,19 @@ class TripControllerTest {
         .andExpect(jsonPath("$.name").value("Paris"));
   }
 
+  @Test
+  void removeFriendFromTripReturnsNoContent() throws Exception {
+    Authentication authentication = authentication("testuser");
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user(7L)));
+
+    mockMvc
+        .perform(delete("/api/trips/1/friends/8").principal(authentication))
+        .andExpect(status().isNoContent());
+
+    verify(tripService).removeFriendFromTrip(1L, 8L, 7L);
+  }
+
   private Authentication authentication(String username) {
     Authentication authentication = mock(Authentication.class);
     when(authentication.getName()).thenReturn(username);

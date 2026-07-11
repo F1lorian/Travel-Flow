@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -60,6 +61,16 @@ class EventControllerTest {
 
     GetMapping getMapping = method.getAnnotation(GetMapping.class);
     assertThat(getMapping.value()).containsExactly("event/conflict");
+  }
+
+  @Test
+  void eventControllerHatDenRemoveFriendFromEventEndpoint() throws NoSuchMethodException {
+    Method method =
+        EventController.class.getDeclaredMethod(
+            "removeFriendFromEvent", Long.class, Long.class, Authentication.class);
+
+    DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
+    assertThat(deleteMapping.value()).containsExactly("event/{eventId}/participants/{friendUserId}");
   }
 
   @Test
@@ -273,6 +284,23 @@ class EventControllerTest {
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(edited);
     verify(eventService).EditEvent(42L, request);
+  }
+
+  @Test
+  void removeFriendFromEventDelegatesToServiceWithCurrentUser() {
+    EventService eventService = mock(EventService.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+
+    ResponseEntity<Void> response = eventController.removeFriendFromEvent(42L, 8L, authentication);
+
+    assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    verify(eventService).removeFriendFromEvent(42L, 8L, 7L);
   }
 
   @Test
