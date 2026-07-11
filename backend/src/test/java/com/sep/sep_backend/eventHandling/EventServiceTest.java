@@ -555,15 +555,20 @@ class EventServiceTest {
   void parseMailFileErzeugtUnterschiedlicheDatenFuerUnterschiedlicheMails() throws Exception {
     EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
 
+    // Two appointments on distinct days that are both clearly different from "today", so the test
+    // stays deterministic regardless of the calendar date it runs on.
+    LocalDateTime start11 = LocalDate.now().plusMonths(2).atTime(13, 0);
+    LocalDateTime start20 = LocalDate.now().plusMonths(3).atTime(13, 0);
+
     EventResponseDTO event11 =
         serviceWithObjectMapper.ParseMailFile(
-            reiseEventMail("Reise Frankreich", "2026-07-11T13:00:00"));
+            reiseEventMail("Reise Frankreich", start11.toString()));
     EventResponseDTO event20 =
         serviceWithObjectMapper.ParseMailFile(
-            reiseEventMail("Reise Frankreich", "2026-07-20T13:00:00"));
+            reiseEventMail("Reise Frankreich", start20.toString()));
 
-    assertThat(event11.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 11, 13, 0));
-    assertThat(event20.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 20, 13, 0));
+    assertThat(event11.getStart()).isEqualTo(start11);
+    assertThat(event20.getStart()).isEqualTo(start20);
     // The two mails must not collapse onto the same (import) day — the original bug.
     assertThat(event11.getStart().toLocalDate()).isNotEqualTo(event20.getStart().toLocalDate());
     assertThat(event11.getStart().toLocalDate()).isNotEqualTo(LocalDate.now());
