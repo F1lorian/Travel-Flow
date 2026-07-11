@@ -70,7 +70,8 @@ class EventControllerTest {
             "removeFriendFromEvent", Long.class, Long.class, Authentication.class);
 
     DeleteMapping deleteMapping = method.getAnnotation(DeleteMapping.class);
-    assertThat(deleteMapping.value()).containsExactly("event/{eventId}/participants/{friendUserId}");
+    assertThat(deleteMapping.value())
+        .containsExactly("event/{eventId}/participants/{friendUserId}");
   }
 
   @Test

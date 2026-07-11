@@ -97,9 +97,7 @@ public class TripController {
 
   @DeleteMapping("/{tripId}/friends/{friendUserId}")
   public ResponseEntity<Void> removeFriendFromTrip(
-      @PathVariable Long tripId,
-      @PathVariable Long friendUserId,
-      Authentication authentication) {
+      @PathVariable Long tripId, @PathVariable Long friendUserId, Authentication authentication) {
     try {
       tripService.removeFriendFromTrip(tripId, friendUserId, getCurrentUserId(authentication));
       return ResponseEntity.noContent().build();

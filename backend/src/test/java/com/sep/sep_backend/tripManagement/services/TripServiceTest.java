@@ -136,15 +136,13 @@ class TripServiceTest {
     trip.setId(1L);
     User requester = userWithTrips(7L);
     User friend = userWithTrips(8L);
-    UserTrip requesterTrip =
-        new UserTrip(requester, trip, null, UserTrip.InviteStatus.ACCEPTED);
+    UserTrip requesterTrip = new UserTrip(requester, trip, null, UserTrip.InviteStatus.ACCEPTED);
     UserTrip friendTrip = new UserTrip(friend, trip, requester, UserTrip.InviteStatus.ACCEPTED);
 
     when(tripRepository.existsById(1L)).thenReturn(true);
     when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
         .thenReturn(Optional.of(requesterTrip));
-    when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L))
-        .thenReturn(Optional.of(friendTrip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L)).thenReturn(Optional.of(friendTrip));
 
     tripService.removeFriendFromTrip(1L, 8L, 7L);
 
