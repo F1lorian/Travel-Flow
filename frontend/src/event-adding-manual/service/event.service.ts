@@ -161,5 +161,8 @@ export class EventService {
     return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/participants`);
   }
 
+  removeFriendFromEvent(eventId: string, friendId: number): Observable<void> {
+    return this.http.delete<void>(`${this.inviteFriendEndpoint}/${eventId}/participants/${friendId}`)
+  }
 
 }

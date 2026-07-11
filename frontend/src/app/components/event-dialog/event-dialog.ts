@@ -327,9 +327,24 @@ export class EventDialog implements OnInit {
     return this.participants.some(participant => participant.username === username);
   }
 
-  removeFriend(){
-    //placeholder aktuell
-    console.log("remove friend")
+  removeParticipant(username: string){
+    this.participants = this.participants.filter(
+      participant => participant.username !== username
+    );
+  }
+
+  removeFriendFromEvent(participant: UserEventDTO){
+    const friendId = participant.userId;
+    const eventId = this.data.id!;
+    this.eventService.removeFriendFromEvent(eventId, friendId).subscribe({
+      next: () => {
+        this.removeParticipant(participant.username);
+      },
+      error: (err)=> {
+        this.errorMessage = "Error: " + err.message;
+      }
+    })
+
   }
 
 }
