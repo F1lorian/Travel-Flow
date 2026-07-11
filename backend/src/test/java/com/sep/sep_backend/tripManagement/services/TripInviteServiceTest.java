@@ -4,20 +4,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -27,13 +34,20 @@ import org.springframework.web.server.ResponseStatusException;
 class TripInviteServiceTest {
 
   @Mock private TripRepository tripRepository;
+  @Mock private EventRepository eventRepository;
   @Mock private UserRepository userRepository;
   @Mock private UserTripRepository userTripRepository;
+  @Mock private UserEventRepository userEventRepository;
   @Mock private TripInviteNotificationService notificationService;
 
   private TripInviteService newService() {
     return new TripInviteService(
-        tripRepository, userRepository, userTripRepository, notificationService);
+        tripRepository,
+        eventRepository,
+        userRepository,
+        userTripRepository,
+        userEventRepository,
+        notificationService);
   }
 
   @Test
@@ -52,12 +66,48 @@ class TripInviteServiceTest {
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
         .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.empty());
+    when(eventRepository.findByTrip_Id(10L)).thenReturn(List.of());
 
     TripInviteResponseDTO result = service.inviteFriendToTrip("max", 10L, 2L);
 
     assertThat(result.message()).isEqualTo("Trip invite sent");
     verify(userTripRepository).save(any(UserTrip.class));
     verify(notificationService).notifyNewInvite(friend, trip, currentUser);
+  }
+
+  @Test
+  void inviteFriendToTripCreatesPendingEventInvitesForExistingTripEvents() {
+    TripInviteService service = newService();
+    User currentUser = user(1L, "max");
+    User friend = user(2L, "anna");
+    Trip trip = trip(10L);
+    Event firstEvent = event(20L, trip);
+    Event secondEvent = event(21L, trip);
+    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
+        .thenReturn(Optional.of(currentUser));
+    when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
+    when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+    currentUser.getFriends().add(friend);
+    when(userTripRepository.findByUserAndTrip(currentUser, trip))
+        .thenReturn(Optional.of(creatorEntry));
+    when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.empty());
+    when(eventRepository.findByTrip_Id(10L)).thenReturn(List.of(firstEvent, secondEvent));
+    when(userEventRepository.findByEvent_IdAndUser_Id(20L, 2L)).thenReturn(Optional.empty());
+    when(userEventRepository.findByEvent_IdAndUser_Id(21L, 2L)).thenReturn(Optional.empty());
+
+    service.inviteFriendToTrip("max", 10L, 2L);
+
+    ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository, times(2)).save(captor.capture());
+    assertThat(captor.getAllValues())
+        .extracting(UserEvent::getEvent)
+        .containsExactly(firstEvent, secondEvent);
+    assertThat(captor.getAllValues()).allMatch(userEvent -> userEvent.getUser() == friend);
+    assertThat(captor.getAllValues()).allMatch(userEvent -> userEvent.getCreator() == currentUser);
+    assertThat(captor.getAllValues())
+        .allMatch(userEvent -> userEvent.getStatus() == UserEvent.InviteStatus.PENDING);
   }
 
   @Test
@@ -185,12 +235,46 @@ class TripInviteServiceTest {
     when(userTripRepository.findByUserAndTrip(currentUser, trip))
         .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(declinedEntry));
+    when(eventRepository.findByTrip_Id(10L)).thenReturn(List.of());
 
     service.inviteFriendToTrip("max", 10L, 2L);
 
     assertThat(declinedEntry.getStatus()).isEqualTo(UserTrip.InviteStatus.PENDING);
     verify(userTripRepository).save(declinedEntry);
     verify(notificationService).notifyNewInvite(friend, trip, currentUser);
+  }
+
+  @Test
+  void inviteFriendToTripResetsDeclinedEventInviteToPending() {
+    TripInviteService service = newService();
+    User currentUser = user(1L, "max");
+    User friend = user(2L, "anna");
+    Trip trip = trip(10L);
+    Event event = event(20L, trip);
+    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
+    UserTrip declinedTripEntry =
+        new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.DECLINED);
+    UserEvent declinedEventInvite = new UserEvent(event, friend, currentUser);
+    declinedEventInvite.setStatus(UserEvent.InviteStatus.DECLINED);
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
+        .thenReturn(Optional.of(currentUser));
+    when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
+    when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+    currentUser.getFriends().add(friend);
+    when(userTripRepository.findByUserAndTrip(currentUser, trip))
+        .thenReturn(Optional.of(creatorEntry));
+    when(userTripRepository.findByUserAndTrip(friend, trip))
+        .thenReturn(Optional.of(declinedTripEntry));
+    when(eventRepository.findByTrip_Id(10L)).thenReturn(List.of(event));
+    when(userEventRepository.findByEvent_IdAndUser_Id(20L, 2L))
+        .thenReturn(Optional.of(declinedEventInvite));
+
+    service.inviteFriendToTrip("max", 10L, 2L);
+
+    assertThat(declinedEventInvite.getStatus()).isEqualTo(UserEvent.InviteStatus.PENDING);
+    assertThat(declinedEventInvite.getCreator()).isSameAs(currentUser);
+    verify(userEventRepository).save(declinedEventInvite);
   }
 
   @Test
@@ -297,5 +381,17 @@ class TripInviteServiceTest {
     Trip trip = new Trip("Test-Trip");
     trip.setId(id);
     return trip;
+  }
+
+  private Event event(long id, Trip trip) {
+    Event event =
+        new Event(
+            "Event " + id,
+            LocalDateTime.of(2026, 6, 1, 12, 0),
+            LocalDateTime.of(2026, 6, 1, 13, 0),
+            0,
+            trip);
+    event.setId(id);
+    return event;
   }
 }
