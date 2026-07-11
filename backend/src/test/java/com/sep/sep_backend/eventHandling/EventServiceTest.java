@@ -551,9 +551,11 @@ class EventServiceTest {
     EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
 
     EventResponseDTO event11 =
-        serviceWithObjectMapper.ParseMailFile(reiseEventMail("Reise Frankreich", "2026-07-11T13:00:00"));
+        serviceWithObjectMapper.ParseMailFile(
+            reiseEventMail("Reise Frankreich", "2026-07-11T13:00:00"));
     EventResponseDTO event20 =
-        serviceWithObjectMapper.ParseMailFile(reiseEventMail("Reise Frankreich", "2026-07-20T13:00:00"));
+        serviceWithObjectMapper.ParseMailFile(
+            reiseEventMail("Reise Frankreich", "2026-07-20T13:00:00"));
 
     assertThat(event11.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 11, 13, 0));
     assertThat(event20.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 20, 13, 0));
