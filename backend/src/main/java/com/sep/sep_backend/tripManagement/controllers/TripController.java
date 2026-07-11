@@ -95,6 +95,17 @@ public class TripController {
     }
   }
 
+  @DeleteMapping("/{tripId}/friends/{friendUserId}")
+  public ResponseEntity<Void> removeFriendFromTrip(
+      @PathVariable Long tripId, @PathVariable Long friendUserId, Authentication authentication) {
+    try {
+      tripService.removeFriendFromTrip(tripId, friendUserId, getCurrentUserId(authentication));
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
   /**
    * returns the userid from the user currently logged in
    *

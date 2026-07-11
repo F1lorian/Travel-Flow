@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.entities.UserTripId;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -127,6 +128,47 @@ class TripServiceTest {
     verify(ausgabeRepository, never()).deleteByTrip_Id(any());
     verify(userTripRepository, never()).deleteByIdTripId(any());
     verify(tripRepository, never()).deleteById(any());
+  }
+
+  @Test
+  void removeFriendFromTripDeletesFriendFromTripAndTripEvents() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User requester = userWithTrips(7L);
+    User friend = userWithTrips(8L);
+    UserTrip requesterTrip = new UserTrip(requester, trip, null, UserTrip.InviteStatus.ACCEPTED);
+    UserTrip friendTrip = new UserTrip(friend, trip, requester, UserTrip.InviteStatus.ACCEPTED);
+
+    when(tripRepository.existsById(1L)).thenReturn(true);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(requesterTrip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L)).thenReturn(Optional.of(friendTrip));
+
+    tripService.removeFriendFromTrip(1L, 8L, 7L);
+
+    InOrder inOrder = inOrder(userEventRepository, userTripRepository);
+    inOrder.verify(userEventRepository).deleteByEvent_Trip_IdAndUser_Id(1L, 8L);
+    inOrder.verify(userTripRepository).deleteById(new UserTripId(8L, 1L));
+  }
+
+  @Test
+  void removeFriendFromTripRejectsWhenRequesterIsNotAcceptedTripMember() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User requester = userWithTrips(7L);
+    UserTrip requesterTrip = new UserTrip(requester, trip, null, UserTrip.InviteStatus.PENDING);
+
+    when(tripRepository.existsById(1L)).thenReturn(true);
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(requesterTrip));
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class, () -> tripService.removeFriendFromTrip(1L, 8L, 7L));
+
+    assertEquals("Only accepted trip members can remove friends", exception.getMessage());
+    verify(userEventRepository, never()).deleteByEvent_Trip_IdAndUser_Id(any(), any());
+    verify(userTripRepository, never()).deleteById(any());
   }
 
   private User userWithTrips(long id) {
