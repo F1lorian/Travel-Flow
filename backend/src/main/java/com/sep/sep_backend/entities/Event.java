@@ -101,7 +101,11 @@ public class Event {
     return this.trip == null ? null : this.trip.getId();
   }
 
-  public User getOwner() {return owner;}
+  public User getOwner() {
+    return owner;
+  }
 
-  public void setOwner(User owner) {this.owner = owner;}
+  public void setOwner(User owner) {
+    this.owner = owner;
+  }
 }

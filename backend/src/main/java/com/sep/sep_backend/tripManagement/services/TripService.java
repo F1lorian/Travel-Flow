@@ -14,11 +14,10 @@ import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-
-import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,9 +109,9 @@ public class TripService {
 
     // Resolve the creator before saving anything so a bad user id cannot leave an orphaned trip.
     User user =
-            userRepository
-                    .findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     Trip trip = new Trip(name);
     trip.setStartDate(startDate);
@@ -147,7 +146,8 @@ public class TripService {
     requireMember(id, userId);
 
     if (trip.getOwner() == null || trip.getOwner().getId() != userId) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the trip creator can delete this trip");
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip creator can delete this trip");
     }
     userEventRepository.deleteByEvent_Trip_Id(id);
     eventRepository.deleteByTrip_Id(id);
@@ -168,11 +168,8 @@ public class TripService {
                         + "\" and all of its events and expenses were deleted."));
   }
 
-
   public List<TripParticipantDTO> getParticipants(Long tripId) {
-    return userTripRepository.findByTrip_Id(tripId).stream()
-            .map(TripParticipantDTO::from)
-            .toList();
+    return userTripRepository.findByTrip_Id(tripId).stream().map(TripParticipantDTO::from).toList();
   }
 
   /**

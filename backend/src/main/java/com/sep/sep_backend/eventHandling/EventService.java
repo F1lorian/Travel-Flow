@@ -168,9 +168,12 @@ public class EventService {
   @Transactional
   public void DeleteEventFromDB(Long eventId, Long userId) {
     Event event =
-            eventRepository
-                    .findById(eventId)
-                    .orElseThrow(() -> new EntityNotFoundException("Event mit ID " + eventId + " wurde nicht gefunden"));
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(
+                        "Event mit ID " + eventId + " wurde nicht gefunden"));
 
     requireOwner(event, userId);
 
@@ -242,7 +245,6 @@ public class EventService {
             .findById(UserID)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-
     Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
     newEvent.setOwner(creator);
     Event savedEvent = eventRepository.save(newEvent);
@@ -270,8 +272,8 @@ public class EventService {
                     event.getKosten(),
                     event.getStartTime(),
                     event.getEndTime(),
-                        event.getTripId(),
-                        event.getOwner() != null ? event.getOwner().getName() : null))
+                    event.getTripId(),
+                    event.getOwner() != null ? event.getOwner().getName() : null))
         .toList();
   }
 
@@ -302,9 +304,9 @@ public class EventService {
    */
   public void inviteFriendToEvent(Long eventId, Long friendUserId, Long requestingUserId) {
     Event event =
-            eventRepository
-                    .findById(eventId)
-                    .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
     requireOwner(event, requestingUserId);
 
@@ -313,13 +315,13 @@ public class EventService {
     }
 
     User friend =
-            userRepository
-                    .findById(friendUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        userRepository
+            .findById(friendUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
     User requestingUser =
-            userRepository
-                    .findById(requestingUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        userRepository
+            .findById(requestingUserId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     UserEvent invite = new UserEvent(event, friend, requestingUser);
     userEventRepository.save(invite);
@@ -427,13 +429,14 @@ public class EventService {
 
   /**
    * checks if the user is the creator of the event
+   *
    * @param event
    * @param userId
    */
   private void requireOwner(Event event, Long userId) {
     if (event.getOwner() == null || event.getOwner().getId() != userId) {
       throw new ResponseStatusException(
-              HttpStatus.FORBIDDEN, "Only the event creator can perform this action");
+          HttpStatus.FORBIDDEN, "Only the event creator can perform this action");
     }
   }
 

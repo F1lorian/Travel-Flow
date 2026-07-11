@@ -319,4 +319,17 @@ export class EventDialog implements OnInit {
     return this.data.creatorUsername === localStorage.getItem('sepUser');
   }
 
+  isParticipantOwner(username: string): boolean {
+    return this.data.creatorUsername === username;
+  }
+
+  isParticipant(username :string): boolean {
+    return this.participants.some(participant => participant.username === username);
+  }
+
+  removeFriend(){
+    //placeholder aktuell
+    console.log("remove friend")
+  }
+
 }

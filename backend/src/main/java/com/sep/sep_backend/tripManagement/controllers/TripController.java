@@ -9,7 +9,6 @@ DELETE /api/trips/{id} → frontend delete-trip button */
 import com.sep.sep_backend.accountmanagement.CurrentUserService;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
-import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
@@ -19,8 +18,6 @@ import com.sep.sep_backend.tripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;

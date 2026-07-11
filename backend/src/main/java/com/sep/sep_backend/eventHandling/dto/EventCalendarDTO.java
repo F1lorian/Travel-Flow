@@ -26,7 +26,13 @@ public class EventCalendarDTO {
    * @param tripId identifier of the trip the event belongs to
    */
   public EventCalendarDTO(
-      String id, String title, double kosten, LocalDateTime start, LocalDateTime end, Long tripId, String creatorUsername) {
+      String id,
+      String title,
+      double kosten,
+      LocalDateTime start,
+      LocalDateTime end,
+      Long tripId,
+      String creatorUsername) {
     this.id = id;
     this.title = title;
     this.start = start;
@@ -147,7 +153,8 @@ public class EventCalendarDTO {
   public String getCreatorUsername() {
     return creatorUsername;
   }
-  public void setCreatorUsername(String name){
+
+  public void setCreatorUsername(String name) {
     this.creatorUsername = name;
   }
 }

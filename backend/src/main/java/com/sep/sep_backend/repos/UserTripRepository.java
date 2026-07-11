@@ -1,12 +1,9 @@
 package com.sep.sep_backend.repos;
 
 import com.sep.sep_backend.entities.*;
-
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> {
   boolean existsByIdUserIdAndIdTripId(Long userId, Long tripId);
@@ -23,4 +20,5 @@ public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> 
 
   List<UserTrip> findByUser_IdAndStatus(Long userId, UserTrip.InviteStatus status);
 
-  List<UserTrip> findByTrip_Id(long tripId);}
+  List<UserTrip> findByTrip_Id(long tripId);
+}

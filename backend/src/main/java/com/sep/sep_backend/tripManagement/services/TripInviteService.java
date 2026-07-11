@@ -200,7 +200,7 @@ public class TripInviteService {
   private Trip getTripOrThrow(long tripId) {
     return tripRepository
         .findById(tripId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
   }
 
   /**
@@ -215,9 +215,16 @@ public class TripInviteService {
         .anyMatch(existingFriend -> existingFriend.getId() == friend.getId());
   }
 
+  /**
+   * checks if the user is the owner of the trip, if not it forbids further access
+   *
+   * @param trip
+   * @param user
+   */
   private void requireOwner(Trip trip, User user) {
     if (trip.getOwner() == null || trip.getOwner().getId() != user.getId()) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the trip creator can invite friends");
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip creator can invite friends");
     }
   }
 }

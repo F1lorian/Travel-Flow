@@ -132,7 +132,7 @@ public class EventController {
    */
   @PostMapping("event/delete")
   public ResponseEntity<DeleteEventResponseDTO> DeleteEventFromDB(
-          @RequestBody Long EventID, Authentication authentication) {
+      @RequestBody Long EventID, Authentication authentication) {
     eventService.DeleteEventFromDB(EventID, getCurrentUserId(authentication));
     return ResponseEntity.ok(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
   }
@@ -147,7 +147,7 @@ public class EventController {
    */
   @PostMapping("event/edit/{id}")
   public ResponseEntity<EventResponseDTO> EditEvent(
-          @PathVariable Long id, @RequestBody EventRequestDTO dto, Authentication authentication) {
+      @PathVariable Long id, @RequestBody EventRequestDTO dto, Authentication authentication) {
     var response = eventService.EditEvent(id, dto, getCurrentUserId(authentication));
     return ResponseEntity.ok(response);
   }
