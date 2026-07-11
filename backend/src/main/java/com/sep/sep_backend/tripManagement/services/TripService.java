@@ -17,6 +17,9 @@ import com.sep.sep_backend.repos.UserTripRepository;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+
+import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -107,14 +110,16 @@ public class TripService {
 
     // Resolve the creator before saving anything so a bad user id cannot leave an orphaned trip.
     User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-    Trip trip = new Trip(name.trim());
+    Trip trip = new Trip(name);
     trip.setStartDate(startDate);
     trip.setEndDate(endDate);
+    trip.setOwner(user);
     Trip savedTrip = tripRepository.save(trip);
+
     userTripRepository.save(new UserTrip(user, savedTrip, null, UserTrip.InviteStatus.ACCEPTED));
 
     // Mirror the in-app confirmation by email; a mail failure never fails the creation itself.
@@ -141,6 +146,9 @@ public class TripService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found: " + id));
     requireMember(id, userId);
 
+    if (trip.getOwner() == null || trip.getOwner().getId() != userId) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the trip creator can delete this trip");
+    }
     userEventRepository.deleteByEvent_Trip_Id(id);
     eventRepository.deleteByTrip_Id(id);
     ausgabeRepository.deleteByTrip_Id(id);
@@ -161,9 +169,10 @@ public class TripService {
   }
 
 
-  public List<UserTrip> getParticipants(Trip trip) {
-    return userTripRepository.findByTrip_IdAndStatus(
-            trip.getId(), UserTrip.InviteStatus.ACCEPTED);
+  public List<TripParticipantDTO> getParticipants(Long tripId) {
+    return userTripRepository.findByTrip_Id(tripId).stream()
+            .map(TripParticipantDTO::from)
+            .toList();
   }
 
   /**

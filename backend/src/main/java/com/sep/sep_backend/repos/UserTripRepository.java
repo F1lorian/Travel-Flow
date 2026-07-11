@@ -23,5 +23,4 @@ public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> 
 
   List<UserTrip> findByUser_IdAndStatus(Long userId, UserTrip.InviteStatus status);
 
-  List<UserTrip> findByTrip_IdAndStatus(long trip_id, UserTrip.InviteStatus status);
-}
+  List<UserTrip> findByTrip_Id(long tripId);}

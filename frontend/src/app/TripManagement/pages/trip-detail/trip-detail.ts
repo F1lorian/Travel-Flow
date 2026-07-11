@@ -2,11 +2,11 @@
    and POST /api/trips/{id}/events via TripService. Events are included
    in the trip response, so no separate events fetch is needed. */
 
-import { Component, inject, signal, OnInit } from '@angular/core';
+import {Component, inject, signal, OnInit, computed} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { EventRecommendation, TripService, Trip, Event, Category } from '../../services/trip.service';
+import { EventRecommendation, TripService, Trip, Event, Category, TripParticipantDTO} from '../../services/trip.service';
 import { NotificationService } from '../../../components/notification-menu/notification.service';
 import { FeedbackService, apiErrorMessage } from '../../../services/feedback.service';
 import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
@@ -14,11 +14,13 @@ import { EventService as CalendarEventService } from '../../../../event-adding-m
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
 import { EventDialog } from '../../../components/event-dialog/event-dialog';
 import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
+import {SlicePipe} from '@angular/common';
+import {MatIcon} from '@angular/material/icon';
 
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, EventSearchComponent],
+  imports: [FormsModule, RouterLink, EventSearchComponent, SlicePipe, MatIcon],
   templateUrl: './trip-detail.html',
   styleUrl: './trip-detail.css'
 })
@@ -36,6 +38,10 @@ export class TripDetail implements OnInit {
   recentCategories = signal<Category[]>([]);
   showDeleteConfirm = signal(false);
   errorMessage = '';
+  participants = signal<TripParticipantDTO[]>([]);
+  acceptedParticipants = computed(() =>
+    this.participants().filter(p => p.status === 'ACCEPTED')
+  );
 
   // Delete-event modal state. The modal is a small 3-step flow driven by deleteStep:
   //   'choice'       -> delete the event, or move it to another trip?
@@ -58,6 +64,11 @@ export class TripDetail implements OnInit {
       },
       error: (err) =>
         this.errorMessage = 'Could not load trip: ' + apiErrorMessage(err, 'server not reachable')
+    });
+
+    this.tripService.getParticipants(tripId).subscribe({
+      next: (participants) => this.participants.set(participants),
+      error: () => { /* non-fatal */ }
     });
 
     this.tripService.getRecentCategories().subscribe({
@@ -348,5 +359,18 @@ export class TripDetail implements OnInit {
       },
       error: (err) => this.errorMessage = apiErrorMessage(err, 'Conflict check failed')
     });
+  }
+
+  isOwner(): boolean {
+    return this.trip()?.ownerUsername === localStorage.getItem('sepUser');
+  }
+
+  isParticipantOwner(username: string): boolean {
+    return this.trip()?.ownerUsername === username;
+  }
+
+  removeParticipant(participant: TripParticipantDTO) {
+    // Platzhalter — Funktionalität folgt später
+    console.log('Remove participant (not implemented yet):', participant);
   }
 }

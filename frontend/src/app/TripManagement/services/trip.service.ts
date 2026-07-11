@@ -16,6 +16,7 @@ export interface Trip {
   invitedByUserId: number;
   invitedByUsername?: string;
   invited: boolean;
+  ownerUsername?: string;
 }
 
 export interface Event {
@@ -41,8 +42,12 @@ export interface EventRecommendation {
   sourceUrl: string;
 }
 
-export interface TripParticipantsDTO {
-  Us
+export interface TripParticipantDTO {
+  userId: number;
+  username: string;
+  firstname: string;
+  surname: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -90,7 +95,7 @@ export class TripService {
     return this.http.post<EventRecommendation[]>(`${this.apiUrl}/event-search`, { location });
   }
 
-  getParticipants(eventId: string): Observable<UserEventDTO[]> {
-    return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/participants`);
+  getParticipants(tripId: number): Observable<TripParticipantDTO[]> {
+    return this.http.get<TripParticipantDTO[]>(`${this.apiUrl}/${tripId}/participants`);
   }
 }

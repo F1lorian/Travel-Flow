@@ -14,6 +14,7 @@ import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripDTO;
+import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
 import com.sep.sep_backend.tripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
@@ -113,19 +114,8 @@ public class TripController {
         trip, userTripRepository.findByIdUserIdAndIdTripId(userId, trip.getId()).orElse(null));
   }
 
-  @GetMapping("/getUsers/{id}")
-  public ResponseEntity<List<User>> getAllUsersForTrip(@PathVariable Long id) {
-    Trip trip = tripRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Trip not found"));
-    List<UserTrip> userTrips = tripService.getParticipants(trip);
-    List<User> users = userTrips.stream()
-            .collect(Collectors.toMap(
-                    ut -> ut.getUser().getId(),
-                    UserTrip::getUser,
-                    (existing, duplicate) -> existing
-            ))
-            .values()
-            .stream()
-            .toList();
-    return ResponseEntity.ok(users);
+  @GetMapping("/{id}/participants")
+  public ResponseEntity<List<TripParticipantDTO>> getParticipants(@PathVariable Long id) {
+    return ResponseEntity.ok(tripService.getParticipants(id));
   }
 }

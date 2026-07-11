@@ -26,6 +26,10 @@ public class Trip {
   @OneToMany(mappedBy = "trip")
   private List<UserTrip> userTrips;
 
+  @ManyToOne
+  @JoinColumn(name = "owner_id")
+  private User owner;
+
   public Trip() {}
 
   public Trip(String name) {
@@ -99,5 +103,13 @@ public class Trip {
 
   public void setEndDate(LocalDate endDate) {
     this.endDate = endDate;
+  }
+
+  public User getOwner() {
+    return owner;
+  }
+
+  public void setOwner(User owner) {
+    this.owner = owner;
   }
 }

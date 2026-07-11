@@ -6,8 +6,10 @@
       <h1>{{ trip()!.name }}</h1>
       <div class="trip-header-actions">
         <button class="add-event-btn" (click)="openCreateDialog()">Add Event</button>
-        <button class="invite-to-trip-btn" (click)="openInviteDialog()">Invite Friends</button>
-        <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+        @if (isOwner()) {
+          <button class="invite-to-trip-btn" (click)="openInviteDialog()">Invite Friends</button>
+          <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+        }
       </div>
     </div>
 
@@ -29,11 +31,11 @@
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
                     <span class="event-date">
-        {{ formatDateTime(event.startTime) }}
+    {{ formatDateTime(event.startTime) }}
                       @if (event.endTime) {
                         – {{ formatDateTime(event.endTime) }}
                       }
-      </span>
+  </span>
                   }
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
@@ -56,6 +58,38 @@
         }
       </div>
 
+      <div class="right-content">
+        <h2>Participants · {{ acceptedParticipants().length }}</h2>
+        @if (acceptedParticipants().length === 0) {
+          <p class="empty">No participants yet.</p>
+        } @else {
+          <ul class="participant-list">
+            @for (participant of acceptedParticipants(); track participant.userId) {
+              <li class="participant-item">
+                <div class="participant-avatar">
+                  {{ participant.firstname | slice:0:1 }}{{ participant.surname | slice:0:1 }}
+                </div>
+                <div class="participant-info">
+                  <p class="participant-name">{{ participant.firstname }} {{ participant.surname }}</p>
+                  <p class="participant-username">&#64;{{ participant.username }}</p>
+                </div>
+                @if (isParticipantOwner(participant.username)) {
+                  <mat-icon class="owner-star" title="Trip creator">star</mat-icon>
+                } @else if (isOwner()) {
+                  <button
+                    class="delete-participant-icon-btn"
+                    (click)="removeParticipant(participant)"
+                    title="Remove participant">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                    </svg>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
     </div>
 
     <!-- AI recommendation: floating glowing orb launcher (bottom-right) + slide-in drawer.
