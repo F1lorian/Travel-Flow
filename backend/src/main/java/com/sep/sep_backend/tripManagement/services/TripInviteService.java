@@ -232,4 +232,9 @@ public class TripInviteService {
         .filter(entry -> entry.getStatus() == UserTrip.InviteStatus.ACCEPTED)
         .isPresent();
   }
+
+  public List<UserTrip> getParticipants(Trip trip) {
+    return userTripRepository.findByTrip_IdAndStatus(
+            trip.getId(), UserTrip.InviteStatus.PENDING);
+  }
 }

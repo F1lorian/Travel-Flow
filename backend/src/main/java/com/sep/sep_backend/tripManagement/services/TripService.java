@@ -160,6 +160,12 @@ public class TripService {
                         + "\" and all of its events and expenses were deleted."));
   }
 
+
+  public List<UserTrip> getParticipants(Trip trip) {
+    return userTripRepository.findByTrip_IdAndStatus(
+            trip.getId(), UserTrip.InviteStatus.ACCEPTED);
+  }
+
   /**
    * Removes a friend from a trip and from all events belonging to that trip. The friendship itself
    * is not changed.

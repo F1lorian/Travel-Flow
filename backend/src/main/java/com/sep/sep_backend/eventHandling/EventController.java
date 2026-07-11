@@ -127,11 +127,13 @@ public class EventController {
    * Deletes the event with the given identifier.
    *
    * @param EventID identifier of the event to delete
+   * @param authentication
    * @return response containing a deletion confirmation message
    */
   @PostMapping("event/delete")
-  public ResponseEntity<DeleteEventResponseDTO> DeleteEventFromDB(@RequestBody Long EventID) {
-    eventService.DeleteEventFromDB(EventID);
+  public ResponseEntity<DeleteEventResponseDTO> DeleteEventFromDB(
+          @RequestBody Long EventID, Authentication authentication) {
+    eventService.DeleteEventFromDB(EventID, getCurrentUserId(authentication));
     return ResponseEntity.ok(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
   }
 
@@ -140,12 +142,13 @@ public class EventController {
    *
    * @param id identifier of the event to update
    * @param dto event values that should be applied
+   * @param authentication
    * @return response containing the updated event data
    */
   @PostMapping("event/edit/{id}")
   public ResponseEntity<EventResponseDTO> EditEvent(
-      @PathVariable Long id, @RequestBody EventRequestDTO dto) {
-    var response = eventService.EditEvent(id, dto);
+          @PathVariable Long id, @RequestBody EventRequestDTO dto, Authentication authentication) {
+    var response = eventService.EditEvent(id, dto, getCurrentUserId(authentication));
     return ResponseEntity.ok(response);
   }
 

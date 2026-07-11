@@ -5,6 +5,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import {UserEventDTO} from '../../../event-adding-manual/models/UserEventDTO';
 
 export interface Trip {
   id: number;
@@ -38,6 +39,10 @@ export interface EventRecommendation {
   description: string;
   location: string;
   sourceUrl: string;
+}
+
+export interface TripParticipantsDTO {
+  Us
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,5 +88,9 @@ export class TripService {
 
   searchEventRecommendations(location: string): Observable<EventRecommendation[]> {
     return this.http.post<EventRecommendation[]>(`${this.apiUrl}/event-search`, { location });
+  }
+
+  getParticipants(eventId: string): Observable<UserEventDTO[]> {
+    return this.http.get<UserEventDTO[]>(`${this.inviteFriendEndpoint}/${eventId}/participants`);
   }
 }

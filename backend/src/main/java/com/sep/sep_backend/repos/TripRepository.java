@@ -17,4 +17,6 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     WHERE u.id = :userId
 """)
   List<Trip> findAllByUserId(@Param("userId") Long userId);
+
+  Trip findById(long id);
 }

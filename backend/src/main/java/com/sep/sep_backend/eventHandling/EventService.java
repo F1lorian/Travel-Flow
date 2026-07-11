@@ -53,8 +53,10 @@ import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
@@ -141,13 +143,15 @@ public class EventService {
     if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
       throw new EventOutsideTripException("Event liegt außerhalb des Trips");
     }
-    Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
-    Event savedEvent = eventRepository.save(newEvent);
 
     User creator =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
+    newEvent.setOwner(creator);
+    Event savedEvent = eventRepository.save(newEvent);
 
     UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
     creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
@@ -159,16 +163,19 @@ public class EventService {
   /**
    * Deletes the event with the given identifier.
    *
-   * @param EventID identifier of the event to delete
+   * @param eventId identifier of the event to delete
    */
   @Transactional
-  public void DeleteEventFromDB(Long EventID) {
-    if (!eventRepository.existsById(EventID)) {
-      throw new EntityNotFoundException("Event mit ID " + EventID + " wurde nicht gefunden");
-    }
+  public void DeleteEventFromDB(Long eventId, Long userId) {
+    Event event =
+            eventRepository
+                    .findById(eventId)
+                    .orElseThrow(() -> new EntityNotFoundException("Event mit ID " + eventId + " wurde nicht gefunden"));
 
-    userEventRepository.deleteByEvent_Id(EventID);
-    eventRepository.deleteById(EventID);
+    requireOwner(event, userId);
+
+    userEventRepository.deleteByEvent_Id(eventId);
+    eventRepository.deleteById(eventId);
   }
 
   /**
@@ -178,7 +185,7 @@ public class EventService {
    * @param dto request data containing the new event values
    * @return response data of the updated event
    */
-  public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto) {
+  public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto, Long userId) {
     Event event =
         eventRepository
             .findById(eventId)
@@ -186,6 +193,8 @@ public class EventService {
                 () ->
                     new EntityNotFoundException(
                         "Event mit ID " + eventId + " wurde nicht gefunden"));
+
+    requireOwner(event, userId);
 
     if (dto.getName() != null) {
       event.setName(dto.getName());
@@ -227,13 +236,16 @@ public class EventService {
     if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
       throw new EventOutsideTripException("Event liegt außerhalb des Trips");
     }
-    Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
-    Event savedEvent = eventRepository.save(newEvent);
 
     User creator =
         userRepository
             .findById(UserID)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+
+    Event newEvent = new Event(eventName, eventStart, eventEnd, dto.getKosten(), matchingTrip);
+    newEvent.setOwner(creator);
+    Event savedEvent = eventRepository.save(newEvent);
 
     UserEvent creatorEntry = new UserEvent(savedEvent, creator, creator);
     creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
@@ -289,28 +301,24 @@ public class EventService {
    */
   public void inviteFriendToEvent(Long eventId, Long friendUserId, Long requestingUserId) {
     Event event =
-        eventRepository
-            .findById(eventId)
-            .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+            eventRepository
+                    .findById(eventId)
+                    .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-    boolean requesterIsParticipant =
-        userEventRepository.existsByEvent_IdAndUser_Id(eventId, requestingUserId);
-    if (!requesterIsParticipant) {
-      throw new IllegalArgumentException("Only participants can invite friends");
-    }
+    requireOwner(event, requestingUserId);
 
     if (userEventRepository.existsByEvent_IdAndUser_Id(eventId, friendUserId)) {
       throw new IllegalArgumentException("User already invited");
     }
 
     User friend =
-        userRepository
-            .findById(friendUserId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            userRepository
+                    .findById(friendUserId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
     User requestingUser =
-        userRepository
-            .findById(requestingUserId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            userRepository
+                    .findById(requestingUserId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     UserEvent invite = new UserEvent(event, friend, requestingUser);
     userEventRepository.save(invite);
@@ -414,6 +422,18 @@ public class EventService {
 
   public List<UserEvent> getParticipants(Long eventId) {
     return userEventRepository.findByEvent_Id(eventId);
+  }
+
+  /**
+   * checks if the user is the creator of the event
+   * @param event
+   * @param userId
+   */
+  private void requireOwner(Event event, Long userId) {
+    if (event.getOwner() == null || event.getOwner().getId() != userId) {
+      throw new ResponseStatusException(
+              HttpStatus.FORBIDDEN, "Only the event creator can perform this action");
+    }
   }
 
   /**
