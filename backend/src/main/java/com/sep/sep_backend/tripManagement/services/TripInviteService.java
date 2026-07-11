@@ -1,9 +1,13 @@
 package com.sep.sep_backend.tripManagement.services;
 
+import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
@@ -20,18 +24,24 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class TripInviteService {
   private final TripRepository tripRepository;
+  private final EventRepository eventRepository;
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
+  private final UserEventRepository userEventRepository;
   private final TripInviteNotificationService notificationService;
 
   public TripInviteService(
       TripRepository tripRepository,
+      EventRepository eventRepository,
       UserRepository userRepository,
       UserTripRepository userTripRepository,
+      UserEventRepository userEventRepository,
       TripInviteNotificationService notificationService) {
     this.tripRepository = tripRepository;
+    this.eventRepository = eventRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
+    this.userEventRepository = userEventRepository;
     this.notificationService = notificationService;
   }
 
@@ -84,7 +94,27 @@ public class TripInviteService {
       notificationService.notifyNewInvite(friend, trip, currentUser);
     }
 
+    inviteFriendToExistingTripEvents(trip, friend, currentUser);
+
     return new TripInviteResponseDTO(trip.getId(), friend.getId(), "Trip invite sent");
+  }
+
+  private void inviteFriendToExistingTripEvents(Trip trip, User friend, User invitedBy) {
+    for (Event event : eventRepository.findByTrip_Id(trip.getId())) {
+      var existingInvite =
+          userEventRepository.findByEvent_IdAndUser_Id(event.getId(), friend.getId());
+      if (existingInvite.isPresent()) {
+        UserEvent userEvent = existingInvite.get();
+        if (userEvent.getStatus() == UserEvent.InviteStatus.DECLINED) {
+          userEvent.setStatus(UserEvent.InviteStatus.PENDING);
+          userEvent.setCreator(invitedBy);
+          userEventRepository.save(userEvent);
+        }
+        continue;
+      }
+
+      userEventRepository.save(new UserEvent(event, friend, invitedBy));
+    }
   }
 
   /**
