@@ -293,6 +293,32 @@ public class EventService {
   }
 
   /**
+   * Removes a friend from an event without deleting the event or changing the friendship.
+   *
+   * @param eventId event from which the friend should be removed
+   * @param friendUserId user to remove from the event
+   * @param requestingUserId user requesting the removal
+   */
+  @Transactional
+  public void removeFriendFromEvent(Long eventId, Long friendUserId, Long requestingUserId) {
+    if (!eventRepository.existsById(eventId)) {
+      throw new IllegalArgumentException("Event not found");
+    }
+
+    boolean requesterIsParticipant =
+        userEventRepository.existsByEvent_IdAndUser_Id(eventId, requestingUserId);
+    if (!requesterIsParticipant) {
+      throw new IllegalArgumentException("Only participants can remove friends from events");
+    }
+
+    if (!userEventRepository.existsByEvent_IdAndUser_Id(eventId, friendUserId)) {
+      throw new IllegalArgumentException("User is not part of this event");
+    }
+
+    userEventRepository.deleteByEvent_IdAndUser_Id(eventId, friendUserId);
+  }
+
+  /**
    * responds to the invitation
    *
    * @param eventId

@@ -181,6 +181,14 @@ public class EventController {
     return ResponseEntity.ok().build();
   }
 
+  @DeleteMapping("event/{eventId}/participants/{friendUserId}")
+  public ResponseEntity<Void> removeFriendFromEvent(
+      @PathVariable Long eventId, @PathVariable Long friendUserId, Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    eventService.removeFriendFromEvent(eventId, friendUserId, userId);
+    return ResponseEntity.noContent().build();
+  }
+
   /**
    * responds the users decision if he accepts the invite or if he does not
    *
