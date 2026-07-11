@@ -701,6 +701,29 @@ class EventServiceTest {
   }
 
   @Test
+  void removeFriendFromEventDeletesUserEventWhenRequesterIsParticipant() {
+    when(eventRepository.existsById(42L)).thenReturn(true);
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
+
+    eventService.removeFriendFromEvent(42L, 8L, 7L);
+
+    verify(userEventRepository).deleteByEvent_IdAndUser_Id(42L, 8L);
+  }
+
+  @Test
+  void removeFriendFromEventRejectsWhenRequesterIsNotParticipant() {
+    when(eventRepository.existsById(42L)).thenReturn(true);
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
+
+    assertThatThrownBy(() -> eventService.removeFriendFromEvent(42L, 8L, 7L))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Only participants can remove friends from events");
+
+    verify(userEventRepository, never()).deleteByEvent_IdAndUser_Id(any(), any());
+  }
+
+  @Test
   void respondToInviteUpdatesStatusAndNotifiesCreator() {
     Event event =
         new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
