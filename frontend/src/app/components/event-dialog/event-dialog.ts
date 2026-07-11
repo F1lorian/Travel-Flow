@@ -26,6 +26,7 @@ interface EventDialogData {
   tripId?: number;
   start?: string;
   end?: string;
+  creatorUsername?: string;
 }
 
 @Component({
@@ -309,6 +310,13 @@ export class EventDialog implements OnInit {
       const parsed = parseFloat((this.kosten as string).replace(',', '.'));
       this.kosten = isNaN(parsed) ? undefined : parsed;
     }
+  }
+
+  get isOwner(): boolean {
+    if (this.mode === 'create') {
+      return true;
+    }
+    return this.data.creatorUsername === localStorage.getItem('sepUser');
   }
 
 }

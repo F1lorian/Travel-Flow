@@ -270,7 +270,8 @@ public class EventService {
                     event.getKosten(),
                     event.getStartTime(),
                     event.getEndTime(),
-                    event.getTripId()))
+                        event.getTripId(),
+                        event.getOwner() != null ? event.getOwner().getName() : null))
         .toList();
   }
 

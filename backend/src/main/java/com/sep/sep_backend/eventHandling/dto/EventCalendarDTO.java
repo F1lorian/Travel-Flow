@@ -10,6 +10,7 @@ public class EventCalendarDTO {
   private Long tripId;
   private LocalDateTime start;
   private LocalDateTime end;
+  private String creatorUsername;
 
   /** Creates an empty calendar event DTO for serialization and deserialization. */
   public EventCalendarDTO() {}
@@ -25,13 +26,14 @@ public class EventCalendarDTO {
    * @param tripId identifier of the trip the event belongs to
    */
   public EventCalendarDTO(
-      String id, String title, double kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
+      String id, String title, double kosten, LocalDateTime start, LocalDateTime end, Long tripId, String creatorUsername) {
     this.id = id;
     this.title = title;
     this.start = start;
     this.end = end;
     this.kosten = kosten;
     this.tripId = tripId;
+    this.creatorUsername = creatorUsername;
   }
 
   /**
@@ -140,5 +142,12 @@ public class EventCalendarDTO {
    */
   public void setTripId(Long tripId) {
     this.tripId = tripId;
+  }
+
+  public String getCreatorUsername() {
+    return creatorUsername;
+  }
+  public void setCreatorUsername(String name){
+    this.creatorUsername = name;
   }
 }

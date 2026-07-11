@@ -189,7 +189,7 @@
       </button>
     }
 
-    @if (mode === 'show') {
+    @if (mode === 'show' && isOwner) {
       <button
         (click)="edit()"
         class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
@@ -200,7 +200,7 @@
       </button>
     }
 
-    @if (mode === 'edit' || mode === 'show') {
+    @if ((mode === 'edit' || mode === 'show') && isOwner) {
       <button
         (click)="delete()"
         class="flex-1 rounded-lg border border-slate-300 bg-white px-5 py-3
