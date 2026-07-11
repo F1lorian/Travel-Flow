@@ -6,9 +6,13 @@ Called by TripEventController, which exposes the results to the Angular frontend
 import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
+import com.sep.sep_backend.repos.UserTripRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -26,16 +30,19 @@ public class TripEventService {
   private final TripRepository tripRepository;
   private final CategoryService categoryService;
   private final UserEventRepository userEventRepository;
+  private final UserTripRepository userTripRepository;
 
   public TripEventService(
       EventRepository eventRepository,
       TripRepository tripRepository,
       CategoryService categoryService,
-      UserEventRepository userEventRepository) {
+      UserEventRepository userEventRepository,
+      UserTripRepository userTripRepository) {
     this.eventRepository = eventRepository;
     this.tripRepository = tripRepository;
     this.categoryService = categoryService;
     this.userEventRepository = userEventRepository;
+    this.userTripRepository = userTripRepository;
   }
 
   /**
@@ -46,6 +53,7 @@ public class TripEventService {
    * CategoryService#getOrCreate} so typing a new label creates it and reusing an existing one links
    * to it.
    */
+  @Transactional
   public Event addEventToTrip(
       Long tripId,
       String name,
@@ -71,7 +79,32 @@ public class TripEventService {
       newEvent.setCategorie(category);
     }
 
-    return eventRepository.save(newEvent);
+    Event savedEvent = eventRepository.save(newEvent);
+    addTripMembersToEvent(savedEvent, tripId);
+    return savedEvent;
+  }
+
+  private void addTripMembersToEvent(Event event, Long tripId) {
+    for (UserTrip userTrip : userTripRepository.findByIdTripId(tripId)) {
+      if (userTrip.getStatus() == UserTrip.InviteStatus.DECLINED) {
+        continue;
+      }
+      if (userEventRepository.existsByEvent_IdAndUser_Id(
+          event.getId(), userTrip.getUser().getId())) {
+        continue;
+      }
+
+      User creator = userTrip.getInvitedBy() != null ? userTrip.getInvitedBy() : userTrip.getUser();
+      UserEvent userEvent = new UserEvent(event, userTrip.getUser(), creator);
+      userEvent.setStatus(toEventInviteStatus(userTrip.getStatus()));
+      userEventRepository.save(userEvent);
+    }
+  }
+
+  private UserEvent.InviteStatus toEventInviteStatus(UserTrip.InviteStatus tripStatus) {
+    return tripStatus == UserTrip.InviteStatus.ACCEPTED
+        ? UserEvent.InviteStatus.ACCEPTED
+        : UserEvent.InviteStatus.PENDING;
   }
 
   public List<Event> getEventsForTrip(Long tripId) {
