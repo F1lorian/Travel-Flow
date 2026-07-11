@@ -369,8 +369,24 @@ export class TripDetail implements OnInit {
     return this.trip()?.ownerUsername === username;
   }
 
-  removeParticipant(participant: TripParticipantDTO) {
-    // Platzhalter — Funktionalität folgt später
-    console.log('Remove participant (not implemented yet):', participant);
+  removeParticipant(username: string) {
+    this.participants.update(participants =>
+      participants.filter(participant => participant.username !== username)
+    );
+  }
+
+  removeFriendFromEvent(participant: TripParticipantDTO){
+    const friendId = participant.userId;
+    const tripId = this.trip()?.id;
+    if (!tripId){
+      this.errorMessage = "Trip nicht verfügbar";
+      return;
+    }
+    this.tripService.removeFriendsFromTrip(tripId, friendId).subscribe({
+      next: () => {
+        this.removeParticipant(participant.username);
+      },
+      error: (err) => { this.errorMessage = 'Error: ' + err.message}
+    })
   }
 }

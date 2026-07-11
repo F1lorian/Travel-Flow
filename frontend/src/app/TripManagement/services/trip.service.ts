@@ -97,4 +97,8 @@ export class TripService {
   getParticipants(tripId: number): Observable<TripParticipantDTO[]> {
     return this.http.get<TripParticipantDTO[]>(`${this.apiUrl}/${tripId}/participants`);
   }
+
+  removeFriendsFromTrip(tripId: number, friendId: number): Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${tripId}/friends/${friendId}`)
+  }
 }
