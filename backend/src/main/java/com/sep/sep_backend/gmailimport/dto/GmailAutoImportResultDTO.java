@@ -1,6 +1,6 @@
 package com.sep.sep_backend.gmailimport.dto;
 
-import com.sep.sep_backend.eventHandling.EventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import java.util.List;
 
 /**

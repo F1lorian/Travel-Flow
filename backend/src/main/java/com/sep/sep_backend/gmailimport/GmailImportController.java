@@ -1,6 +1,6 @@
 package com.sep.sep_backend.gmailimport;
 
-import com.sep.sep_backend.eventHandling.EventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportRequestDTO;
 import com.sep.sep_backend.gmailimport.dto.GmailAutoImportResultDTO;

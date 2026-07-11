@@ -2,6 +2,11 @@ package com.sep.sep_backend.eventHandling;
 
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
+import com.sep.sep_backend.eventHandling.dto.DeleteEventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
+import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.UserEventDTO;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
