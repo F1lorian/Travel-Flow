@@ -264,7 +264,9 @@ export class CalendarComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        this.addCreatedEvent(result);
+        // Gmail multi-import returns an array of saved events; single imports return one event.
+        const events = Array.isArray(result) ? result : [result];
+        events.forEach(event => this.addCreatedEvent(event));
       }
     })
   }

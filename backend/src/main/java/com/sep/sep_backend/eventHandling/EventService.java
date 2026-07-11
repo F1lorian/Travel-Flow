@@ -13,6 +13,7 @@ import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
 import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
 import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
+import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -33,14 +34,18 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +55,11 @@ import org.springframework.transaction.annotation.Transactional;
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
 public class EventService {
+
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EventService.class);
+
+  /** Placeholder name for an event whose real name could not be determined. */
+  private static final String UNKNOWN_EVENT_NAME = "Unbekanntes Event";
 
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
@@ -185,7 +195,7 @@ public class EventService {
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId, Long UserID) {
     Trip matchingTrip = findTripByIdIfPresent(tripId);
     String eventName =
-        dto.getName() == null || dto.getName().isBlank() ? "Unbekanntes Event" : dto.getName();
+        dto.getName() == null || dto.getName().isBlank() ? UNKNOWN_EVENT_NAME : dto.getName();
     LocalDateTime eventStart = dto.getStart() != null ? dto.getStart() : LocalDateTime.now();
     LocalDateTime eventEnd = resolveEndTime(dto.getEnd(), eventStart);
     if (matchingTrip != null && isEventOutsideTrip(eventStart, eventEnd, matchingTrip)) {
@@ -305,10 +315,10 @@ public class EventService {
   }
 
   /**
-   * returns all pending invited for a user
+   * returns all pending invites for a user
    *
    * @param userId
-   * @return
+   * @return the user's pending event invitations
    */
   public List<UserEvent> getIncomingEventInvites(Long userId) {
     return userEventRepository.findByUser_IdAndStatus(userId, UserEvent.InviteStatus.PENDING);
@@ -325,12 +335,6 @@ public class EventService {
         .toList();
   }
 
-  /**
-   * returns a list of all users that are part of an event
-   *
-   * @param eventId
-   * @return
-   */
   public List<UserEvent> getParticipants(Long eventId) {
     return userEventRepository.findByEvent_Id(eventId);
   }
@@ -362,7 +366,158 @@ public class EventService {
     }
     // 2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
     var body = extractText(message);
-    return parseTextWithGemini(message.getSubject(), body);
+    return parseTextWithGemini(message.getSubject(), body, resolveSentDate(message));
+  }
+
+  /**
+   * Parses a mail into an event, but only when it actually describes one. A structured JSON-LD
+   * event always counts; otherwise Gemini decides whether the text contains a real appointment.
+   * Returns an empty {@link Optional} for messages without an event so bulk importers can skip
+   * them.
+   *
+   * @param inputStream raw RFC822 mail
+   * @return the parsed event, or empty when the mail contains no event
+   */
+  public Optional<EventResponseDTO> parseMailFileIfEvent(InputStream inputStream) throws Exception {
+    Session session = Session.getDefaultInstance(new Properties());
+    MimeMessage message = new MimeMessage(session, inputStream);
+
+    var jsonLdBlocks = extractJsonLd(message);
+    Optional<EventResponseDTO> event = Optional.empty();
+    if (!jsonLdBlocks.isEmpty()) {
+      var jsonEvent =
+          jsonLdBlocks.stream()
+              .filter(this::isSchemaOrg)
+              .filter(this::isSchemaEvent)
+              .findFirst()
+              .orElse(null);
+      if (jsonEvent != null) {
+        event = Optional.of(mapJsonLdToDTO(jsonEvent));
+      }
+    }
+
+    if (event.isEmpty()) {
+      var body = extractText(message);
+      event = detectEventWithGemini(message.getSubject(), body, resolveSentDate(message));
+    }
+
+    // Ein Event ohne echten Namen ("Unbekanntes Event") wird beim automatischen Import nicht
+    // übernommen — der Nutzer soll keine namenlosen Platzhalter im Kalender bekommen.
+    return event.filter(this::hasRealName);
+  }
+
+  /** True when the event has a real name; a blank or "Unbekanntes Event" placeholder is dropped. */
+  private boolean hasRealName(EventResponseDTO event) {
+    String name = event.getName();
+    return name != null && !name.isBlank() && !name.equals(UNKNOWN_EVENT_NAME);
+  }
+
+  /** How many times a throttled/failed Gemini detection call is retried before giving up. */
+  private static final int DETECTION_MAX_RETRIES = 2;
+
+  /**
+   * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
+   *
+   * <p>Returns empty for a mail that genuinely has no event (empty body or a {@code hasEvent:
+   * false} verdict). Throws {@link EventDetectionException} when detection could not run (no Gemini
+   * key, or the call keeps failing after retries) so the caller can report the message as "could
+   * not be checked" rather than silently treating a failure as "no event".
+   */
+  private Optional<EventResponseDTO> detectEventWithGemini(
+      String subject, String mailText, LocalDateTime sentDate) {
+    if (mailText == null || mailText.isBlank()) {
+      return Optional.empty();
+    }
+    if (geminiApiKey == null || geminiApiKey.isBlank()) {
+      throw new EventDetectionException("Gemini API key is not configured");
+    }
+
+    int attempt = 0;
+    while (true) {
+      try {
+        Client client = Client.builder().apiKey(geminiApiKey).build();
+
+        GenerateContentConfig config =
+            GenerateContentConfig.builder()
+                .responseMimeType("application/json")
+                .temperature(0.1f)
+                .build();
+
+        GenerateContentResponse response =
+            client.models.generateContent(
+                geminiModel, buildGeminiEventDetectionPrompt(subject, mailText, sentDate), config);
+
+        String raw = response.text();
+        log.info("Gmail event detection for [{}] -> {}", subject, raw);
+        JsonNode node = objectMapper.readTree(raw);
+
+        // An event needs a real, parseable start date. Without one we skip the mail instead of
+        // importing it to "now" (today), which previously scattered dateless mails onto the import
+        // day. A blank/unparseable date therefore yields "no event", not a failure.
+        Optional<LocalDateTime> startOpt = tryParseDatetime(node.path("startDate").asText(""));
+        if (startOpt.isEmpty()) {
+          return Optional.empty();
+        }
+
+        LocalDateTime start = startOpt.get();
+        LocalDateTime end =
+            tryParseDatetime(node.path("endDate").asText(""))
+                .orElseGet(() -> resolveEndTime(null, start));
+        String name = node.path("name").asText(subject);
+        int kosten = node.path("kosten").asInt(0);
+        return Optional.of(new EventResponseDTO(name, kosten, start, end));
+      } catch (Exception exception) {
+        if (attempt++ >= DETECTION_MAX_RETRIES) {
+          log.warn("Gmail event detection failed for [{}] after {} attempts", subject, attempt);
+          throw new EventDetectionException("Gemini event detection failed", exception);
+        }
+        // Back off briefly before retrying a throttled/transient failure.
+        try {
+          Thread.sleep(400L * attempt);
+        } catch (InterruptedException interrupted) {
+          Thread.currentThread().interrupt();
+          throw new EventDetectionException("Event detection interrupted", interrupted);
+        }
+      }
+    }
+  }
+
+  private String buildGeminiEventDetectionPrompt(
+      String subject, String mailText, LocalDateTime sentDate) {
+    return """
+                Prüfe, ob diese E-Mail eine konkrete Veranstaltung oder einen Termin beschreibt
+                (z. B. Meeting, Konzert, Reservierung, Arzttermin, Buchung mit Datum/Uhrzeit).
+                Werbung, Newsletter, Rechnungen ohne Termin und reine Benachrichtigungen sind KEIN Event.
+
+                Antworte nur mit JSON:
+                {
+                  "hasEvent": true,
+                  "name": "Eventname",
+                  "kosten": 0,
+                  "startDate": "2026-06-01T20:00:00",
+                  "endDate": "2026-06-01T22:00:00"
+                }
+
+                Regeln:
+                - hasEvent ist nur true, wenn ein echter Termin mit erkennbarem Datum vorhanden ist.
+                - Falls hasEvent false ist, sind die übrigen Felder egal.
+                - kosten ist eine ganze Zahl.
+                - startDate ist yyyy-MM-ddTHH:mm:ss (ISO 8601), aus dem Mailtext entnommen.
+                - endDate ist yyyy-MM-ddTHH:mm:ss.
+                - Das Bezugsdatum (Sende-Datum der E-Mail) ist %s. Relative Angaben wie "morgen",
+                  "übermorgen", "nächsten Montag" oder Wochentage beziehen sich auf dieses
+                  Bezugsdatum, NICHT auf das heutige Datum.
+                - Nutze immer das im Text genannte konkrete Datum, wenn vorhanden.
+                - Falls kein Eventname gefunden wird: Betreff nutzen.
+                - Erfinde keine Daten.
+
+                Betreff:
+                %s
+
+                Mailtext:
+                %s
+                """
+        .formatted(formatReferenceDate(sentDate), subject, mailText);
   }
 
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
@@ -518,7 +673,8 @@ public class EventService {
     }
   }
 
-  private EventResponseDTO parseTextWithGemini(String subject, String mailText) {
+  private EventResponseDTO parseTextWithGemini(
+      String subject, String mailText, LocalDateTime sentDate) {
     if (geminiApiKey == null || geminiApiKey.isBlank() || mailText == null || mailText.isBlank()) {
       return mapTextToDTO(mailText);
     }
@@ -534,7 +690,8 @@ public class EventService {
               .build();
 
       GenerateContentResponse response =
-          client.models.generateContent(geminiModel, buildGeminiPrompt(subject, mailText), config);
+          client.models.generateContent(
+              geminiModel, buildGeminiPrompt(subject, mailText, sentDate), config);
 
       JsonNode node = objectMapper.readTree(response.text());
 
@@ -545,12 +702,15 @@ public class EventService {
 
       return new EventResponseDTO(name, kosten, start, end);
     } catch (Exception exception) {
-      // Bei ungültiger KI-Antwort wird trozdem versucht ein Evnt zu erstellen.
-      return mapTextToDTO(mailText);
+      // Ein fehlgeschlagener Gemini-Aufruf (z. B. 429 Quota) darf NICHT als Event mit dem heutigen
+      // Datum "erfunden" werden — sonst landet jeder Import auf heute. Der Fehler wird
+      // weitergereicht, damit der Import als fehlgeschlagen gemeldet statt falsch gespeichert wird.
+      log.warn("Gemini text extraction failed for [{}]", subject, exception);
+      throw new EventDetectionException("Gemini event extraction failed", exception);
     }
   }
 
-  private String buildGeminiPrompt(String subject, String mailText) {
+  private String buildGeminiPrompt(String subject, String mailText, LocalDateTime sentDate) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
                 Antworte nur mit JSON:
@@ -563,9 +723,12 @@ public class EventService {
 
                 Regeln:
                 - kosten ist eine ganze Zahl.
-                - startDate ist yyyy-MM-ddTHH:mm:ss.
+                - startDate ist yyyy-MM-ddTHH:mm:ss (ISO 8601), aus dem Mailtext entnommen.
                 - endDate ist yyyy-MM-ddTHH:mm:ss.
-                - Falls kein Datum gefunden wird: heutiger Tag.
+                - Das Bezugsdatum (Sende-Datum der E-Mail) ist %s. Relative Angaben wie "morgen",
+                  "übermorgen", "nächsten Montag" oder Wochentage beziehen sich auf dieses
+                  Bezugsdatum, NICHT auf das heutige Datum.
+                - Nutze immer das im Text genannte konkrete Datum, wenn vorhanden.
                 - Falls kein Preis gefunden wird: kosten 0.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
                 - Erfinde keine Daten.
@@ -576,7 +739,7 @@ public class EventService {
                 Mailtext:
                 %s
                 """
-        .formatted(subject, mailText);
+        .formatted(formatReferenceDate(sentDate), subject, mailText);
   }
 
   private boolean isSchemaOrg(JsonNode node) {
@@ -653,7 +816,7 @@ public class EventService {
   }
 
   private EventResponseDTO mapTextToDTO(String text) {
-    var name = text == null || text.isBlank() ? "Unbekanntes Event" : text;
+    var name = text == null || text.isBlank() ? UNKNOWN_EVENT_NAME : text;
     LocalDateTime start = LocalDateTime.now();
     return new EventResponseDTO(name, 0, start, resolveEndTime(null, start));
   }
@@ -674,7 +837,7 @@ public class EventService {
     var price = eventNode.path("offers").path("price").asInt();
     var start = parseDatetime(eventNode.path("startDate").asText());
     var end = parseEndDatetime(eventNode.path("endDate").asText(), start);
-    var name = eventNode.path("name").asText("Unbekanntes Event");
+    var name = eventNode.path("name").asText(UNKNOWN_EVENT_NAME);
     return new EventResponseDTO(name, price, start, end);
   }
 
@@ -704,24 +867,77 @@ public class EventService {
     return null;
   }
 
-  private LocalDateTime parseDatetime(String jsonDatetime) {
-    if (jsonDatetime == null || jsonDatetime.isBlank()) {
-      return LocalDateTime.now();
-    }
+  /** yyyy-MM-ddTHH:mm without seconds, one of the shapes Gemini and JSON-LD sometimes emit. */
+  private static final DateTimeFormatter LOCAL_NO_SECONDS =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
-    return LocalDateTime.parse(jsonDatetime);
+  /**
+   * Leniently parses the various datetime shapes Gemini and JSON-LD return, returning empty when
+   * the value is blank or in no recognized format. Accepts an offset/zone (trailing {@code Z} or
+   * {@code +02:00}), the canonical {@code yyyy-MM-ddTHH:mm:ss}, the same without seconds, and a
+   * date-only value (mapped to start of day). Never throws, so a malformed date no longer aborts
+   * detection.
+   */
+  private static Optional<LocalDateTime> tryParseDatetime(String value) {
+    if (value == null || value.isBlank()) {
+      return Optional.empty();
+    }
+    String trimmed = value.trim();
+    try {
+      return Optional.of(OffsetDateTime.parse(trimmed).toLocalDateTime());
+    } catch (DateTimeParseException ignored) {
+      // not an offset/zoned value
+    }
+    try {
+      return Optional.of(LocalDateTime.parse(trimmed));
+    } catch (DateTimeParseException ignored) {
+      // not canonical local datetime
+    }
+    try {
+      return Optional.of(LocalDateTime.parse(trimmed, LOCAL_NO_SECONDS));
+    } catch (DateTimeParseException ignored) {
+      // not a seconds-less local datetime
+    }
+    try {
+      return Optional.of(LocalDate.parse(trimmed).atStartOfDay());
+    } catch (DateTimeParseException ignored) {
+      // not a date-only value either
+    }
+    return Optional.empty();
+  }
+
+  private LocalDateTime parseDatetime(String jsonDatetime) {
+    return tryParseDatetime(jsonDatetime).orElseGet(LocalDateTime::now);
   }
 
   private LocalDateTime parseEndDatetime(String jsonDatetime, LocalDateTime start) {
-    if (jsonDatetime == null || jsonDatetime.isBlank()) {
-      return resolveEndTime(null, start);
-    }
-
-    return LocalDateTime.parse(jsonDatetime);
+    return tryParseDatetime(jsonDatetime).orElseGet(() -> resolveEndTime(null, start));
   }
 
   private LocalDateTime resolveEndTime(LocalDateTime end, LocalDateTime start) {
     return end != null ? end : start.plusDays(1);
+  }
+
+  /**
+   * The mail's sent date, used as the reference point for relative date phrases ("morgen", weekday
+   * names) in the AI prompt. Falls back to now only when the header is absent, so relative
+   * resolution has an anchor even for hand-crafted test mails.
+   */
+  private LocalDateTime resolveSentDate(MimeMessage message) throws MessagingException {
+    Date sentDate = message.getSentDate();
+    if (sentDate == null) {
+      return LocalDateTime.now();
+    }
+    return LocalDateTime.ofInstant(sentDate.toInstant(), ZoneId.systemDefault());
+  }
+
+  private String formatReferenceDate(LocalDateTime sentDate) {
+    LocalDateTime reference = sentDate != null ? sentDate : LocalDateTime.now();
+    // yyyy-MM-dd plus the weekday so "nächsten Montag" and similar resolve correctly.
+    return reference.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE)
+        + " ("
+        + reference.getDayOfWeek()
+        + ")";
   }
 
   private boolean isEventOutsideTrip(LocalDateTime eventStart, LocalDateTime eventEnd, Trip trip) {
