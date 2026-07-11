@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -339,6 +340,35 @@ public class EventService {
     return parseTextWithGemini(message.getSubject(), body);
   }
 
+  /**
+   * Parses an uploaded email stream only if it actually contains an event, for auto-import mode.
+   *
+   * @param inputStream email file content
+   * @return the parsed event, or empty if the mail does not contain an event
+   * @throws Exception if the email content cannot be read or parsed
+   */
+  public Optional<EventResponseDTO> parseMailFileIfEvent(InputStream inputStream) throws Exception {
+    Session session = Session.getDefaultInstance(new Properties());
+    MimeMessage message = new MimeMessage(session, inputStream);
+    var jsonLdBlocks = extractJsonLd(message);
+
+    if (!jsonLdBlocks.isEmpty()) {
+      var jsonEvent =
+          jsonLdBlocks.stream()
+              .filter(node -> isSchemaOrg(node))
+              .filter(node -> isSchemaEvent(node))
+              .findFirst()
+              .orElse(null);
+
+      if (jsonEvent != null) {
+        return Optional.of(mapJsonLdToDTO(jsonEvent));
+      }
+    }
+
+    var body = extractText(message);
+    return parseTextWithGeminiIfEvent(message.getSubject(), body);
+  }
+
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
       throws Exception {
     Store store = null;
@@ -524,6 +554,46 @@ public class EventService {
     }
   }
 
+  /**
+   * Same as {@link #parseTextWithGemini}, but for auto-import mode: instead of always falling back
+   * to a generic "Unbekanntes Event", it asks Gemini to explicitly flag whether the mail actually
+   * contains an event, and returns empty when it does not (or when detection fails).
+   */
+  private Optional<EventResponseDTO> parseTextWithGeminiIfEvent(String subject, String mailText) {
+    if (geminiApiKey == null || geminiApiKey.isBlank() || mailText == null || mailText.isBlank()) {
+      return Optional.empty();
+    }
+
+    try {
+      Client client = Client.builder().apiKey(geminiApiKey).build();
+
+      GenerateContentConfig config =
+          GenerateContentConfig.builder()
+              .responseMimeType("application/json")
+              .temperature(0.1f)
+              .build();
+
+      GenerateContentResponse response =
+          client.models.generateContent(
+              geminiModel, buildGeminiIsEventPrompt(subject, mailText), config);
+
+      JsonNode node = objectMapper.readTree(response.text());
+
+      if (!node.path("isEvent").asBoolean(false)) {
+        return Optional.empty();
+      }
+
+      String name = node.path("name").asText(subject);
+      int kosten = node.path("kosten").asInt(0);
+      LocalDateTime start = parseDatetime(node.path("startDate").asText());
+      LocalDateTime end = parseEndDatetime(node.path("endDate").asText(), start);
+
+      return Optional.of(new EventResponseDTO(name, kosten, start, end));
+    } catch (Exception exception) {
+      return Optional.empty();
+    }
+  }
+
   private String buildGeminiPrompt(String subject, String mailText) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
@@ -540,6 +610,35 @@ public class EventService {
                 - startDate ist yyyy-MM-ddTHH:mm:ss.
                 - endDate ist yyyy-MM-ddTHH:mm:ss.
                 - Falls kein Datum gefunden wird: heutiger Tag.
+                - Falls kein Preis gefunden wird: kosten 0.
+                - Falls kein Eventname gefunden wird: Betreff nutzen.
+                - Erfinde keine Daten.
+
+                Betreff:
+                %s
+
+                Mailtext:
+                %s
+                """
+        .formatted(subject, mailText);
+  }
+
+  private String buildGeminiIsEventPrompt(String subject, String mailText) {
+    return """
+                Lies diese E-Mail. Enthält sie ein konkretes Event (Termin, Reise, Reservierung, Veranstaltung)?
+                Antworte nur mit JSON:
+                {
+                  "isEvent": true,
+                  "name": "Eventname",
+                  "kosten": 0,
+                  "startDate": "2026-06-01T20:00:00",
+                  "endDate": "2026-06-01T22:00:00"
+                }
+
+                Regeln:
+                - isEvent ist false, wenn kein konkretes Event erkennbar ist (z.B. Newsletter, Werbung, allgemeine Nachricht).
+                - kosten ist eine ganze Zahl.
+                - startDate und endDate sind yyyy-MM-ddTHH:mm:ss.
                 - Falls kein Preis gefunden wird: kosten 0.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
                 - Erfinde keine Daten.
