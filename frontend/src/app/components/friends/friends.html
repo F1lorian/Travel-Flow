@@ -5,7 +5,7 @@
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Friends</h1>
       <p class="mt-2 text-slate-500">
-        Manage your friends and view information they shared with you.
+        Manage your friends, invitations and shared information.
       </p>
     </div>
 
@@ -29,15 +29,15 @@
         placeholder="Search by name or username"
         (keyup.enter)="searchUsers()"
         class="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3
-                 text-slate-900 placeholder:text-slate-400 outline-none transition
-                 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+               text-slate-900 placeholder:text-slate-400 outline-none transition
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
       />
 
       <button
         type="button"
         (click)="searchUsers()"
         class="min-h-11 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
-                 transition hover:bg-blue-700 active:scale-[0.99]"
+               transition hover:bg-blue-700 active:scale-[0.99]"
       >
         Search
       </button>
@@ -63,13 +63,12 @@
                   </p>
                 </div>
 
-                <!-- Already connected users cannot be added again -->
                 @if (user.connected) {
                   <button
                     type="button"
                     disabled
                     class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2
-                             font-semibold text-slate-500"
+                           font-semibold text-slate-500"
                   >
                     Already connected
                   </button>
@@ -79,7 +78,7 @@
                     (click)="sendFriendRequest(user.id)"
                     [disabled]="requestSent[user.id]"
                     class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
-             transition hover:bg-slate-700"
+                           transition hover:bg-slate-700"
                   >
                     {{ requestSent[user.id] ? 'Request sent' : 'Send friend request' }}
                   </button>
@@ -92,6 +91,7 @@
     }
   </section>
 
+  <!-- Incoming friend requests -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Friend requests</h2>
 
@@ -104,7 +104,7 @@
             <div>
               <p>
                 <span class="font-semibold text-slate-900">
-                {{ request.senderUsername }}
+                  {{ request.senderUsername }}
                 </span>
                 <span class="text-slate-500">
                   wants to be your friend
@@ -121,6 +121,7 @@
               >
                 Accept
               </button>
+
               <button
                 type="button"
                 (click)="declineRequest(request.id)"
@@ -136,8 +137,8 @@
     }
   </section>
 
+  <!-- Current friend list -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
-    <!-- Current friend list -->
     <h2 class="mb-4 text-xl font-semibold">Your friends</h2>
 
     @if (friends.length === 0) {
@@ -161,7 +162,7 @@
                 type="button"
                 (click)="viewProfile(friend.id)"
                 class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
-                         transition hover:bg-blue-700"
+                       transition hover:bg-blue-700"
               >
                 View profile
               </button>
@@ -170,7 +171,7 @@
                 type="button"
                 (click)="viewEvents(friend.id)"
                 class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white
-                         transition hover:bg-indigo-700"
+                       transition hover:bg-indigo-700"
               >
                 View events
               </button>
@@ -179,9 +180,84 @@
                 type="button"
                 (click)="removeFriend(friend.id)"
                 class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                         font-semibold text-slate-700 transition hover:bg-slate-100"
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Remove
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- Incoming trip and event invitations -->
+  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <h2 class="mb-4 text-xl font-semibold">Incoming Invitations</h2>
+
+    @if (incomingTripInvites.length === 0 && incomingEventInvites.length === 0) {
+      <p class="text-slate-500">No open invitations.</p>
+    } @else {
+      <ul class="divide-y divide-slate-200">
+        @for (invite of incomingTripInvites; track invite.tripId) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p>
+                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
+                <span class="text-slate-500"> invited you to the trip </span>
+                <span class="font-semibold text-slate-900">{{ invite.tripName }}</span>
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="acceptTripInvite(invite.tripId)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                       transition hover:bg-blue-700 active:scale-[0.99]"
+              >
+                Accept
+              </button>
+
+              <button
+                type="button"
+                (click)="declineTripInvite(invite.tripId)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Decline
+              </button>
+            </div>
+          </li>
+        }
+
+        @for (invite of incomingEventInvites; track invite.eventId) {
+          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p>
+                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
+                <span class="text-slate-500"> invited you to the event </span>
+                <span class="font-semibold text-slate-900">{{ invite.eventName }}</span>
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="acceptEventInvite(invite.eventId)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                       transition hover:bg-blue-700 active:scale-[0.99]"
+              >
+                Accept
+              </button>
+
+              <button
+                type="button"
+                (click)="declineEventInvite(invite.eventId)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Decline
               </button>
             </div>
           </li>
@@ -199,7 +275,7 @@
         type="button"
         (click)="clearSharedInformation()"
         class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                 font-semibold text-slate-700 transition hover:bg-slate-100"
+               font-semibold text-slate-700 transition hover:bg-slate-100"
       >
         Clear
       </button>
@@ -273,78 +349,6 @@
       <p class="text-slate-500">
         Select a friend and choose what shared information you want to view.
       </p>
-    }
-  </section>
-
-  <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
-    <h2 class="mb-4 text-xl font-semibold">Incoming Invitations</h2>
-
-    @if (incomingTripInvites.length === 0 && incomingEventInvites.length === 0) {
-      <p class="text-slate-500">No open invitations.</p>
-    } @else {
-      <ul class="divide-y divide-slate-200">
-        @for (invite of incomingTripInvites; track invite.tripId) {
-          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p>
-                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
-                <span class="text-slate-500"> invited you to the trip </span>
-                <span class="font-semibold text-slate-900">{{ invite.tripName }}</span>
-              </p>
-            </div>
-
-            <div class="flex gap-2">
-              <button
-                type="button"
-                (click)="acceptTripInvite(invite.tripId)"
-                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
-                     transition hover:bg-blue-700 active:scale-[0.99]"
-              >
-                Accept
-              </button>
-              <button
-                type="button"
-                (click)="declineTripInvite(invite.tripId)"
-                class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                     font-semibold text-slate-700 transition hover:bg-slate-100"
-              >
-                Decline
-              </button>
-            </div>
-          </li>
-        }
-
-        @for (invite of incomingEventInvites; track invite.eventId) {
-          <li class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p>
-                <span class="font-semibold text-slate-900">{{ invite.invitedByUsername }}</span>
-                <span class="text-slate-500"> invited you to the event </span>
-                <span class="font-semibold text-slate-900">{{ invite.eventName }}</span>
-              </p>
-            </div>
-
-            <div class="flex gap-2">
-              <button
-                type="button"
-                (click)="acceptEventInvite(invite.eventId)"
-                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
-                     transition hover:bg-blue-700 active:scale-[0.99]"
-              >
-                Accept
-              </button>
-              <button
-                type="button"
-                (click)="declineEventInvite(invite.eventId)"
-                class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                     font-semibold text-slate-700 transition hover:bg-slate-100"
-              >
-                Decline
-              </button>
-            </div>
-          </li>
-        }
-      </ul>
     }
   </section>
 </div>

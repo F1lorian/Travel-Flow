@@ -1,14 +1,21 @@
-import {Component, inject, OnInit} from '@angular/core';
-import {Friend, FriendsService} from '../../services/friends.service';
+import { SlicePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef} from '@angular/material/dialog';
-import {MatIcon} from '@angular/material/icon';
-import {SlicePipe} from '@angular/common';
-import {forkJoin} from 'rxjs';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { forkJoin } from 'rxjs';
+import { Friend, FriendsService } from '../../services/friends.service';
 
 interface InviteDialogData {
   tripId: number;
 }
+
 @Component({
   selector: 'app-invite-dialog',
   imports: [FormsModule, MatIcon, SlicePipe, MatDialogContent, MatDialogActions],
@@ -19,58 +26,77 @@ interface InviteDialogData {
 export class InviteDialog implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<InviteDialog>);
   private readonly friendsService = inject(FriendsService);
-  friends: Friend[] = [];
-  errorMessage = "";
   readonly data = inject<InviteDialogData>(MAT_DIALOG_DATA);
+
+  friends: Friend[] = [];
+  errorMessage = '';
   inviteDropdownOpen = false;
   selection: Friend[] = [];
+  selectedFriendId: number | null = null;
 
-
-  ngOnInit() {
-    this.friendsService.getFriends().subscribe((data) => {
+  ngOnInit(): void {
+    this.friendsService.getFriends().subscribe({
+      next: (data) => {
         this.friends = data;
       },
-      (error) => {
+      error: (error: unknown) => {
         console.error('Error while loading friends:', error);
-      }
-    )
+      },
+    });
   }
 
   /**
-   * sends invites to all the friends that have been selected, closes the dialog after that
+   * Sends invites to all selected friends.
+   *
+   * If the template uses a single dropdown, selectedFriendId is used.
+   * If the template uses multi-select, selection is used.
    */
   inviteSelectedFriend(): void {
-    if (this.selection.length === 0) {
+    const selectedFriends = this.getSelectedFriends();
+
+    if (selectedFriends.length === 0) {
       return;
     }
 
-    const inviteCalls = this.selection.map(friend => this.friendsService.sendInviteMessage(this.data.tripId, friend.id));
+    const inviteCalls = selectedFriends.map((friend) =>
+      this.friendsService.sendInviteMessage(this.data.tripId, friend.id)
+    );
 
     forkJoin(inviteCalls).subscribe({
       next: () => {
-        console.log('Invite sent');
         this.errorMessage = '';
+        this.close();
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error while sending invite:', error);
-        this.errorMessage = error?.error?.message || 'Einladung konnte nicht gesendet werden.';
-      }
+        this.errorMessage = error.error?.message || 'Invitation could not be sent.';
+      },
     });
-
-    this.close();
   }
 
-  selectFriend(friend: Friend) {
-    if (!this.selection.some(f => f.id === friend.id)) {
+  selectFriend(friend: Friend): void {
+    if (!this.selection.some((selectedFriend) => selectedFriend.id === friend.id)) {
       this.selection = [...this.selection, friend];
     }
   }
 
-  removeSelection(friend: Friend) {
-    this.selection = this.selection.filter(f => f.id !== friend.id);
+  removeSelection(friend: Friend): void {
+    this.selection = this.selection.filter((selectedFriend) => selectedFriend.id !== friend.id);
   }
 
-  close(){
+  close(): void {
     this.dialogRef.close();
+  }
+
+  private getSelectedFriends(): Friend[] {
+    if (this.selection.length > 0) {
+      return this.selection;
+    }
+
+    if (this.selectedFriendId === null) {
+      return [];
+    }
+
+    return this.friends.filter((friend) => friend.id === this.selectedFriendId);
   }
 }
