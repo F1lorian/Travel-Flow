@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.ausgabe.AusgabeRequestDTO;
 import com.sep.sep_backend.ausgabe.AusgabeResponseDTO;
 import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.ausgabe.ForecastDTO;
 import com.sep.sep_backend.ausgabe.KategorieSummeDTO;
 import com.sep.sep_backend.entities.Ausgabe;
 import com.sep.sep_backend.entities.Categories;
@@ -29,6 +30,54 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.web.server.ResponseStatusException;
 
 public class AusgabenServiceTest {
+
+  @Test
+  void forecastBerechnetTagesUndWochenvorhersageMitLinearerRegression() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    EventRepository eventRepository = mock(EventRepository.class);
+    CategoriesRepository categoriesRepository = mock(CategoriesRepository.class);
+    UserRepository userRepository = mock(UserRepository.class);
+    UserTripRepository userTripRepository = mock(UserTripRepository.class);
+    AusgabeService ausgabeService =
+        new AusgabeService(
+            ausgabeRepository,
+            tripRepository,
+            eventRepository,
+            categoriesRepository,
+            userRepository,
+            userTripRepository);
+
+    LocalDate today = LocalDate.of(2026, 7, 12);
+    LocalDate start = today.minusDays(30);
+    LocalDate end = today.minusDays(1);
+    User user = new User("maxmuster", "max@example.com", "hash", "answer");
+    Trip trip = new Trip("Berlin");
+    Categories category = new Categories("Freizeit");
+
+    // Die Ausgaben folgen exakt der Geraden y = x + 1.
+    // Dadurch muessen fuer die naechsten Tage die Werte 31 bis 37 entstehen.
+    List<Ausgabe> expenses = new java.util.ArrayList<>();
+    for (int dayIndex = 0; dayIndex < 30; dayIndex++) {
+      Ausgabe expense =
+          new Ausgabe(dayIndex + 1, trip, start.plusDays(dayIndex), category);
+      expense.setUser(user);
+      expenses.add(expense);
+    }
+
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
+        .thenReturn(Optional.of(user));
+    when(ausgabeRepository.findByUserAndDateBetween(user, start, end)).thenReturn(expenses);
+    when(eventRepository.findByUsersContainingAndStartTimeBetween(
+            user, start.atStartOfDay(), end.atStartOfDay()))
+        .thenReturn(List.of());
+
+    ForecastDTO result = ausgabeService.forecast(today, "maxmuster");
+
+    assertThat(result.getDaily()).isEqualTo(34.0);
+    assertThat(result.getWeek()).isEqualTo(238.0);
+    verify(ausgabeRepository).findByUserAndDateBetween(user, start, end);
+  }
 
   @Test
   void ausgabeHinzufuegenSpeichertAusgabeMitAngefragtemTrip() {

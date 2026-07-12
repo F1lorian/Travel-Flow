@@ -469,4 +469,93 @@ public class AusgabeService {
 
     return text;
   }
+
+  /**
+   * Predicts the authenticated user's spending for the next seven days using linear regression.
+   *
+   * <p>The prediction is based on the user's daily expenses from the previous 30 completed days.
+   * Days without expenses are included with a value of zero. Negative predicted values are
+   * treated as zero.
+   *
+   * @param today reference date used to determine the historical and forecast periods
+   * @param username authenticated user's name or email
+   * @return forecast containing the average predicted daily spending and the predicted total for
+   *     the next seven days
+   */
+  public ForecastDTO forecast(LocalDate today, String username) {
+    // Es werden die letzten 30 Tage betrachtet
+    // Der heutige Tag wird nicht verwendet, weil im Laufe des Tages noch Ausgaben hinzukommen koennen.
+    LocalDate start = today.minusDays(30);
+    LocalDate end = today.minusDays(1);
+
+    // Wir holen uns die Ausgaben fuer den user in dem Zeitraum
+    List<AusgabeResponseDTO> expenses =
+            ausgabenliste(start, end, username);
+
+    // Jeder Eintrag steht fuer die Ausgaben eines Tages
+    // Tage ohne Ausgaben bleiben bei 0 und werden ebenfalls in der linearen Regression beruecksichtigt
+    double[] dailyExpenses = new double[30];
+
+    // Jede Ausgabe wird dem passenden Tag innerhalb des 30-Tage-Zeitraums zugeordnet.
+    for (AusgabeResponseDTO expense : expenses) {
+      int dayIndex = (int) java.time.temporal.ChronoUnit.DAYS.between(
+              start, expense.getDate());
+
+      // Diese Pruefung verhindert einen Zugriff ausserhalb des Arrays.
+      if (dayIndex >= 0 && dayIndex < dailyExpenses.length) {
+        dailyExpenses[dayIndex] += expense.getKosten();
+      }
+    }
+
+    // Bei der Regression ist x der Tagesindex von 0 bis 29 und y sind die
+    // Ausgaben des jeweiligen Tages. Zuerst werden beide Mittelwerte berechnet.
+    double meanX = 0;
+    double meanY = 0;
+
+    for (int i = 0; i < dailyExpenses.length; i++) {
+      meanX += i;
+      meanY += dailyExpenses[i];
+    }
+
+    meanX /= dailyExpenses.length;
+    meanY /= dailyExpenses.length;
+
+    // Zaehler und Nenner werden zur Berechnung der Steigung benoetigt:
+    // Steigung = Summe((x - meanX) * (y - meanY)) / Summe((x - meanX)^2)
+    double numerator = 0;
+    double denominator = 0;
+
+    for (int i = 0; i < dailyExpenses.length; i++) {
+      double xDifference = i - meanX;
+      double yDifference = dailyExpenses[i] - meanY;
+
+      numerator += xDifference * yDifference;
+      denominator += xDifference * xDifference;
+    }
+
+    // Die Regressionsgerade hat die Form y = slope * x + intercept.
+    double slope = numerator / denominator;
+    double intercept = meanY - slope * meanX;
+
+    double weeklyForecast = 0;
+
+    // Die vergangenen Tage haben die Indizes 0 bis 29
+    // Somit repraesentieren die Indizes 30 bis 36 die naechsten sieben Tage
+    for (int dayIndex = 30; dayIndex < 37; dayIndex++) {
+      double prediction = slope * dayIndex + intercept;
+
+      // Vorhergesagte Ausgaben koennen nicht negativ sein.
+      weeklyForecast += Math.max(0, prediction);
+    }
+
+    // Der Tageswert ist der Durchschnitt der sieben vorhergesagten Tage
+    double dailyForecast = weeklyForecast / 7;
+
+    // Die Geldbetraege werden auf zwei Nachkommastellen gerundet.
+    dailyForecast = Math.round(dailyForecast * 100.0) / 100.0;
+    weeklyForecast = Math.round(weeklyForecast * 100.0) / 100.0;
+
+    return new ForecastDTO(dailyForecast, weeklyForecast);
+  }
+
 }

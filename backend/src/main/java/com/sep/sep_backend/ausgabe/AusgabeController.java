@@ -301,4 +301,16 @@ public class AusgabeController {
         .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
         .body(csv);
   }
+
+  /**
+   * Returns an expense forecast for the authenticated user for the next seven days.
+   *
+   * @param today reference date used for the forecast calculation
+   * @param authentication current request authentication
+   * @return forecast containing the predicted daily average and seven-day total
+   */
+  @GetMapping(value = "/forecast")
+  public ForecastDTO forecast(@RequestParam LocalDate today, Authentication authentication){
+    return ausgabeService.forecast(today, getCurrentUsername(authentication));
+  }
 }
