@@ -33,26 +33,21 @@ test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
 });
 
-test('Alle Elemente werden angezeigt wenn mode = edit', async ({ page }) => {
+test('Alle Elemente werden angezeigt wenn mode = edit (Owner)', async ({ page }) => {
   const eventDate = todayDateString();
 
   await mockCalendarEvents(page, [
     {
       id: '1',
-      title: 'Test Event',
       name: 'Test Event',
-      start: `${eventDate}T10:00:00`,
-      end: `${eventDate}T11:00:00`,
       startTime: `${eventDate}T10:00:00`,
       endTime: `${eventDate}T11:00:00`,
       kosten: 20,
+      creatorUsername: 'playwright',
     },
   ]);
 
   await page.goto('/calendar');
-
-  await expect(page.getByText('Test Event')).toBeVisible();
-
   await page.getByText('Test Event').click();
   await page.getByRole('button', { name: 'Edit' }).click();
 
