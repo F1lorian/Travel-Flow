@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/trips/{tripId}/events")
 public class TripEventController {
 
-  // Shape of the JSON body sent by the frontend when adding an event
+  /** Shape of the JSON body sent by the frontend when adding or updating a trip event. */
   public record CreateEventRequest(
       String name,
       LocalDateTime startTime,

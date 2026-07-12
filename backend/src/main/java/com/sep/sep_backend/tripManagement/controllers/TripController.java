@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/trips")
 public class TripController {
 
-  // Shape of the JSON body sent by the frontend when creating a trip
+  /** Shape of the JSON body sent by the frontend when creating a trip. */
   public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;

@@ -24,6 +24,13 @@ public class TripInviteController {
     this.tripInviteService = tripInviteService;
   }
 
+  /**
+   * Invites a friend to a trip on behalf of the authenticated user.
+   *
+   * @param tripId id of the trip to invite into
+   * @param friendId id of the friend to invite
+   * @return the created invite in pending state
+   */
   @PostMapping("/{tripId}/{friendId}")
   public TripInviteResponseDTO inviteFriendToTrip(
       @PathVariable long tripId, @PathVariable long friendId, Authentication authentication) {
@@ -31,18 +38,23 @@ public class TripInviteController {
         getCurrentUsername(authentication), tripId, friendId);
   }
 
+  /**
+   * Accepts the authenticated user's pending invite to the given trip, making them a trip member.
+   */
   @PostMapping("/{tripId}/accept")
   public TripInviteResponseDTO acceptTripInvite(
       @PathVariable long tripId, Authentication authentication) {
     return tripInviteService.respondToTripInvite(getCurrentUsername(authentication), tripId, true);
   }
 
+  /** Declines the authenticated user's pending invite to the given trip. */
   @PostMapping("/{tripId}/decline")
   public TripInviteResponseDTO declineTripInvite(
       @PathVariable long tripId, Authentication authentication) {
     return tripInviteService.respondToTripInvite(getCurrentUsername(authentication), tripId, false);
   }
 
+  /** Lists all trip invites still awaiting an answer from the authenticated user. */
   @GetMapping("/incoming")
   public List<TripInviteDTO> getIncomingTripInvites(Authentication authentication) {
     return tripInviteService.getIncomingTripInvites(getCurrentUsername(authentication)).stream()
@@ -50,6 +62,7 @@ public class TripInviteController {
         .toList();
   }
 
+  /** Extracts the username from the security context, rejecting unauthenticated calls with 401. */
   private String getCurrentUsername(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");

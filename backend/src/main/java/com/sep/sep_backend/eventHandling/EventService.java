@@ -394,6 +394,14 @@ public class EventService {
     return parseTextWithGemini(message.getSubject(), body);
   }
 
+  /**
+   * Connects to the user's IMAP mailbox and returns previews (UID, subject, sender, date) of the
+   * newest messages, newest first, so the user can pick which mail to import as an event.
+   *
+   * @param request IMAP connection details plus optional folder and result limit
+   * @return previews of the most recent messages, or an empty list for an empty folder
+   * @throws Exception when the IMAP connection, authentication, or folder access fails
+   */
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
       throws Exception {
     Store store = null;
@@ -422,6 +430,15 @@ public class EventService {
     }
   }
 
+  /**
+   * Fetches a single mail by UID from the user's IMAP mailbox and parses it into event data using
+   * the same pipeline as uploaded mail files (JSON-LD first, Gemini text extraction as fallback).
+   *
+   * @param request IMAP connection details plus the UID of the mail to import
+   * @return the event details extracted from the mail
+   * @throws EntityNotFoundException when no mail with the given UID exists in the folder
+   * @throws Exception when the IMAP connection or mail parsing fails
+   */
   public EventResponseDTO parseImapMessage(ImapMailSelectionRequestDTO request) throws Exception {
     Store store = null;
     Folder folder = null;

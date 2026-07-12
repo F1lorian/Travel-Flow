@@ -65,6 +65,13 @@ public class ProfileManagementService {
     this.googleTokenVerifier = googleTokenVerifier;
   }
 
+  /**
+   * Returns the logged-in user's own profile details, including login provider and email
+   * verification state.
+   *
+   * @param username username or email of the authenticated user
+   * @return the profile data shown on the account page
+   */
   public ProfileDetailsDTO getProfile(String username) {
     User user = findByUsername(username);
     return new ProfileDetailsDTO(
@@ -85,6 +92,17 @@ public class ProfileManagementService {
     return new MessageResponseDTO(sendChangeCodeEmail(user));
   }
 
+  /**
+   * Changes the user's password after validating the new password and confirming account ownership
+   * with either the e-mailed one-time code or a matching Google login. A security notice is mailed
+   * to the account owner afterwards.
+   *
+   * @param username username or email of the authenticated user
+   * @param request new password, its repetition, and the ownership proof (code or Google token)
+   * @return a confirmation message for the frontend
+   * @throws IllegalArgumentException when the password is too weak, the repetition does not match,
+   *     or the ownership proof is missing or invalid
+   */
   public MessageResponseDTO changePassword(String username, ChangePasswordRequestDTO request) {
     User user = findByUsername(username);
     String newPassword = requireText(request.newPassword(), "New password is required");

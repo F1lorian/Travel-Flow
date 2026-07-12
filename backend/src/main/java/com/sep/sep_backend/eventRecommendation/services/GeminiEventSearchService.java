@@ -15,19 +15,13 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 /**
- * Finds real upcoming public events for a location using Google's Gemini API.
+ * Suggests plausible upcoming public events for a location using Google's Gemini API.
  *
- * <p>The search runs as two separate Gemini calls so each step has one job:
- *
- * <ol>
- *   <li><b>Search</b> — Gemini with the {@code google_search} tool grounds the answer in real web
- *       results and returns free-text notes about events.
- *   <li><b>Format</b> — a second call turns those notes into a strict JSON array that maps cleanly
- *       onto {@link EventRecommendationDTO}.
- * </ol>
- *
- * Splitting the steps keeps the JSON reliable: the model only formats text it already has, instead
- * of searching and formatting in one go.
+ * <p>This asks Gemini directly for a JSON array of events, without the {@code google_search}
+ * grounding tool: that tool has zero free quota on non-billing Google Cloud projects, which made
+ * every search fail with a 429 regardless of which model was configured. Without web grounding,
+ * Gemini answers from its training knowledge instead of live listings, so results are best-effort
+ * suggestions (e.g. well-known recurring festivals/markets) rather than confirmed current events.
  */
 @Service
 public class GeminiEventSearchService {
@@ -65,33 +59,23 @@ public class GeminiEventSearchService {
     }
 
     try {
-      // Step 1 — web-grounded search. The google_search tool lets Gemini look up
-      // real events; low temperature (0.2) keeps it factual rather than creative.
-      String searchText =
-          extractText(
-              callGemini(
-                  Map.of(
-                      "contents", contents(buildSearchPrompt(location)),
-                      "tools", List.of(Map.of("google_search", Map.of())),
-                      "generationConfig", Map.of("temperature", 0.2, "maxOutputTokens", 4096))));
-
-      // Model found no events to describe — return empty instead of formatting "".
-      if (searchText.isBlank()) {
-        return List.of();
-      }
-
-      // Step 2 — formatting only. responseMimeType=application/json + temperature 0
-      // force a deterministic, pure-JSON answer we can deserialize directly.
+      // Single call, no google_search tool: responseMimeType=application/json forces a
+      // pure-JSON answer, and a moderate temperature lets the model draw on plausible,
+      // well-known recurring events instead of just refusing to answer.
       String jsonText =
           extractText(
               callGemini(
                   Map.of(
-                      "contents", contents(buildFormattingPrompt(location, searchText)),
+                      "contents", contents(buildPrompt(location)),
                       "generationConfig",
                           Map.of(
                               "responseMimeType", "application/json",
-                              "temperature", 0,
+                              "temperature", 0.3,
                               "maxOutputTokens", 4096))));
+
+      if (jsonText.isBlank()) {
+        return List.of();
+      }
 
       return parseRecommendations(jsonText);
     } catch (HttpStatusCodeException exception) {
@@ -119,47 +103,32 @@ public class GeminiEventSearchService {
     return List.of(Map.of("role", "user", "parts", List.of(Map.of("text", prompt))));
   }
 
-  // The number of events (1 to 5) is set in this prompt text — change it here.
-  private String buildSearchPrompt(String location) {
+  // The number of events (1 to 5) and the exact JSON shape are defined in this prompt.
+  // No web access here, so the model draws on general/training knowledge instead of live listings.
+  private String buildPrompt(String location) {
     return """
-            Search the web for public events in or near "%s" happening in the next 7 days.
-            Today's date is %s.
+            Suggest 1 to 5 public events that plausibly take place in or near "%s" in the next 7 days,
+            based on your general knowledge of recurring festivals, markets, concerts, and other
+            public events typical for this location and time of year. Today's date is %s.
 
-            Find 1 to 5 real upcoming public events for the requested city, region, or country.
-            Prefer the most relevant and soonest upcoming events.
-            Prefer official event, venue, ticketing, city, tourism, and organizer pages.
-            Include each event's name, date/time, price if known, venue or area, short description, and source URL.
-            Do not invent details. If a detail is unknown, say it is unknown.
+            You do not have web access, so these cannot be confirmed live listings. Prefer
+            well-known, likely-recurring events over implausible one-off guesses. If you cannot
+            think of any reasonable suggestion for this location, return an empty JSON array.
+
+            Return only a JSON array. Do not include markdown or explanation.
+
+            Each object must have exactly these fields:
+            - name: string
+            - dateTime: string in ISO local format like 2026-06-01T18:30:00. If exact time is unknown, use 18:00:00.
+            - price: number in EUR. If free, use 0. If unknown, use null.
+            - description: string, one or two short sentences. Make clear this is a general suggestion, not a confirmed listing.
+            - location: string with venue or area.
+            - sourceUrl: string with a general info page if known, otherwise an empty string.
+
+            If price is unknown, use null. If sourceUrl is unknown, use an empty string.
+            Escape line breaks inside string values as \\n. Do not put literal line breaks inside JSON strings.
             """
         .formatted(location, LocalDate.now());
-  }
-
-  // The result count (1 to 5) and the exact JSON shape are defined in this prompt.
-  private String buildFormattingPrompt(String location, String searchText) {
-    return """
-                Convert the event search notes below into JSON for "%s".
-
-                Return only a JSON array. Do not include markdown or explanation.
-
-
-
-                Return 1 to 5 event objects from the notes that happen in the next 7 days. Prefer the most relevant and soonest upcoming events.
-
-                Each object must have exactly these fields:
-                - name: string
-                - dateTime: string in ISO local format like 2026-06-01T18:30:00. If exact time is not listed, use 18:00:00.
-                - price: number in EUR. If free, use 0. If unknown, use null.
-                - description: string, one or two short sentences.
-                - location: string with venue or area.
-                - sourceUrl: string with booking or info page.
-
-                Do not invent details. If price is unknown, use null. If sourceUrl is unknown, use an empty string.
-                Escape line breaks inside string values as \\n. Do not put literal line breaks inside JSON strings.
-
-                Event search notes:
-                %s
-                """
-        .formatted(location, searchText);
   }
 
   // Deserializes the JSON array into DTOs. ALLOW_UNQUOTED_CONTROL_CHARS tolerates
