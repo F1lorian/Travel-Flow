@@ -7,6 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { EventRecommendation, TripService, Trip, Event, Category } from '../../services/trip.service';
+import { NotificationService } from '../../../components/notification-menu/notification.service';
+import { FeedbackService, apiErrorMessage } from '../../../services/feedback.service';
 import { EventSearchComponent } from '../../../EventRecommendation/pages/event-search/event-search';
 import { EventService as CalendarEventService } from '../../../../event-adding-manual/service/event.service';
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
@@ -22,6 +24,8 @@ import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
 })
 export class TripDetail implements OnInit {
   private tripService = inject(TripService);
+  private notificationService = inject(NotificationService);
+  private feedback = inject(FeedbackService);
   private calendarEventService = inject(CalendarEventService);
   private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
@@ -52,7 +56,8 @@ export class TripDetail implements OnInit {
         this.trip.set(trip);
         this.events.set(trip.events);
       },
-      error: (err) => this.errorMessage = 'Could not load trip: ' + err.message
+      error: (err) =>
+        this.errorMessage = 'Could not load trip: ' + apiErrorMessage(err, 'server not reachable')
     });
 
     this.tripService.getRecentCategories().subscribe({
@@ -78,9 +83,12 @@ export class TripDetail implements OnInit {
           startTime: result.event.start,
           endTime: result.event.end,
         }]);
+        this.feedback.success(`Event "${result.event.name}" added`);
+        this.notificationService.add(`Event "${result.event.name}" added`);
       }
       if (result?.action === 'error') {
         this.errorMessage = result.message;
+        this.feedback.error(`Event can't be added: ${result.message}`);
       }
     });
   }
@@ -147,12 +155,16 @@ export class TripDetail implements OnInit {
             : e
           )
         );
+        this.feedback.success(`Event "${result.event.name}" updated`);
       }
       if (result?.action === 'deleted') {
         this.events.update(list => list.filter(e => e.id !== event.id));
+        this.feedback.success(`Event "${event.name}" deleted`);
+        this.notificationService.add(`Event "${event.name}" deleted`);
       }
       if (result?.action === 'error') {
         this.errorMessage = result.message;
+        this.feedback.error(`Event can't be saved: ${result.message}`);
       }
     });
   }
@@ -171,9 +183,15 @@ export class TripDetail implements OnInit {
       this.tripService.addEvent(tripId, recommendation.name, startTime, undefined, cost).subscribe({
         next: (event) => {
           this.events.update(list => [...list, event]);
+          this.feedback.success(`Event "${event.name}" added`);
+          this.notificationService.add(`Event "${event.name}" added`);
           this.errorMessage = '';
         },
-        error: (err) => this.errorMessage = 'Could not add recommended event: ' + err.message
+        error: (err) => {
+          const reason = apiErrorMessage(err, 'server not reachable');
+          this.errorMessage = `Recommended event can't be added: ${reason}`;
+          this.feedback.error(this.errorMessage);
+        }
       });
     });
   }
@@ -191,14 +209,20 @@ export class TripDetail implements OnInit {
   }
 
   confirmDelete() {
-    const tripId = this.trip()?.id;
-    if (!tripId) return;
-    this.tripService.deleteTrip(tripId).subscribe({
+    const trip = this.trip();
+    if (!trip) return;
+    this.tripService.deleteTrip(trip.id).subscribe({
       next: () => {
         this.showDeleteConfirm.set(false);
+        this.feedback.success(`Trip "${trip.name}" deleted`);
+        this.notificationService.add(`Trip "${trip.name}" deleted`);
         this.router.navigate(['/trips']);
       },
-      error: (err) => this.errorMessage = 'Could not delete trip: ' + err.message
+      error: (err) => {
+        const reason = apiErrorMessage(err, 'server not reachable');
+        this.errorMessage = `Trip can't be deleted: ${reason}`;
+        this.feedback.error(this.errorMessage);
+      }
     });
   }
 
@@ -222,9 +246,15 @@ export class TripDetail implements OnInit {
     this.tripService.deleteEvent(tripId, event.id).subscribe({
       next: () => {
         this.events.update(list => list.filter(e => e.id !== event.id));
+        this.feedback.success(`Event "${event.name}" deleted`);
+        this.notificationService.add(`Event "${event.name}" deleted`);
         this.closeEventModal();
       },
-      error: (err) => this.errorMessage = 'Could not delete event: ' + err.message
+      error: (err) => {
+        const reason = apiErrorMessage(err, 'server not reachable');
+        this.errorMessage = `Event can't be deleted: ${reason}`;
+        this.feedback.error(this.errorMessage);
+      }
     });
   }
 
@@ -238,7 +268,8 @@ export class TripDetail implements OnInit {
         this.otherTrips.set(trips.filter(t => t.id !== currentTripId));
         this.deleteStep.set('pick-trip');
       },
-      error: (err) => this.errorMessage = 'Could not load trips: ' + err.message
+      error: (err) =>
+        this.errorMessage = 'Could not load trips: ' + apiErrorMessage(err, 'server not reachable')
     });
   }
 
@@ -262,9 +293,15 @@ export class TripDetail implements OnInit {
     this.tripService.moveEvent(tripId, event.id, target.id).subscribe({
       next: () => {
         this.events.update(list => list.filter(e => e.id !== event.id));
+        this.feedback.success(`Event "${event.name}" moved to "${target.name}"`);
+        this.notificationService.add(`Event "${event.name}" moved to "${target.name}"`);
         this.closeEventModal();
       },
-      error: (err) => this.errorMessage = 'Could not move event: ' + err.message
+      error: (err) => {
+        const reason = apiErrorMessage(err, 'server not reachable');
+        this.errorMessage = `Event can't be moved: ${reason}`;
+        this.feedback.error(this.errorMessage);
+      }
     });
   }
 
@@ -309,7 +346,7 @@ export class TripDetail implements OnInit {
           }
         });
       },
-      error: (err) => this.errorMessage = err?.error || 'Konfliktpruefung fehlgeschlagen.'
+      error: (err) => this.errorMessage = apiErrorMessage(err, 'Conflict check failed')
     });
   }
 }

@@ -5,9 +5,12 @@ import com.sep.sep_backend.accountmanagement.MessageResponseDTO;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -15,12 +18,6 @@ import com.sep.sep_backend.repos.UserTripRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +26,6 @@ import org.springframework.util.StringUtils;
 /** Handles the logged-in user's own profile: viewing privacy details and changing the password. */
 @Service
 public class ProfileManagementService {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ProfileManagementService.class);
   private static final int CODE_MIN = 100000;
   private static final int CODE_MAX = 900000;
   private static final int VERIFICATION_MINUTES = 15;
@@ -40,10 +36,10 @@ public class ProfileManagementService {
   private final TripRepository tripRepository;
   private final EventRepository eventRepository;
   private final UserEventRepository userEventRepository;
-  private final JavaMailSender mailSender;
+  private final FriendRequestRepository friendRequestRepository;
+  private final EmailNotificationService emailNotificationService;
   private final PasswordEncoder passwordEncoder;
   private final GoogleTokenVerifier googleTokenVerifier;
-  private final String mailUsername;
   private final SecureRandom secureRandom = new SecureRandom();
 
   public ProfileManagementService(
@@ -53,22 +49,29 @@ public class ProfileManagementService {
       TripRepository tripRepository,
       EventRepository eventRepository,
       UserEventRepository userEventRepository,
-      JavaMailSender mailSender,
+      FriendRequestRepository friendRequestRepository,
+      EmailNotificationService emailNotificationService,
       PasswordEncoder passwordEncoder,
-      GoogleTokenVerifier googleTokenVerifier,
-      @Value("${spring.mail.username:}") String mailUsername) {
+      GoogleTokenVerifier googleTokenVerifier) {
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
     this.ausgabeRepository = ausgabeRepository;
     this.tripRepository = tripRepository;
     this.eventRepository = eventRepository;
     this.userEventRepository = userEventRepository;
-    this.mailSender = mailSender;
+    this.friendRequestRepository = friendRequestRepository;
+    this.emailNotificationService = emailNotificationService;
     this.passwordEncoder = passwordEncoder;
     this.googleTokenVerifier = googleTokenVerifier;
-    this.mailUsername = mailUsername;
   }
 
+  /**
+   * Returns the logged-in user's own profile details, including login provider and email
+   * verification state.
+   *
+   * @param username username or email of the authenticated user
+   * @return the profile data shown on the account page
+   */
   public ProfileDetailsDTO getProfile(String username) {
     User user = findByUsername(username);
     return new ProfileDetailsDTO(
@@ -89,6 +92,17 @@ public class ProfileManagementService {
     return new MessageResponseDTO(sendChangeCodeEmail(user));
   }
 
+  /**
+   * Changes the user's password after validating the new password and confirming account ownership
+   * with either the e-mailed one-time code or a matching Google login. A security notice is mailed
+   * to the account owner afterwards.
+   *
+   * @param username username or email of the authenticated user
+   * @param request new password, its repetition, and the ownership proof (code or Google token)
+   * @return a confirmation message for the frontend
+   * @throws IllegalArgumentException when the password is too weak, the repetition does not match,
+   *     or the ownership proof is missing or invalid
+   */
   public MessageResponseDTO changePassword(String username, ChangePasswordRequestDTO request) {
     User user = findByUsername(username);
     String newPassword = requireText(request.newPassword(), "New password is required");
@@ -105,6 +119,13 @@ public class ProfileManagementService {
     user.setVerificationCode(null);
     user.setVerificationCodeExpiresAt(null);
     userRepository.save(user);
+
+    // Security notice: the owner should hear about a password change even if they didn't make it.
+    emailNotificationService.sendBestEffort(
+        user.getEmail(),
+        "Your SEP password was changed",
+        "Your SEP password was just changed. If this wasn't you, use \"Forgot password\" on the"
+            + " login page to reset it immediately.");
     return new MessageResponseDTO("Password changed successfully");
   }
 
@@ -128,6 +149,28 @@ public class ProfileManagementService {
     }
     user.getFriends().clear();
 
+    // Pending/answered friend requests also reference the user on either side.
+    friendRequestRepository.deleteAll(friendRequestRepository.findBySenderOrReceiver(user, user));
+
+    // Event participations also reference the user. Invites this user sent to others stay valid
+    // for the invitee (the row is re-anchored on them), the user's own participation rows are
+    // removed, and personal events (no trip) left without any participant are deleted with them.
+    for (UserEvent sentInvite : userEventRepository.findByCreator_Id(user.getId())) {
+      if (sentInvite.getUser().getId() != user.getId()) {
+        sentInvite.setCreator(sentInvite.getUser());
+        userEventRepository.save(sentInvite);
+      }
+    }
+    List<UserEvent> participations = userEventRepository.findByUser_Id(user.getId());
+    List<Event> participatedEvents = participations.stream().map(UserEvent::getEvent).toList();
+    userEventRepository.deleteAll(participations);
+    userEventRepository.flush();
+    for (Event event : participatedEvents) {
+      if (event.getTrip() == null && !userEventRepository.existsByEvent_Id(event.getId())) {
+        eventRepository.delete(event);
+      }
+    }
+
     // Clear the inviter reference on other members' trips so deleting the user leaves no dangling
     // invited_by_id, then drop the user's own trip memberships and expenses (neither cascades).
     for (UserTrip invited : userTripRepository.findByInvitedBy(user)) {
@@ -147,6 +190,15 @@ public class ProfileManagementService {
     }
 
     userRepository.delete(user);
+    // Force the DELETE to hit the database now, so a constraint problem aborts the request
+    // before the "account deleted" confirmation below can go out for a rolled-back deletion.
+    userRepository.flush();
+
+    // Final confirmation to the address on file; sent best-effort since the account is gone.
+    emailNotificationService.sendBestEffort(
+        user.getEmail(),
+        "Your SEP account was deleted",
+        "Your SEP account and its data were permanently deleted. Goodbye!");
     return new MessageResponseDTO("Account deleted successfully");
   }
 
@@ -197,19 +249,17 @@ public class ProfileManagementService {
         .orElseThrow(() -> new IllegalArgumentException("Account not found"));
   }
 
+  // The user is told where their code ended up, so this checks whether delivery worked and
+  // falls back to showing the code in the response (useful in local setups without SMTP).
   private String sendChangeCodeEmail(User user) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom(mailUsername);
-    message.setTo(user.getEmail());
-    message.setSubject("SEP password change code");
-    message.setText("Your SEP password change code is: " + user.getVerificationCode());
-    try {
-      mailSender.send(message);
-      return "Verification code sent to your email";
-    } catch (MailException exception) {
-      LOGGER.warn("Password change code could not be sent to {}", user.getEmail(), exception);
-      return "Email could not be sent. Your code is: " + user.getVerificationCode();
-    }
+    boolean sent =
+        emailNotificationService.trySend(
+            user.getEmail(),
+            "SEP password change code",
+            "Your SEP password change code is: " + user.getVerificationCode());
+    return sent
+        ? "Verification code sent to your email"
+        : "Email could not be sent. Your code is: " + user.getVerificationCode();
   }
 
   private String createCode() {

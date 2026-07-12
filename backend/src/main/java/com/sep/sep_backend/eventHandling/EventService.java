@@ -15,6 +15,7 @@ import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
 import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
@@ -68,6 +69,7 @@ public class EventService {
   private final ObjectMapper objectMapper;
   private final UserEventRepository userEventRepository;
   private final EventInviteNotificationService notificationService;
+  private final EmailNotificationService emailNotificationService;
 
   @Value("${gemini.api-key}")
   private String geminiApiKey;
@@ -91,7 +93,8 @@ public class EventService {
       UserRepository userRepository,
       ObjectMapper objectMapper,
       UserEventRepository userEventRepository,
-      EventInviteNotificationService notificationService) {
+      EventInviteNotificationService notificationService,
+      EmailNotificationService emailNotificationService) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
@@ -99,6 +102,7 @@ public class EventService {
     this.objectMapper = objectMapper;
     this.userEventRepository = userEventRepository;
     this.notificationService = notificationService;
+    this.emailNotificationService = emailNotificationService;
   }
 
   /**
@@ -290,6 +294,15 @@ public class EventService {
     userEventRepository.save(invite);
 
     notificationService.notifyNewInvite(friend, event, requestingUser);
+
+    // The invited friend learns about the event even while logged out.
+    emailNotificationService.sendBestEffort(
+        friend.getEmail(),
+        "You were invited to the event \"" + event.getName() + "\"",
+        requestingUser.getName()
+            + " invited you to the event \""
+            + event.getName()
+            + "\". Log in to SEP to see the details.");
   }
 
   /**
@@ -338,6 +351,22 @@ public class EventService {
     userEventRepository.save(userEvent);
 
     notificationService.notifyInviteAnswered(userEvent);
+
+    // Tell the inviter how their invite was answered (skip self-created participant rows).
+    User invitee = userEvent.getUser();
+    User inviter = userEvent.getCreator();
+    if (inviter != null && invitee != null && inviter.getId() != invitee.getId()) {
+      String answer = status == UserEvent.InviteStatus.ACCEPTED ? "accepted" : "declined";
+      emailNotificationService.sendBestEffort(
+          inviter.getEmail(),
+          "Your invite to \"" + userEvent.getEvent().getName() + "\" was " + answer,
+          invitee.getName()
+              + " "
+              + answer
+              + " your invitation to the event \""
+              + userEvent.getEvent().getName()
+              + "\".");
+    }
   }
 
   /**
@@ -546,6 +575,14 @@ public class EventService {
         .formatted(formatReferenceDate(sentDate), subject, mailText);
   }
 
+  /**
+   * Connects to the user's IMAP mailbox and returns previews (UID, subject, sender, date) of the
+   * newest messages, newest first, so the user can pick which mail to import as an event.
+   *
+   * @param request IMAP connection details plus optional folder and result limit
+   * @return previews of the most recent messages, or an empty list for an empty folder
+   * @throws Exception when the IMAP connection, authentication, or folder access fails
+   */
   public List<ImapMailPreviewDTO> getImapMailPreviews(ImapMailboxRequestDTO request)
       throws Exception {
     Store store = null;
@@ -574,6 +611,15 @@ public class EventService {
     }
   }
 
+  /**
+   * Fetches a single mail by UID from the user's IMAP mailbox and parses it into event data using
+   * the same pipeline as uploaded mail files (JSON-LD first, Gemini text extraction as fallback).
+   *
+   * @param request IMAP connection details plus the UID of the mail to import
+   * @return the event details extracted from the mail
+   * @throws EntityNotFoundException when no mail with the given UID exists in the folder
+   * @throws Exception when the IMAP connection or mail parsing fails
+   */
   public EventResponseDTO parseImapMessage(ImapMailSelectionRequestDTO request) throws Exception {
     Store store = null;
     Folder folder = null;

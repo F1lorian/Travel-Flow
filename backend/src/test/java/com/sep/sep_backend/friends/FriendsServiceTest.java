@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.sep.sep_backend.entities.FriendRequest;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import java.util.List;
@@ -24,9 +25,11 @@ class FriendsServiceTest {
   @Mock private UserRepository userRepository;
   @Mock private FriendRequestRepository friendRequestRepository;
   @Mock private FriendRequestNotificationService notificationService;
+  @Mock private EmailNotificationService emailNotificationService;
 
   private FriendsService newService() {
-    return new FriendsService(userRepository, friendRequestRepository, notificationService);
+    return new FriendsService(
+        userRepository, friendRequestRepository, notificationService, emailNotificationService);
   }
 
   @Test
@@ -85,6 +88,8 @@ class FriendsServiceTest {
     assertThat(friend.getFriends()).doesNotContain(currentUser);
     verify(userRepository).save(currentUser);
     verify(userRepository).save(friend);
+    // Only the acting user is emailed; the removed friend is deliberately not notified.
+    verify(emailNotificationService).sendBestEffort(eq(currentUser.getEmail()), any(), any());
   }
 
   @Test
@@ -123,6 +128,8 @@ class FriendsServiceTest {
     assertThat(result.receiverUsername()).isEqualTo("anna");
     verify(friendRequestRepository).save(any(FriendRequest.class));
     verify(notificationService).notifyNewRequest(any(FriendRequestDTO.class));
+    // The receiver learns about the request even while logged out.
+    verify(emailNotificationService).sendBestEffort(eq(receiver.getEmail()), any(), any());
   }
 
   @Test
@@ -203,6 +210,8 @@ class FriendsServiceTest {
     verify(friendRequestRepository, times(1))
         .save(any(FriendRequest.class)); // genau ein save insgesamt
     verify(notificationService).notifyRequestAnswered(any(FriendRequestDTO.class));
+    verify(emailNotificationService).sendBestEffort(eq(sender.getEmail()), any(), any());
+    verify(emailNotificationService).sendBestEffort(eq(receiver.getEmail()), any(), any());
   }
 
   @Test
@@ -223,6 +232,9 @@ class FriendsServiceTest {
     assertThat(sender.getFriends()).contains(receiver);
     assertThat(receiver.getFriends()).contains(sender);
     verify(notificationService).notifyRequestAnswered(any(FriendRequestDTO.class));
+    // Both sides of the new friendship get an email confirmation.
+    verify(emailNotificationService).sendBestEffort(eq(sender.getEmail()), any(), any());
+    verify(emailNotificationService).sendBestEffort(eq(receiver.getEmail()), any(), any());
   }
 
   @Test
@@ -262,6 +274,8 @@ class FriendsServiceTest {
     assertThat(sender.getFriends()).doesNotContain(receiver);
     assertThat(receiver.getFriends()).doesNotContain(sender);
     verify(notificationService).notifyRequestAnswered(any(FriendRequestDTO.class));
+    // The sender learns their request was turned down.
+    verify(emailNotificationService).sendBestEffort(eq(sender.getEmail()), any(), any());
   }
 
   @Test
@@ -288,6 +302,7 @@ class FriendsServiceTest {
     user.setName(username);
     user.setFirstName(firstName);
     user.setSurname(surname);
+    user.setEmail(username + "@example.com");
     return user;
   }
 }

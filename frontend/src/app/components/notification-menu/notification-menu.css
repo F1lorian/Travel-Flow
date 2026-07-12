@@ -1,0 +1,80 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Notification bell button in the top right action area */
+.notification-trigger {
+  width: 44px;
+  height: 40px;
+  padding: 0 !important;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 0;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+  line-height: 1;
+}
+
+.notification-trigger:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Center the Material icon inside the button */
+.notification-trigger mat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 24px;
+
+  margin: 0;
+}
+
+/* Empty state text inside the dropdown */
+.notification-empty {
+  padding: 12px 16px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* A single notification row in the dropdown */
+.notification-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  min-width: 220px;
+  max-width: 320px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.notification-item:last-child {
+  border-bottom: 0;
+}
+
+.notification-message {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+/* Unread notifications are shown bold until the menu is opened */
+.notification-item.unread .notification-message {
+  font-weight: 700;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}

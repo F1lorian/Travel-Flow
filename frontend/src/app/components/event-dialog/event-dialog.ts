@@ -15,6 +15,8 @@ import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import {Friend, FriendsService} from '../../services/friends.service';
 import { UserEventDTO } from '../../../event-adding-manual/models/UserEventDTO';
 import {forkJoin} from 'rxjs';
+import {NotificationService} from '../notification-menu/notification.service';
+import {FeedbackService} from '../../services/feedback.service';
 
 interface EventDialogData {
   mode?: 'create' | 'edit' | 'show';
@@ -53,6 +55,8 @@ export class EventDialog implements OnInit {
   tripService = inject(TripService);
   eventService = inject(EventService);
   friendsService = inject(FriendsService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly feedback = inject(FeedbackService);
   dialog = inject(MatDialog);
   trips: Trip[] = [];
   friends: Friend[] = [];
@@ -163,8 +167,14 @@ export class EventDialog implements OnInit {
     );
 
     forkJoin(inviteCalls).subscribe({
-      next: () => this.dialogRef.close({ action: 'created', event: response }),
-      error: () => this.dialogRef.close({ action: 'created', event: response })
+      next: () => {
+        this.reportInvitesSent();
+        this.dialogRef.close({ action: 'created', event: response });
+      },
+      error: () => {
+        this.feedback.error('Some invites could not be sent');
+        this.dialogRef.close({ action: 'created', event: response });
+      }
     });
     },
     error: (err) => {
@@ -196,8 +206,14 @@ export class EventDialog implements OnInit {
         );
 
         forkJoin(inviteCalls).subscribe({
-          next: () => this.dialogRef.close({ action: 'saved', event: response }),
-          error: () => this.dialogRef.close({ action: 'saved', event: response })
+          next: () => {
+            this.reportInvitesSent();
+            this.dialogRef.close({ action: 'saved', event: response });
+          },
+          error: () => {
+            this.feedback.error('Some invites could not be sent');
+            this.dialogRef.close({ action: 'saved', event: response });
+          }
         });
       },
       error: () => this.showError()
@@ -266,6 +282,16 @@ export class EventDialog implements OnInit {
 
   showError(err?: { error?: string }) {
     this.errorMessage = err?.error || 'Ein Fehler ist aufgetreten.';
+  }
+
+  /** Confirms sent event invites with a toast and one bell notification per friend. */
+  private reportInvitesSent() {
+    const eventName = this.title || 'the event';
+    for (const friend of this.invitations) {
+      this.notificationService.add(`${friend.username} was invited to the event "${eventName}"`);
+    }
+    const names = this.invitations.map(friend => friend.username).join(', ');
+    this.feedback.success(`Invite sent to ${names}`);
   }
 
   inviteFriend(friend: Friend) {
