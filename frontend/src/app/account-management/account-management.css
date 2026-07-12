@@ -229,6 +229,45 @@ input::placeholder {
   color: #94a3b8;
 }
 
+/* Password field with an inline show/hide (eye) toggle. */
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  /* Leave room for the toggle button so long values don't run under it. */
+  padding-right: 64px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: #f0f2f5;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #0866ff;
+  outline-offset: 2px;
+}
+
 .two-column,
 .three-column {
   display: grid;

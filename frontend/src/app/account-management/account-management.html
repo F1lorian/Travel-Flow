@@ -90,7 +90,24 @@
       }
 
       <input name="loginUsername" placeholder="User name or email" [(ngModel)]="username" required />
-      <input name="loginPassword" placeholder="Password" type="password" [(ngModel)]="password" required />
+      <div class="password-field">
+        <input
+          name="loginPassword"
+          placeholder="Password"
+          [type]="isPasswordVisible('login') ? 'text' : 'password'"
+          [(ngModel)]="password"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('login')"
+          [attr.aria-label]="isPasswordVisible('login') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('login')"
+        >
+          {{ isPasswordVisible('login') ? '🙈' : '👁️' }}
+        </button>
+      </div>
 
       <button class="primary-action" type="submit">Log in</button>
 
@@ -137,20 +154,42 @@
       </label>
 
       <h2>Create password</h2>
-      <input
-        name="registerPassword"
-        placeholder="Password"
-        type="password"
-        [(ngModel)]="password"
-        required
-      />
-      <input
-        name="repeatPassword"
-        placeholder="Repeat password"
-        type="password"
-        [(ngModel)]="repeatPassword"
-        required
-      />
+      <div class="password-field">
+        <input
+          name="registerPassword"
+          placeholder="Password"
+          [type]="isPasswordVisible('register') ? 'text' : 'password'"
+          [(ngModel)]="password"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('register')"
+          [attr.aria-label]="isPasswordVisible('register') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('register')"
+        >
+          {{ isPasswordVisible('register') ? '🙈' : '👁️' }}
+        </button>
+      </div>
+      <div class="password-field">
+        <input
+          name="repeatPassword"
+          placeholder="Repeat password"
+          [type]="isPasswordVisible('registerRepeat') ? 'text' : 'password'"
+          [(ngModel)]="repeatPassword"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('registerRepeat')"
+          [attr.aria-label]="isPasswordVisible('registerRepeat') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('registerRepeat')"
+        >
+          {{ isPasswordVisible('registerRepeat') ? '🙈' : '👁️' }}
+        </button>
+      </div>
       <p class="field-help">
         Password must be at least 9 characters and include a capital letter, a number, and a symbol.
       </p>
@@ -258,20 +297,42 @@
         <p class="message error">{{ error() }}</p>
       }
 
-      <input
-        name="newPasswordEmail"
-        placeholder="New password"
-        type="password"
-        [(ngModel)]="newPassword"
-        required
-      />
-      <input
-        name="repeatNewPasswordEmail"
-        placeholder="Repeat new password"
-        type="password"
-        [(ngModel)]="repeatNewPassword"
-        required
-      />
+      <div class="password-field">
+        <input
+          name="newPasswordEmail"
+          placeholder="New password"
+          [type]="isPasswordVisible('resetEmailNew') ? 'text' : 'password'"
+          [(ngModel)]="newPassword"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('resetEmailNew')"
+          [attr.aria-label]="isPasswordVisible('resetEmailNew') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('resetEmailNew')"
+        >
+          {{ isPasswordVisible('resetEmailNew') ? '🙈' : '👁️' }}
+        </button>
+      </div>
+      <div class="password-field">
+        <input
+          name="repeatNewPasswordEmail"
+          placeholder="Repeat new password"
+          [type]="isPasswordVisible('resetEmailRepeat') ? 'text' : 'password'"
+          [(ngModel)]="repeatNewPassword"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('resetEmailRepeat')"
+          [attr.aria-label]="isPasswordVisible('resetEmailRepeat') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('resetEmailRepeat')"
+        >
+          {{ isPasswordVisible('resetEmailRepeat') ? '🙈' : '👁️' }}
+        </button>
+      </div>
       <p class="field-help">
         Password must be at least 9 characters and include a capital letter, a number, and a symbol.
       </p>
@@ -291,20 +352,42 @@
       }
 
       <input name="resetUsername" placeholder="User name or email" [(ngModel)]="username" required />
-      <input
-        name="newPassword"
-        placeholder="New password"
-        type="password"
-        [(ngModel)]="newPassword"
-        required
-      />
-      <input
-        name="repeatNewPassword"
-        placeholder="Repeat new password"
-        type="password"
-        [(ngModel)]="repeatNewPassword"
-        required
-      />
+      <div class="password-field">
+        <input
+          name="newPassword"
+          placeholder="New password"
+          [type]="isPasswordVisible('resetNew') ? 'text' : 'password'"
+          [(ngModel)]="newPassword"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('resetNew')"
+          [attr.aria-label]="isPasswordVisible('resetNew') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('resetNew')"
+        >
+          {{ isPasswordVisible('resetNew') ? '🙈' : '👁️' }}
+        </button>
+      </div>
+      <div class="password-field">
+        <input
+          name="repeatNewPassword"
+          placeholder="Repeat new password"
+          [type]="isPasswordVisible('resetRepeat') ? 'text' : 'password'"
+          [(ngModel)]="repeatNewPassword"
+          required
+        />
+        <button
+          type="button"
+          class="password-toggle"
+          (click)="togglePassword('resetRepeat')"
+          [attr.aria-label]="isPasswordVisible('resetRepeat') ? 'Hide password' : 'Show password'"
+          [attr.aria-pressed]="isPasswordVisible('resetRepeat')"
+        >
+          {{ isPasswordVisible('resetRepeat') ? '🙈' : '👁️' }}
+        </button>
+      </div>
       <p class="field-help">
         Password must be at least 9 characters and include a capital letter, a number, and a symbol.
       </p>
