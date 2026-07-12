@@ -16,7 +16,6 @@ import { EventDialog } from '../../../components/event-dialog/event-dialog';
 import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
 import {SlicePipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
-import {UserEventDTO} from '../../../../event-adding-manual/models/UserEventDTO';
 
 @Component({
   selector: 'app-trip-detail',
