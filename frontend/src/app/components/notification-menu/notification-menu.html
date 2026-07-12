@@ -1,0 +1,26 @@
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="menu"
+  (menuOpened)="onMenuOpened()"
+  aria-label="Open notifications"
+  class="notification-trigger">
+  <mat-icon
+    [matBadge]="unreadCount()"
+    [matBadgeHidden]="unreadCount() === 0"
+    matBadgeColor="warn"
+    matBadgeSize="small">notifications</mat-icon>
+</button>
+
+<mat-menu #menu="matMenu">
+  @if (notifications().length === 0) {
+    <div class="notification-empty">No notifications</div>
+  } @else {
+    @for (notification of notifications(); track notification.id) {
+      <div class="notification-item" [class.unread]="!notification.read">
+        <span class="notification-message">{{ notification.message }}</span>
+        <span class="notification-time">{{ formatTime(notification.timestamp) }}</span>
+      </div>
+    }
+    <button mat-menu-item class="notification-clear" (click)="clearAll()">Clear all</button>
+  }
+</mat-menu>

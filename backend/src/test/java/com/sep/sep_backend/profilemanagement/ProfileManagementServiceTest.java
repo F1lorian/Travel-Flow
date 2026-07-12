@@ -11,8 +11,10 @@ import com.sep.sep_backend.accountmanagement.GoogleTokenVerifier;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
+import com.sep.sep_backend.repos.FriendRequestRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
@@ -25,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +38,8 @@ class ProfileManagementServiceTest {
   @Mock private TripRepository tripRepository;
   @Mock private EventRepository eventRepository;
   @Mock private UserEventRepository userEventRepository;
-  @Mock private JavaMailSender mailSender;
+  @Mock private FriendRequestRepository friendRequestRepository;
+  @Mock private EmailNotificationService emailNotificationService;
   @Mock private GoogleTokenVerifier googleTokenVerifier;
 
   private ProfileManagementService service;
@@ -55,10 +57,10 @@ class ProfileManagementServiceTest {
             tripRepository,
             eventRepository,
             userEventRepository,
-            mailSender,
+            friendRequestRepository,
+            emailNotificationService,
             ENCODER,
-            googleTokenVerifier,
-            "noreply@example.com");
+            googleTokenVerifier);
   }
 
   private User user(String username, String email) {

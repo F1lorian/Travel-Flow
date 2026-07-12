@@ -3,6 +3,7 @@ package com.sep.sep_backend.tripManagement.services;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
@@ -14,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Service that handles the Invitations to trips as well as the responses. Sits between {@link
- * com.sep.sep_backend.tripManagement.controllers.TripInviteController} and * the JPA repositories
+ * Service that handles invitations to trips as well as the responses (accept/decline). Only
+ * accepted members can invite, only friends can be invited, and every step is mirrored by email so
+ * the other side learns about it even while logged out. Sits between {@link
+ * com.sep.sep_backend.tripManagement.controllers.TripInviteController} and the JPA repositories.
  */
 @Service
 public class TripInviteService {
@@ -23,16 +26,19 @@ public class TripInviteService {
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
   private final TripInviteNotificationService notificationService;
+  private final EmailNotificationService emailNotificationService;
 
   public TripInviteService(
       TripRepository tripRepository,
       UserRepository userRepository,
       UserTripRepository userTripRepository,
-      TripInviteNotificationService notificationService) {
+      TripInviteNotificationService notificationService,
+      EmailNotificationService emailNotificationService) {
     this.tripRepository = tripRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
     this.notificationService = notificationService;
+    this.emailNotificationService = emailNotificationService;
   }
 
   /**
@@ -84,6 +90,20 @@ public class TripInviteService {
       notificationService.notifyNewInvite(friend, trip, currentUser);
     }
 
+    // The invited friend learns about the pending invite even while logged out.
+    emailNotificationService.sendBestEffort(
+        friend.getEmail(),
+        "You were invited to the trip \"" + trip.getName() + "\"",
+        currentUser.getName()
+            + " invited you to the trip \""
+            + trip.getName()
+            + "\". Log in to SEP to accept or decline.");
+    // The inviter's in-app notification is mirrored to their inbox as well.
+    emailNotificationService.sendBestEffort(
+        currentUser.getEmail(),
+        "Invite sent for trip \"" + trip.getName() + "\"",
+        "You invited " + friend.getName() + " to the trip \"" + trip.getName() + "\".");
+
     return new TripInviteResponseDTO(trip.getId(), friend.getId(), "Trip invite sent");
   }
 
@@ -116,6 +136,21 @@ public class TripInviteService {
     userTripRepository.save(entry);
 
     notificationService.notifyInviteAnswered(entry);
+
+    // Tell the inviter how their invite was answered (skip invites with no recorded inviter).
+    User inviter = entry.getInvitedBy();
+    if (inviter != null) {
+      String answer = accept ? "accepted" : "declined";
+      emailNotificationService.sendBestEffort(
+          inviter.getEmail(),
+          "Your invite to \"" + trip.getName() + "\" was " + answer,
+          currentUser.getName()
+              + " "
+              + answer
+              + " your invitation to the trip \""
+              + trip.getName()
+              + "\".");
+    }
 
     return new TripInviteResponseDTO(
         trip.getId(),

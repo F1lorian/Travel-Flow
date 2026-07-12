@@ -1,17 +1,77 @@
 <section class="account-page">
   <aside class="brand-panel">
     <div class="brand-content">
-      <h1 class="brand-name">SEP Travel</h1>
-      <p class="brand-tagline">Plan smarter. Travel better. Together.</p>
+      <div class="brand-logo">
+        <svg class="brand-logo-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M21 4.5 3.8 10.9c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.6 4.9c.3.8 1.4.9 1.8.1l2.1-4 4.7 2c.7.3 1.5-.2 1.6-1L21.9 5.6c.1-.8-.6-1.4-.9-1.1Z"
+            fill="currentColor"
+          />
+        </svg>
+        <span class="brand-logo-text">SEP&nbsp;Travel</span>
+      </div>
+
+      <h1 class="brand-headline">
+        Plan smarter.<br />
+        Travel better.<br />
+        <span class="brand-headline-accent">Together.</span>
+      </h1>
       <p class="brand-description">
-        Organize your trips with AI that finds the events suited best to you — then share them
-        with friends and make every journey easier, cheaper, and more memorable.
+        Your trips, friends, events, and budget — organized in one place, with AI that finds the
+        events that fit you best.
       </p>
+
       <ul class="brand-points">
-        <li>🤖 AI-picked events tailored to your taste</li>
-        <li>👫 Plan and share trips with your friends</li>
-        <li>💸 Keep budgets and expenses under control</li>
-        <li>🗓️ Your whole trip in one smart calendar</li>
+        <li>
+          <span class="brand-point-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3Z" fill="currentColor"/>
+              <path d="M18.5 14l.9 2.3 2.1.7-2.1.7-.9 2.3-.9-2.3-2.1-.7 2.1-.7.9-2.3Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="brand-point-text">
+            <strong>AI event recommendations</strong>
+            Discover concerts, festivals and markets tailored to your taste and destination.
+          </span>
+        </li>
+        <li>
+          <span class="brand-point-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" fill="currentColor"/>
+              <path d="M2.5 19c.5-3.2 3.2-5 6.5-5s6 1.8 6.5 5H2.5Zm14.9 0c-.2-1.9-1-3.4-2.2-4.5.3 0 .5-.1.8-.1 2.7 0 4.9 1.5 5.4 4.6h-4Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="brand-point-text">
+            <strong>Trips with friends</strong>
+            Invite friends to trips and events, and keep everyone in sync automatically.
+          </span>
+        </li>
+        <li>
+          <span class="brand-point-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M8 7.5h8M8 11h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M14.5 15.5h2.5v2.5h-2.5z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="brand-point-text">
+            <strong>Shared budgets &amp; expenses</strong>
+            Track spending per trip and see who paid what — no spreadsheets needed.
+          </span>
+        </li>
+        <li>
+          <span class="brand-point-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="m9.5 14.8 1.8 1.8 3.4-3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="brand-point-text">
+            <strong>One smart calendar</strong>
+            Every event of every trip in a single calendar — import events straight from your inbox.
+          </span>
+        </li>
       </ul>
     </div>
   </aside>
@@ -20,6 +80,7 @@
   @if (mode() === 'login') {
     <form class="login-panel" (ngSubmit)="login()">
       <h1>Log in to SEP</h1>
+      <p class="form-subtitle">Welcome back — your next trip is waiting.</p>
 
       @if (message()) {
         <p class="message success">{{ message() }}</p>

@@ -183,6 +183,22 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   cursor: pointer;
 }
 
+/* Toast (snackbar) colors used by FeedbackService: green confirms, red explains a failure.
+   Both MDC and Material token names are set to stay compatible across Material versions. */
+.feedback-success {
+  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+  --mat-snackbar-button-color: #ffffff;
+}
+
+.feedback-error {
+  --mdc-snackbar-container-color: #c62828;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+  --mat-snackbar-button-color: #ffffff;
+}
+
 .rounded-2xl-dialog .mat-mdc-dialog-surface {
   border-radius: 1rem !important;
 }

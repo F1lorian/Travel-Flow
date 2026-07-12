@@ -11,11 +11,18 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { forkJoin } from 'rxjs';
 import { Friend, FriendsService } from '../../services/friends.service';
+import { NotificationService } from '../notification-menu/notification.service';
+import { FeedbackService, apiErrorMessage } from '../../services/feedback.service';
 
 interface InviteDialogData {
   tripId: number;
 }
 
+/**
+ * Dialog for inviting one or more of the user's friends to the current trip. On success the dialog
+ * closes and the user gets a toast plus a bell notification per invited friend; each invited friend
+ * is notified by email (sent by the backend). On failure the backend's reason is shown.
+ */
 @Component({
   selector: 'app-invite-dialog',
   imports: [FormsModule, MatIcon, SlicePipe, MatDialogContent, MatDialogActions],
@@ -26,6 +33,8 @@ interface InviteDialogData {
 export class InviteDialog implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<InviteDialog>);
   private readonly friendsService = inject(FriendsService);
+  private readonly feedback = inject(FeedbackService);
+  private readonly notificationService = inject(NotificationService);
   readonly data = inject<InviteDialogData>(MAT_DIALOG_DATA);
 
   friends: Friend[] = [];
@@ -39,8 +48,8 @@ export class InviteDialog implements OnInit {
       next: (data) => {
         this.friends = data;
       },
-      error: (error: unknown) => {
-        console.error('Error while loading friends:', error);
+      error: (error) => {
+        this.feedback.error(apiErrorMessage(error, 'Friends could not be loaded'));
       },
     });
   }
@@ -65,11 +74,16 @@ export class InviteDialog implements OnInit {
     forkJoin(inviteCalls).subscribe({
       next: () => {
         this.errorMessage = '';
+        const names = selectedFriends.map((friend) => friend.username).join(', ');
+        this.feedback.success(`Invite sent to ${names}`);
+        for (const friend of selectedFriends) {
+          this.notificationService.add(`${friend.username} was invited to the trip`);
+        }
         this.close();
       },
       error: (error: HttpErrorResponse) => {
-        console.error('Error while sending invite:', error);
-        this.errorMessage = error.error?.message || 'Invitation could not be sent.';
+        this.errorMessage = apiErrorMessage(error, 'Invitation could not be sent.');
+        this.feedback.error(`Invite can't be sent: ${this.errorMessage}`);
       },
     });
   }

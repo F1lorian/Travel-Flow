@@ -3,6 +3,7 @@ package com.sep.sep_backend.tripManagement.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
@@ -30,17 +32,24 @@ class TripInviteServiceTest {
   @Mock private UserRepository userRepository;
   @Mock private UserTripRepository userTripRepository;
   @Mock private TripInviteNotificationService notificationService;
+  @Mock private EmailNotificationService emailNotificationService;
 
   private TripInviteService newService() {
     return new TripInviteService(
-        tripRepository, userRepository, userTripRepository, notificationService);
+        tripRepository,
+        userRepository,
+        userTripRepository,
+        notificationService,
+        emailNotificationService);
   }
 
   @Test
   void inviteFriendToTripCreatesPendingEntryAndNotifies() {
     TripInviteService service = newService();
     User currentUser = user(1L, "max");
+    currentUser.setEmail("max@example.com");
     User friend = user(2L, "anna");
+    friend.setEmail("anna@example.com");
     Trip trip = trip(10L);
     UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
 
@@ -58,6 +67,10 @@ class TripInviteServiceTest {
     assertThat(result.message()).isEqualTo("Trip invite sent");
     verify(userTripRepository).save(any(UserTrip.class));
     verify(notificationService).notifyNewInvite(friend, trip, currentUser);
+    // The invited friend is emailed so they learn about the trip even while logged out, and the
+    // inviter's in-app notification is mirrored to their inbox as well.
+    verify(emailNotificationService).sendBestEffort(eq("anna@example.com"), any(), any());
+    verify(emailNotificationService).sendBestEffort(eq("max@example.com"), any(), any());
   }
 
   @Test

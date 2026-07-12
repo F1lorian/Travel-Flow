@@ -17,6 +17,8 @@ import {
   SharedUserProfile,
 } from '../../services/privacy.service';
 import { WebSocketService } from '../../services/websocket.service';
+import { NotificationService } from '../notification-menu/notification.service';
+import { FeedbackService, apiErrorMessage } from '../../services/feedback.service';
 
 /**
  * Friends page component.
@@ -40,6 +42,8 @@ export class Friends implements OnInit, OnDestroy {
   private readonly friendsService = inject(FriendsService);
   private readonly privacyService = inject(PrivacyService);
   private readonly webSocketService = inject(WebSocketService);
+  private readonly feedback = inject(FeedbackService);
+  private readonly notificationService = inject(NotificationService);
 
   friends: Friend[] = [];
   searchResults: FriendSearchResult[] = [];
@@ -196,6 +200,7 @@ export class Friends implements OnInit, OnDestroy {
   }
 
   sendFriendRequest(userId: number): void {
+    const name = this.searchResults.find((user) => user.id === userId)?.username ?? 'User';
     this.friendsService.sendFriendRequest(userId).subscribe({
       next: (dto) => {
         this.requestSent = { ...this.requestSent, [userId]: true };
@@ -206,42 +211,53 @@ export class Friends implements OnInit, OnDestroy {
           );
 
           this.loadFriends();
+          this.feedback.success(`${name} is now your friend`);
+          this.notificationService.add(`${name} is now your friend`);
+        } else {
+          this.feedback.success(`Friend request sent to ${name}`);
+          this.notificationService.add(`Friend request sent to ${name}`);
         }
       },
       error: (error) => {
-        console.error('Error while sending friend request:', error);
+        this.feedback.error(apiErrorMessage(error, 'Friend request could not be sent'));
       },
     });
   }
 
   acceptRequest(requestId: number): void {
+    const request = this.incomingRequests.find((r) => r.id === requestId);
     this.friendsService.acceptFriendRequest(requestId).subscribe({
       next: () => {
         this.incomingRequests = this.incomingRequests.filter(
           (request) => request.id !== requestId
         );
         this.loadFriends();
+        const name = request?.senderUsername ?? 'Friend request';
+        this.feedback.success(`${name} is now your friend`);
+        this.notificationService.add(`${name} is now your friend`);
       },
       error: (error) => {
-        console.error('Error while accepting friend request:', error);
+        this.feedback.error(apiErrorMessage(error, 'Friend request could not be accepted'));
       },
     });
   }
 
   declineRequest(requestId: number): void {
+    const request = this.incomingRequests.find((r) => r.id === requestId);
     this.friendsService.declineFriendRequest(requestId).subscribe({
       next: () => {
-        this.incomingRequests = this.incomingRequests.filter(
-          (request) => request.id !== requestId
-        );
+        this.incomingRequests = this.incomingRequests.filter((r) => r.id !== requestId);
+        const name = request?.senderUsername ?? 'Friend request';
+        this.feedback.success(`Declined friend request from ${name}`);
       },
       error: (error) => {
-        console.error('Error while declining friend request:', error);
+        this.feedback.error(apiErrorMessage(error, 'Friend request could not be declined'));
       },
     });
   }
 
   removeFriend(userId: number): void {
+    const name = this.friends.find((friend) => friend.id === userId)?.username ?? 'Friend';
     this.friendsService.removeFriend(userId).subscribe({
       next: () => {
         this.loadFriends();
@@ -249,65 +265,73 @@ export class Friends implements OnInit, OnDestroy {
         this.searchResults = this.searchResults.map((user) =>
           user.id === userId ? { ...user, connected: false } : user
         );
+        this.feedback.success(`${name} removed from friends`);
+        this.notificationService.add(`${name} was removed from your friends`);
 
         if (this.selectedProfile?.id === userId) {
           this.clearSharedInformation();
         }
       },
       error: (error) => {
-        console.error('Error while removing friend:', error);
+        this.feedback.error(apiErrorMessage(error, 'Friend could not be removed'));
       },
     });
   }
 
   acceptTripInvite(tripId: number): void {
+    const invite = this.incomingTripInvites.find((i) => i.tripId === tripId);
     this.friendsService.acceptTripInvite(tripId).subscribe({
       next: () => {
-        this.incomingTripInvites = this.incomingTripInvites.filter(
-          (invite) => invite.tripId !== tripId
-        );
+        this.incomingTripInvites = this.incomingTripInvites.filter((i) => i.tripId !== tripId);
+        const name = invite?.tripName ?? 'the trip';
+        this.feedback.success(`Joined trip "${name}"`);
+        this.notificationService.add(`You joined the trip "${name}"`);
       },
       error: (error) => {
-        console.error('Error while accepting trip invite:', error);
+        this.feedback.error(apiErrorMessage(error, 'Trip invite could not be accepted'));
       },
     });
   }
 
   declineTripInvite(tripId: number): void {
+    const invite = this.incomingTripInvites.find((i) => i.tripId === tripId);
     this.friendsService.declineTripInvite(tripId).subscribe({
       next: () => {
-        this.incomingTripInvites = this.incomingTripInvites.filter(
-          (invite) => invite.tripId !== tripId
-        );
+        this.incomingTripInvites = this.incomingTripInvites.filter((i) => i.tripId !== tripId);
+        const name = invite?.tripName ?? 'the trip';
+        this.feedback.success(`Declined invite to "${name}"`);
       },
       error: (error) => {
-        console.error('Error while declining trip invite:', error);
+        this.feedback.error(apiErrorMessage(error, 'Trip invite could not be declined'));
       },
     });
   }
 
   acceptEventInvite(eventId: number): void {
+    const invite = this.incomingEventInvites.find((i) => i.eventId === eventId);
     this.friendsService.acceptEventInvite(eventId).subscribe({
       next: () => {
-        this.incomingEventInvites = this.incomingEventInvites.filter(
-          (invite) => invite.eventId !== eventId
-        );
+        this.incomingEventInvites = this.incomingEventInvites.filter((i) => i.eventId !== eventId);
+        const name = invite?.eventName ?? 'the event';
+        this.feedback.success(`Joined event "${name}"`);
+        this.notificationService.add(`You joined the event "${name}"`);
       },
       error: (error) => {
-        console.error('Error while accepting event invite:', error);
+        this.feedback.error(apiErrorMessage(error, 'Event invite could not be accepted'));
       },
     });
   }
 
   declineEventInvite(eventId: number): void {
+    const invite = this.incomingEventInvites.find((i) => i.eventId === eventId);
     this.friendsService.declineEventInvite(eventId).subscribe({
       next: () => {
-        this.incomingEventInvites = this.incomingEventInvites.filter(
-          (invite) => invite.eventId !== eventId
-        );
+        this.incomingEventInvites = this.incomingEventInvites.filter((i) => i.eventId !== eventId);
+        const name = invite?.eventName ?? 'the event';
+        this.feedback.success(`Declined invite to "${name}"`);
       },
       error: (error) => {
-        console.error('Error while declining event invite:', error);
+        this.feedback.error(apiErrorMessage(error, 'Event invite could not be declined'));
       },
     });
   }
