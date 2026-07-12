@@ -8,6 +8,7 @@ import { AccountManagement } from './account-management/account-management';
 import { authGuard } from './account-management/auth.guard';
 import { CalendarComponent } from './components/calendar/calendar';
 import { Friends } from './components/friends/friends';
+import { PrivacySettings } from './components/privacy-settings/privacy-settings';
 import { GmailImport } from './components/gmail-import/gmail-import';
 
 export const routes: Routes = [
@@ -19,7 +20,9 @@ export const routes: Routes = [
   { path: 'cashbook', component: CashbookComponent, canActivate: [authGuard] },
   { path: 'overview', component: SpendingOverviewComponent, canActivate: [authGuard] },
   { path: 'friends', component: Friends, canActivate: [authGuard] },
+  { path: 'privacy', component: PrivacySettings, canActivate: [authGuard] },
   { path: 'gmail-import', component: GmailImport, canActivate: [authGuard] },
   { path: '', redirectTo: 'account', pathMatch: 'full' },
   { path: '**', redirectTo: 'account' },
+
 ];

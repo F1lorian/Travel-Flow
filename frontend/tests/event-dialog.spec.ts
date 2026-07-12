@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test';
 import {
   authenticate,
-  calendarDate,
   mockCalendarEvents,
   mockEventParticipants,
   mockFriends,
   mockTrips,
 } from './helpers';
+
+function todayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
@@ -18,7 +21,9 @@ test.beforeEach(async ({ page }) => {
 test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
   await mockCalendarEvents(page);
   await page.goto('/calendar');
-  await page.locator('[data-date]').first().click();
+
+  const eventDate = todayDateString();
+  await page.locator(`[data-date="${eventDate}"]`).first().click();
 
   await expect(page.getByRole('heading', { name: 'Create new Event' })).toBeVisible();
   await expect(page.getByPlaceholder('Enter the title')).toBeVisible();
@@ -28,19 +33,25 @@ test('Alle Elemente werden angezeigt wenn mode = create', async ({ page }) => {
 });
 
 test('Alle Elemente werden angezeigt wenn mode = edit', async ({ page }) => {
-  const eventDate = calendarDate();
+  const eventDate = todayDateString();
 
   await mockCalendarEvents(page, [
     {
       id: '1',
       title: 'Test Event',
+      name: 'Test Event',
       start: `${eventDate}T10:00:00`,
       end: `${eventDate}T11:00:00`,
+      startTime: `${eventDate}T10:00:00`,
+      endTime: `${eventDate}T11:00:00`,
       kosten: 20,
     },
   ]);
 
   await page.goto('/calendar');
+
+  await expect(page.getByText('Test Event')).toBeVisible();
+
   await page.getByText('Test Event').click();
   await page.getByRole('button', { name: 'Edit' }).click();
 

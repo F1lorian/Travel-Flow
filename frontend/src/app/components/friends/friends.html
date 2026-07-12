@@ -1,6 +1,24 @@
+<!-- Friends page -->
 <div class="mx-auto w-full max-w-5xl px-6 py-8 text-slate-900">
-  <h1 class="mb-8 text-3xl font-bold tracking-tight">Friends</h1>
+  <!-- Page header with link to privacy settings -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">Friends</h1>
+      <p class="mt-2 text-slate-500">
+        Manage your friends, invitations and shared information.
+      </p>
+    </div>
 
+    <a
+      routerLink="/privacy"
+      class="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-600 px-5 py-3
+             font-semibold text-white transition hover:bg-blue-700 active:scale-[0.99]"
+    >
+      Manage privacy settings
+    </a>
+  </div>
+
+  <!-- Search section for finding new friends -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Search for users</h2>
 
@@ -11,20 +29,21 @@
         placeholder="Search by name or username"
         (keyup.enter)="searchUsers()"
         class="min-h-11 flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3
-                 text-slate-900 placeholder:text-slate-400 outline-none transition
-                 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+               text-slate-900 placeholder:text-slate-400 outline-none transition
+               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
       />
 
       <button
         type="button"
         (click)="searchUsers()"
         class="min-h-11 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
-                 transition hover:bg-blue-700 active:scale-[0.99]"
+               transition hover:bg-blue-700 active:scale-[0.99]"
       >
         Search
       </button>
     </div>
 
+    <!-- Search results -->
     @if (hasSearched) {
       <div class="mt-6 border-t border-slate-200 pt-6">
         <h2 class="mb-4 text-xl font-semibold">Results</h2>
@@ -49,7 +68,7 @@
                     type="button"
                     disabled
                     class="rounded-lg border border-slate-300 bg-slate-100 px-4 py-2
-                             font-semibold text-slate-500"
+                           font-semibold text-slate-500"
                   >
                     Already connected
                   </button>
@@ -59,7 +78,7 @@
                     (click)="sendFriendRequest(user.id)"
                     [disabled]="requestSent[user.id]"
                     class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white
-             transition hover:bg-slate-700"
+                           transition hover:bg-slate-700"
                   >
                     {{ requestSent[user.id] ? 'Request sent' : 'Send friend request' }}
                   </button>
@@ -72,6 +91,7 @@
     }
   </section>
 
+  <!-- Incoming friend requests -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Friend requests</h2>
 
@@ -84,7 +104,7 @@
             <div>
               <p>
                 <span class="font-semibold text-slate-900">
-                {{ request.senderUsername }}
+                  {{ request.senderUsername }}
                 </span>
                 <span class="text-slate-500">
                   wants to be your friend
@@ -101,6 +121,7 @@
               >
                 Accept
               </button>
+
               <button
                 type="button"
                 (click)="declineRequest(request.id)"
@@ -116,6 +137,7 @@
     }
   </section>
 
+  <!-- Current friend list -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Your friends</h2>
 
@@ -134,20 +156,42 @@
               </p>
             </div>
 
-            <button
-              type="button"
-              (click)="removeFriend(friend.id)"
-              class="rounded-lg border border-slate-300 bg-white px-4 py-2
+            <!-- Actions for friends: view shared data or remove friend -->
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                (click)="viewProfile(friend.id)"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
+                       transition hover:bg-blue-700"
+              >
+                View profile
+              </button>
+
+              <button
+                type="button"
+                (click)="viewEvents(friend.id)"
+                class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white
+                       transition hover:bg-indigo-700"
+              >
+                View events
+              </button>
+
+              <button
+                type="button"
+                (click)="removeFriend(friend.id)"
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2
                        font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              Remove
-            </button>
+              >
+                Remove
+              </button>
+            </div>
           </li>
         }
       </ul>
     }
   </section>
 
+  <!-- Incoming trip and event invitations -->
   <section class="mb-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
     <h2 class="mb-4 text-xl font-semibold">Incoming Invitations</h2>
 
@@ -170,15 +214,16 @@
                 type="button"
                 (click)="acceptTripInvite(invite.tripId)"
                 class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
-                     transition hover:bg-blue-700 active:scale-[0.99]"
+                       transition hover:bg-blue-700 active:scale-[0.99]"
               >
                 Accept
               </button>
+
               <button
                 type="button"
                 (click)="declineTripInvite(invite.tripId)"
                 class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                     font-semibold text-slate-700 transition hover:bg-slate-100"
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Decline
               </button>
@@ -201,15 +246,16 @@
                 type="button"
                 (click)="acceptEventInvite(invite.eventId)"
                 class="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white
-                     transition hover:bg-blue-700 active:scale-[0.99]"
+                       transition hover:bg-blue-700 active:scale-[0.99]"
               >
                 Accept
               </button>
+
               <button
                 type="button"
                 (click)="declineEventInvite(invite.eventId)"
                 class="rounded-lg border border-slate-300 bg-white px-4 py-2
-                     font-semibold text-slate-700 transition hover:bg-slate-100"
+                       font-semibold text-slate-700 transition hover:bg-slate-100"
               >
                 Decline
               </button>
@@ -217,6 +263,92 @@
           </li>
         }
       </ul>
+    }
+  </section>
+
+  <!-- Section for displaying profile or event information shared by a friend -->
+  <section class="mt-8 rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200">
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <h2 class="text-xl font-semibold">Shared information</h2>
+
+      <button
+        type="button"
+        (click)="clearSharedInformation()"
+        class="rounded-lg border border-slate-300 bg-white px-4 py-2
+               font-semibold text-slate-700 transition hover:bg-slate-100"
+      >
+        Clear
+      </button>
+    </div>
+
+    <!-- Feedback from privacy-protected requests -->
+    @if (privacySuccessMessage) {
+      <p class="mb-4 rounded-lg bg-green-100 px-4 py-3 text-green-800">
+        {{ privacySuccessMessage }}
+      </p>
+    }
+
+    @if (privacyErrorMessage) {
+      <p class="mb-4 rounded-lg bg-red-100 px-4 py-3 text-red-800">
+        {{ privacyErrorMessage }}
+      </p>
+    }
+
+    @if (loadingProfile) {
+      <p class="text-slate-500">Loading profile information...</p>
+    }
+
+    <!-- Shared profile information -->
+    @if (selectedProfile) {
+      <div class="mb-6 rounded-lg border border-slate-200 p-4">
+        <h3 class="mb-3 text-lg font-semibold">Profile</h3>
+
+        <p>
+          <strong>Username:</strong>
+          &#64;{{ selectedProfile.username }}
+        </p>
+
+        <p>
+          <strong>Name:</strong>
+          {{ selectedProfile.firstName }} {{ selectedProfile.surname }}
+        </p>
+      </div>
+    }
+
+    @if (loadingEvents) {
+      <p class="text-slate-500">Loading events...</p>
+    }
+
+    <!-- Shared events -->
+    @if (sharedEvents.length > 0) {
+      <div class="rounded-lg border border-slate-200 p-4">
+        <h3 class="mb-3 text-lg font-semibold">Events</h3>
+
+        <ul class="divide-y divide-slate-200">
+          @for (event of sharedEvents; track event.id) {
+            <li class="py-3">
+              <p class="font-semibold">{{ event.name }}</p>
+
+              <p class="text-sm text-slate-500">
+                {{ event.startTime | date:'short' }}
+                -
+                {{ event.endTime | date:'short' }}
+              </p>
+
+              <p class="text-sm text-slate-500">
+                Cost: {{ event.kosten | currency:'EUR':'symbol':'1.2-2' }}
+              </p>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Default state before any shared information was selected -->
+    @if (!loadingEvents && sharedEvents.length === 0 && !selectedProfile && !privacyErrorMessage) {
+      <p class="text-slate-500">
+        Select a friend and choose what shared information you want to view.
+      </p>
     }
   </section>
 </div>
