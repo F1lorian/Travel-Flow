@@ -22,6 +22,12 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
   /** Deletes the participation records of every event belonging to the given trip. */
   void deleteByEvent_Trip_Id(Long tripId);
 
+  /** Deletes one user's participation record for one event. */
+  void deleteByEvent_IdAndUser_Id(Long eventId, Long userId);
+
+  /** Deletes one user's participation records for every event of the given trip. */
+  void deleteByEvent_Trip_IdAndUser_Id(Long tripId, Long userId);
+
   /** Lists every event participation of the given user, regardless of invite status. */
   List<UserEvent> findByUser_Id(Long userId);
 

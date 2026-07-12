@@ -1,12 +1,18 @@
-import {Component, inject, OnInit} from '@angular/core';
-import {Friend, FriendsService} from '../../services/friends.service';
+import { SlicePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {MatIcon} from '@angular/material/icon';
-import {SlicePipe} from '@angular/common';
-import {forkJoin} from 'rxjs';
-import {NotificationService} from '../notification-menu/notification.service';
-import {FeedbackService, apiErrorMessage} from '../../services/feedback.service';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
+import { forkJoin } from 'rxjs';
+import { Friend, FriendsService } from '../../services/friends.service';
+import { NotificationService } from '../notification-menu/notification.service';
+import { FeedbackService, apiErrorMessage } from '../../services/feedback.service';
 
 interface InviteDialogData {
   tripId: number;
@@ -19,7 +25,7 @@ interface InviteDialogData {
  */
 @Component({
   selector: 'app-invite-dialog',
-  imports: [FormsModule, MatIcon, SlicePipe],
+  imports: [FormsModule, MatIcon, SlicePipe, MatDialogContent, MatDialogActions],
   standalone: true,
   templateUrl: './invite-dialog.html',
   styleUrl: './invite-dialog.css',
@@ -32,63 +38,79 @@ export class InviteDialog implements OnInit {
   readonly data = inject<InviteDialogData>(MAT_DIALOG_DATA);
 
   friends: Friend[] = [];
-  errorMessage = "";
+  errorMessage = '';
   inviteDropdownOpen = false;
   selection: Friend[] = [];
+  selectedFriendId: number | null = null;
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.friendsService.getFriends().subscribe({
       next: (data) => {
         this.friends = data;
       },
       error: (error) => {
         this.feedback.error(apiErrorMessage(error, 'Friends could not be loaded'));
-      }
+      },
     });
   }
 
   /**
-   * sends invites to all the friends that have been selected, closes the dialog after that
+   * Sends invites to all selected friends.
+   *
+   * If the template uses a single dropdown, selectedFriendId is used.
+   * If the template uses multi-select, selection is used.
    */
   inviteSelectedFriend(): void {
-    if (this.selection.length === 0) {
+    const selectedFriends = this.getSelectedFriends();
+
+    if (selectedFriends.length === 0) {
       return;
     }
 
-    const invitedFriends = this.selection;
-    const inviteCalls = invitedFriends.map(friend =>
+    const inviteCalls = selectedFriends.map((friend) =>
       this.friendsService.sendInviteMessage(this.data.tripId, friend.id)
     );
 
     forkJoin(inviteCalls).subscribe({
       next: () => {
         this.errorMessage = '';
-        const names = invitedFriends.map(friend => friend.username).join(', ');
+        const names = selectedFriends.map((friend) => friend.username).join(', ');
         this.feedback.success(`Invite sent to ${names}`);
-        for (const friend of invitedFriends) {
+        for (const friend of selectedFriends) {
           this.notificationService.add(`${friend.username} was invited to the trip`);
         }
+        this.close();
       },
-      error: (error) => {
-        this.errorMessage = apiErrorMessage(error, "Invitation couldn't be sent.");
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = apiErrorMessage(error, 'Invitation could not be sent.');
         this.feedback.error(`Invite can't be sent: ${this.errorMessage}`);
-      }
+      },
     });
-
-    this.close();
   }
 
-  selectFriend(friend: Friend) {
-    if (!this.selection.some(f => f.id === friend.id)) {
+  selectFriend(friend: Friend): void {
+    if (!this.selection.some((selectedFriend) => selectedFriend.id === friend.id)) {
       this.selection = [...this.selection, friend];
     }
   }
 
-  removeSelection(friend: Friend) {
-    this.selection = this.selection.filter(f => f.id !== friend.id);
+  removeSelection(friend: Friend): void {
+    this.selection = this.selection.filter((selectedFriend) => selectedFriend.id !== friend.id);
   }
 
-  close(){
+  close(): void {
     this.dialogRef.close();
+  }
+
+  private getSelectedFriends(): Friend[] {
+    if (this.selection.length > 0) {
+      return this.selection;
+    }
+
+    if (this.selectedFriendId === null) {
+      return [];
+    }
+
+    return this.friends.filter((friend) => friend.id === this.selectedFriendId);
   }
 }

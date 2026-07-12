@@ -148,6 +148,15 @@ class TripControllerTest {
         .andExpect(jsonPath("$.message").value("You are not a member of this trip"));
   }
 
+  @Test
+  void removeFriendFromTripReturnsNoContent() throws Exception {
+    mockMvc
+        .perform(delete("/api/trips/1/friends/8").principal(authentication))
+        .andExpect(status().isNoContent());
+
+    verify(tripService).removeFriendFromTrip(1L, 8L, 7L);
+  }
+
   private Authentication authentication(String username) {
     Authentication authentication = mock(Authentication.class);
     when(authentication.getName()).thenReturn(username);

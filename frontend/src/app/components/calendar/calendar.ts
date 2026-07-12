@@ -254,12 +254,19 @@ export class CalendarComponent implements OnInit {
    */
   importEvent(){
     const dialogRef = this.dialog.open(EventTransferDialog, {
+      width: '600px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      height: 'auto',
+      panelClass: 'rounded-2xl-dialog',
       data: {mode: 'import',}
     })
 
     dialogRef.afterClosed().subscribe(result => {
       if(result){
-        this.addCreatedEvent(result);
+        // Gmail multi-import returns an array of saved events; single imports return one event.
+        const events = Array.isArray(result) ? result : [result];
+        events.forEach(event => this.addCreatedEvent(event));
       }
     })
   }
@@ -269,6 +276,7 @@ export class CalendarComponent implements OnInit {
    */
   exportEvents(){
     this.dialog.open(EventTransferDialog, {
+      panelClass: 'rounded-2xl-dialog',
       data: {mode: 'export'}
     })
   }

@@ -13,7 +13,7 @@ test('Spending Overview wird angezeigt', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Spending Overview' })).toBeVisible();
   await expect(page.getByText('From')).toBeVisible();
-  await expect(page.getByText('To')).toBeVisible();
+  await expect(page.getByText('To', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Add expense' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Recent expenses' })).toBeVisible();

@@ -80,6 +80,19 @@ public class TripController {
     return ResponseEntity.noContent().build();
   }
 
+  /** DELETE /api/trips/{tripId}/friends/{friendUserId} — remove a member from a trip. */
+  @DeleteMapping("/{tripId}/friends/{friendUserId}")
+  public ResponseEntity<Void> removeFriendFromTrip(
+      @PathVariable Long tripId, @PathVariable Long friendUserId, Authentication authentication) {
+    try {
+      Long userId = currentUserService.requireUser(authentication).getId();
+      tripService.removeFriendFromTrip(tripId, friendUserId, userId);
+      return ResponseEntity.noContent().build();
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
   /** Attaches the user's own membership row so the DTO carries who invited them, if anyone. */
   private TripDTO toDtoWithMembership(Trip trip, Long userId) {
     return TripDTO.from(

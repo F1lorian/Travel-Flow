@@ -2,7 +2,12 @@ package com.sep.sep_backend.eventHandling;
 
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserEvent;
-import com.sep.sep_backend.eventHandling.dto.*;
+import com.sep.sep_backend.eventHandling.dto.DeleteEventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
+import com.sep.sep_backend.eventHandling.dto.EventInviteDTO;
+import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
+import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
+import com.sep.sep_backend.eventHandling.dto.UserEventDTO;
 import com.sep.sep_backend.repos.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -174,6 +179,14 @@ public class EventController {
     Long userId = getCurrentUserId(authentication);
     eventService.inviteFriendToEvent(eventId, friendUserId, userId);
     return ResponseEntity.ok().build();
+  }
+
+  @DeleteMapping("event/{eventId}/participants/{friendUserId}")
+  public ResponseEntity<Void> removeFriendFromEvent(
+      @PathVariable Long eventId, @PathVariable Long friendUserId, Authentication authentication) {
+    Long userId = getCurrentUserId(authentication);
+    eventService.removeFriendFromEvent(eventId, friendUserId, userId);
+    return ResponseEntity.noContent().build();
   }
 
   /**

@@ -1,13 +1,22 @@
 import { test, expect } from '@playwright/test';
 import {
   authenticate,
-  calendarDate,
   mockCalendarEvents,
   mockConflictEvents,
   mockFriends,
   mockJson,
   mockTrips,
 } from './helpers';
+
+function todayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function tomorrowDateString(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0];
+}
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
@@ -35,40 +44,79 @@ test('Alle Elemente werden angezeigt', async ({ page }) => {
 });
 
 test('Event wird über Dialog erstellt', async ({ page }) => {
-  const eventDate = calendarDate();
+  const eventDate = todayDateString();
+  let events: unknown[] = [];
 
-  await mockJson(
-    page,
-    '**/api/event/create/manual',
-    {
+  await page.route('**/api/event/pull/all_events**', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback();
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(events),
+    });
+  });
+
+  await page.route('**/api/event/create/manual**', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.fallback();
+      return;
+    }
+
+    const createdEvent = {
       id: '42',
+      title: 'Mein Test Event',
       name: 'Mein Test Event',
+      start: `${eventDate}T10:00:00`,
+      end: `${eventDate}T11:00:00`,
+      startTime: `${eventDate}T10:00:00`,
+      endTime: `${eventDate}T11:00:00`,
       kosten: 0,
-      start: `${eventDate}T00:00:00`,
-      end: `${eventDate}T01:00:00`,
-    },
-    'POST',
-  );
+    };
+
+    events = [createdEvent];
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(createdEvent),
+    });
+  });
+
   await mockConflictEvents(page);
 
   await page.goto('/calendar');
-  await page.locator('[data-date]').first().click();
+
+  await page.locator(`[data-date="${eventDate}"]`).first().click();
   await page.getByPlaceholder('Enter the title').fill('Mein Test Event');
-  await page.getByRole('button', { name: 'Create' }).click();
+
+  const costInput = page.getByPlaceholder('Enter the costs');
+  if (await costInput.isVisible()) {
+    await costInput.fill('0');
+  }
+
+  await page.getByRole('button', { name: /Create/ }).click();
 
   await expect(page.getByText('Mein Test Event')).toBeVisible();
 });
 
 test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
-  const eventDate = calendarDate();
+  const eventDate = todayDateString();
 
   await mockFriends(page, [{ id: 2, username: 'bob', firstName: 'Bob', surname: 'Friend' }]);
+
   await mockCalendarEvents(page, [
     {
       id: '1',
       title: 'Friend Event',
+      name: 'Friend Event',
       start: `${eventDate}T10:00:00`,
       end: `${eventDate}T11:00:00`,
+      startTime: `${eventDate}T10:00:00`,
+      endTime: `${eventDate}T11:00:00`,
       kosten: 20,
       creatorId: 2,
     },
@@ -76,18 +124,20 @@ test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
 
   await page.goto('/calendar');
 
+  await expect(page.getByText('Friend Event')).toBeVisible();
   await expect(page.locator('.fc-event.friend-calendar-event')).toContainText('Friend Event');
 });
 
 test('Eingeladener Trip bekommt eigene CSS-Klasse', async ({ page }) => {
-  const tripDate = calendarDate();
+  const startDate = todayDateString();
+  const endDate = tomorrowDateString();
 
   await mockTrips(page, [
     {
       id: 7,
       name: 'Invited Trip',
-      startDate: tripDate,
-      endDate: tripDate,
+      startDate,
+      endDate,
       events: [],
       invitedByUserId: 2,
       invitedByUsername: 'bob',
@@ -97,5 +147,6 @@ test('Eingeladener Trip bekommt eigene CSS-Klasse', async ({ page }) => {
 
   await page.goto('/calendar');
 
+  await expect(page.getByText('Invited Trip')).toBeVisible();
   await expect(page.locator('.fc-event.invited-trip-event')).toContainText('Invited Trip');
 });

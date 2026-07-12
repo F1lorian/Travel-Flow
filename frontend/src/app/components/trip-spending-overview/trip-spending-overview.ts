@@ -10,11 +10,15 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { EventDialog } from '../event-dialog/event-dialog';
+import { MatIcon } from '@angular/material/icon';
+import { ConfirmationDialog } from '../confirmation-dialog/confirmation-dialog';
 
 @Component({
   selector: 'trip-spending-overview',
   standalone: true,
-  imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule, FormsModule],
+  imports: [RouterLink, CommonModule, NgApexchartsModule, ReactiveFormsModule, FormsModule, MatIcon],
   templateUrl: './trip-spending-overview.html',
   styleUrls: ['./trip-spending-overview.css']
 })
@@ -58,12 +62,15 @@ export class TripSpendingOverviewComponent implements OnInit {
   categories: string[] = [];
   selectedCategory: string = 'ALL';
 
-  // English labels for backend category values.
-  // Backend values stay unchanged, only the UI labels are translated.
+  // English labels for category values.
+  // German keys are kept so older database rows still render cleanly.
   categoryLabels: Record<string, string> = {
-    ESSEN: 'Food',
+    FOOD: 'Food',
     TRANSPORT: 'Transport',
     HOTEL: 'Hotel',
+    LEISURE: 'Leisure',
+    OTHER: 'Other',
+    ESSEN: 'Food',
     FREIZEIT: 'Leisure',
     SONSTIGES: 'Other'
   };
@@ -72,7 +79,8 @@ export class TripSpendingOverviewComponent implements OnInit {
     private expenseService: ExpenseService,
     private route: ActivatedRoute,
     private tripService: TripService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   /**
@@ -225,6 +233,8 @@ export class TripSpendingOverviewComponent implements OnInit {
   }
 
   // Configuration for the ApexCharts pie chart.
+  chartColors = ['#2f6fed', '#d4dcff', '#b49a67', '#161032', '#51a3a3'];
+
   chartDetails = {
     type: 'pie' as const,
     height: 350
@@ -339,4 +349,101 @@ export class TripSpendingOverviewComponent implements OnInit {
       }
     });
   }
+
+  deleteExpense(expense: any): void {
+    if (expense.sourceType === 'EVENT') {
+      this.openLinkedEventPrompt(expense);
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmationDialog, {
+      data: {
+        title: 'Delete expense',
+        message: 'This expense will be removed permanently.',
+        confirmLabel: 'Delete expense',
+        danger: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.expenseService.deleteExpense(expense.id).subscribe({
+        next: () => this.loadTripExpenses(),
+        error: (error) => {
+          console.error('Error while deleting the expense:', error);
+          this.errorMessage = 'Expense could not be deleted.';
+        }
+      });
+    });
+  }
+
+  private openLinkedEventPrompt(expense: any): void {
+    const promptRef = this.dialog.open(ConfirmationDialog, {
+      data: {
+        title: 'Edit linked event',
+        message: 'This expense is linked to an event. To remove it from spending, edit the event and set the cost to 0, or delete the event.',
+        confirmLabel: 'Edit event'
+      }
+    });
+
+    promptRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      const dialogRef = this.dialog.open(EventDialog, {
+        maxHeight: '90vh',
+        height: 'auto',
+        data: {
+          mode: 'edit',
+          id: String(expense.id),
+          title: expense.eventName,
+          kosten: expense.kosten,
+          tripId: expense.tripId,
+          start: expense.start?.substring(0, 16),
+          end: expense.end?.substring(0, 16),
+        }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result?.action === 'saved' || result?.action === 'deleted') {
+          this.loadTripExpenses();
+        }
+      });
+    });
+  }
+
+  exportCsv(): void {
+    if (!this.tripname) {
+      return;
+    }
+
+    this.expenseService.exportExpensesByTrip(this.tripname).subscribe({
+      next: (blob) => {
+        this.downloadCsv(blob, `${this.tripname}-expenses.csv`);
+      },
+      error: (error) => {
+        console.error('Error while exporting trip expenses:', error);
+        this.errorMessage = 'Expenses could not be exported.';
+      }
+    });
+  }
+
+
+  private downloadCsv(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+  }
+
 }

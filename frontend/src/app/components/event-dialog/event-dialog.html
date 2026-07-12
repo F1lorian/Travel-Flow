@@ -52,7 +52,7 @@
               <p class="text-xs text-gray-400">&#64;{{ participant.username }}</p>
             </div>
           </div>
-          <!--<span
+          <span
             class="text-xs font-semibold px-2 py-1 rounded-full"
             [class.bg-green-100]="participant.status === 'ACCEPTED'"
             [class.text-green-700]="participant.status === 'ACCEPTED'"
@@ -61,7 +61,7 @@
             [class.bg-red-100]="participant.status === 'DECLINED'"
             [class.text-red-700]="participant.status === 'DECLINED'">
           {{ participant.status }}
-        </span>-->
+        </span>
         </div>
       }
       @if (participants.length === 0) {
@@ -181,8 +181,9 @@
     @if (mode === 'create' || mode === 'edit') {
       <button
         (click)="save()"
-        class="flex-1 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
+        class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+ font-semibold text-white
+ transition hover:bg-blue-700 active:scale-[0.99]">
 
         {{ mode === 'create' ? 'Create event' : 'Save changes' }}
       </button>
@@ -191,8 +192,9 @@
     @if (mode === 'show') {
       <button
         (click)="edit()"
-        class="flex-1 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
+        class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+ font-semibold text-white
+ transition hover:bg-blue-700 active:scale-[0.99]">
 
         Edit
       </button>

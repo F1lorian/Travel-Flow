@@ -1,0 +1,108 @@
+<!-- Privacy settings page -->
+<div class="privacy-page">
+  <!-- Page header with title and refresh action -->
+  <header class="page-header">
+    <div>
+      <h1>Privacy Settings</h1>
+      <p>
+        Decide which friends can see your profile information and events.
+      </p>
+    </div>
+
+    <button class="secondary-button" type="button" (click)="loadPermissions()">
+      Refresh
+    </button>
+  </header>
+
+  <!-- Loading state -->
+  @if (loading) {
+    <p class="message muted">Loading privacy settings...</p>
+  }
+
+  <!-- Success feedback after saving permissions -->
+  @if (successMessage) {
+    <p class="message success">{{ successMessage }}</p>
+  }
+
+  <!-- Error feedback if loading or saving failed -->
+  @if (errorMessage) {
+    <p class="message error">{{ errorMessage }}</p>
+  }
+
+  <!-- Empty state if the user has no friends yet -->
+  @if (!loading && permissions.length === 0) {
+    <section class="empty-state">
+      <h2>No friends found</h2>
+      <p>
+        Add friends first before configuring privacy settings.
+      </p>
+    </section>
+  }
+
+  <!-- Privacy permissions table -->
+  @if (!loading && permissions.length > 0) {
+    <section class="settings-card">
+      <table class="privacy-table">
+        <thead>
+        <tr>
+          <th>Friend</th>
+          <th>Can see events</th>
+          <th>Can see profile</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (permission of permissions; track permission.friendId) {
+            <tr>
+              <!-- Friend information -->
+              <td>
+                <div class="friend-info">
+                  <strong>{{ permission.firstName }} {{ permission.surname }}</strong>
+                  <span>
+                  &#64;{{ permission.username }}
+  </span>
+                </div>
+              </td>
+
+              <!-- Permission toggle for events -->
+              <td>
+                <label class="checkbox-field">
+                  <input
+                    type="checkbox"
+                    [ngModel]="permission.canSeeEvents"
+                    (ngModelChange)="updateEventsPermission(permission, $event)"
+                    [disabled]="isSaving(permission.friendId)"
+                  />
+                  <span>Events</span>
+                </label>
+              </td>
+
+              <!-- Permission toggle for profile information -->
+              <td>
+                <label class="checkbox-field">
+                  <input
+                    type="checkbox"
+                    [ngModel]="permission.canSeeProfile"
+                    (ngModelChange)="updateProfilePermission(permission, $event)"
+                    [disabled]="isSaving(permission.friendId)"
+                  />
+                  <span>Profile</span>
+                </label>
+              </td>
+
+              <!-- Saving status for this row -->
+              <td>
+                @if (isSaving(permission.friendId)) {
+                  <span class="status saving">Saving...</span>
+                } @else {
+                  <span class="status saved">Saved</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</div>

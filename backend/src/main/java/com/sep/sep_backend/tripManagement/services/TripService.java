@@ -6,6 +6,7 @@ Called by TripController, which exposes the results to the Angular frontend. */
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
 import com.sep.sep_backend.entities.UserTrip;
+import com.sep.sep_backend.entities.UserTripId;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.AusgabeRepository;
 import com.sep.sep_backend.repos.EventRepository;
@@ -157,5 +158,31 @@ public class TripService {
                     "Your trip \""
                         + trip.getName()
                         + "\" and all of its events and expenses were deleted."));
+  }
+
+  /**
+   * Removes a friend from a trip and from all events belonging to that trip. The friendship itself
+   * is not changed.
+   */
+  @Transactional
+  public void removeFriendFromTrip(Long tripId, Long friendUserId, Long requestingUserId) {
+    if (!tripRepository.existsById(tripId)) {
+      throw new IllegalArgumentException("Trip not found: " + tripId);
+    }
+
+    UserTrip requesterTrip =
+        userTripRepository
+            .findByIdUserIdAndIdTripId(requestingUserId, tripId)
+            .orElseThrow(() -> new IllegalArgumentException("User is not part of this trip"));
+    if (requesterTrip.getStatus() != UserTrip.InviteStatus.ACCEPTED) {
+      throw new IllegalArgumentException("Only accepted trip members can remove friends");
+    }
+
+    userTripRepository
+        .findByIdUserIdAndIdTripId(friendUserId, tripId)
+        .orElseThrow(() -> new IllegalArgumentException("Friend is not part of this trip"));
+
+    userEventRepository.deleteByEvent_Trip_IdAndUser_Id(tripId, friendUserId);
+    userTripRepository.deleteById(new UserTripId(friendUserId, tripId));
   }
 }
