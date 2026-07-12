@@ -53,6 +53,8 @@ const incomingEventInvites = [
 
 test.beforeEach(async ({ page }) => {
   await authenticate(page);
+
+  // Friends page data
   await mockJson(page, '**/api/friends', friends);
   await mockJson(page, '**/api/friends/requests/incoming', []);
   await mockJson(page, '**/api/TripInvites/incoming', []);
@@ -63,15 +65,24 @@ test('Friends-Seite wird angezeigt', async ({ page }) => {
   await page.goto('/friends');
 
   await expect(page.getByRole('heading', { name: 'Friends', exact: true })).toBeVisible();
+  await expect(page.getByText('Manage your friends, invitations and shared information.')).toBeVisible();
+
+  await expect(page.getByRole('link', { name: 'Manage privacy settings' })).toBeVisible();
+
   await expect(page.getByRole('heading', { name: 'Search for users' })).toBeVisible();
   await expect(page.getByPlaceholder('Search by name or username')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search' })).toBeVisible();
+
   await expect(page.getByRole('heading', { name: 'Friend requests' })).toBeVisible();
+  await expect(page.getByText('No open friend requests.')).toBeVisible();
+
   await expect(page.getByRole('heading', { name: 'Your friends' })).toBeVisible();
   await expect(page.getByText('Svetoslav Ivanov')).toBeVisible();
   await expect(page.getByText('@sveto')).toBeVisible();
 
-  await expect(page.getByRole('link', { name: 'Manage privacy settings' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Incoming Invitations' })).toBeVisible();
+  await expect(page.getByText('No open invitations.')).toBeVisible();
+
   await expect(page.getByRole('heading', { name: 'Shared information' })).toBeVisible();
 });
 
