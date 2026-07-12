@@ -74,8 +74,8 @@ public class FriendsService {
    * Sends a friend request to another user, notifying the receiver in-app and by email.
    *
    * <p>If the receiver already has a pending request towards the sender, the two requests are
-   * treated as mutual interest and the existing request is accepted immediately instead of
-   * creating a duplicate.
+   * treated as mutual interest and the existing request is accepted immediately instead of creating
+   * a duplicate.
    *
    * @param currentUsername username or email of the sending user
    * @param receiverId id of the user to befriend

@@ -11,9 +11,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * REST endpoint for inviting a friend to a trip and for responding to (accepting/declining) an
- * incoming invite. The service checks that the inviter has accepted membership on the trip and
- * that the invitee really is a friend; failures surface as {@code {"message": "..."}} responses
- * via {@link com.sep.sep_backend.exception.GlobalExceptionHandler}.
+ * incoming invite. The service checks that the inviter has accepted membership on the trip and that
+ * the invitee really is a friend; failures surface as {@code {"message": "..."}} responses via
+ * {@link com.sep.sep_backend.exception.GlobalExceptionHandler}.
  */
 @RestController
 @RequestMapping("/api/TripInvites")

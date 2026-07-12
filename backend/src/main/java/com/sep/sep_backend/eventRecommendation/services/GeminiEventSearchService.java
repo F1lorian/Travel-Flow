@@ -69,9 +69,12 @@ public class GeminiEventSearchService {
                       "contents", contents(buildPrompt(location)),
                       "generationConfig",
                           Map.of(
-                              "responseMimeType", "application/json",
-                              "temperature", 0.3,
-                              "maxOutputTokens", 4096))));
+                              "responseMimeType",
+                              "application/json",
+                              "temperature",
+                              0.3,
+                              "maxOutputTokens",
+                              4096))));
 
       if (jsonText.isBlank()) {
         return List.of();
