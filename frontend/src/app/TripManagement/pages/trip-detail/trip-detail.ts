@@ -16,6 +16,7 @@ import { EventDialog } from '../../../components/event-dialog/event-dialog';
 import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
 import {SlicePipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
+import {UserEventDTO} from '../../../../event-adding-manual/models/UserEventDTO';
 
 @Component({
   selector: 'app-trip-detail',
@@ -42,6 +43,8 @@ export class TripDetail implements OnInit {
   acceptedParticipants = computed(() =>
     this.participants().filter(p => p.status === 'ACCEPTED')
   );
+  participantToRemove: TripParticipantDTO | null = null;
+
 
   // Delete-event modal state. The modal is a small 3-step flow driven by deleteStep:
   //   'choice'       -> delete the event, or move it to another trip?
@@ -125,6 +128,7 @@ export class TripDetail implements OnInit {
         title: event.name,
         kosten: event.kosten,
         tripId: this.trip()?.id,
+        creatorUsername: event.ownerUsername,
         start: event.startTime?.substring(0, 16),
         end: event.endTime?.substring(0, 16),
       }
@@ -133,6 +137,12 @@ export class TripDetail implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result?.action === 'edit') {
         this.openEditDialog(event);
+      }
+      if (result?.action === 'deleted') {
+        this.events.update(list => list.filter(e => e.id !== event.id));
+      }
+      if (result?.action === 'error') {
+        this.errorMessage = result.message;
       }
     });
   }
@@ -147,6 +157,7 @@ export class TripDetail implements OnInit {
         title: event.name,
         kosten: event.kosten,
         tripId: this.trip()?.id,
+        creatorUsername: event.ownerUsername,
         start: event.startTime?.substring(0, 16),
         end: event.endTime?.substring(0, 16),
       }
@@ -375,7 +386,7 @@ export class TripDetail implements OnInit {
     );
   }
 
-  removeFriendFromEvent(participant: TripParticipantDTO){
+  removeFriendFromTrip(participant: TripParticipantDTO){
     const friendId = participant.userId;
     const tripId = this.trip()?.id;
     if (!tripId){
@@ -388,5 +399,30 @@ export class TripDetail implements OnInit {
       },
       error: (err) => { this.errorMessage = 'Error: ' + err.message}
     })
+  }
+
+  leaveTrip(): void {
+    const currentUsername = localStorage.getItem('sepUser');
+    const self = this.participants().find(p => p.username === currentUsername);
+    if (!self) {
+      return;
+    }
+    this.openRemoveConfirm(self);
+  }
+
+  openRemoveConfirm(participant: TripParticipantDTO): void {
+    this.participantToRemove = participant;
+  }
+
+  cancelRemoveConfirm(): void {
+    this.participantToRemove = null;
+  }
+
+  confirmRemoveParticipant(): void {
+    if (!this.participantToRemove) {
+      return;
+    }
+    this.removeFriendFromTrip(this.participantToRemove);
+    this.participantToRemove = null;
   }
 }

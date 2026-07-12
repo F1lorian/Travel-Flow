@@ -130,6 +130,12 @@ export class CalendarComponent implements OnInit {
       if (result?.action === 'edit') {
         this.editEvent(selectedEvent);
       }
+      if (result?.action === 'deleted') {
+        this.removeDeletedEvent(selectedEvent.id);
+      }
+      if (result?.action === 'error') {
+        this.showMessage(result.message);
+      }
     });
     return;
   }

@@ -14,7 +14,7 @@ import {EventService} from '../../../event-adding-manual/service/event.service';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import {Friend, FriendsService} from '../../services/friends.service';
 import { UserEventDTO } from '../../../event-adding-manual/models/UserEventDTO';
-import {forkJoin} from 'rxjs';
+import {catchError, forkJoin, of} from 'rxjs';
 import {NotificationService} from '../notification-menu/notification.service';
 import {FeedbackService} from '../../services/feedback.service';
 
@@ -66,6 +66,7 @@ export class EventDialog implements OnInit {
   inviteDropdownOpen = false;
   invitations: Friend[] = [];
   participants: UserEventDTO[] = [];
+  participantToRemove: UserEventDTO | null = null;
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
@@ -78,15 +79,13 @@ export class EventDialog implements OnInit {
       this.start = this.data.start || "";
       this.end = this.data.end || "";
     }
-    console.log("data dialog");
-    console.log(this.data);
   }
 
   ngOnInit() {
     this.loadTrips();
     this.loadFriends();
 
-    if (this.mode === 'show' && this.data.id) {
+    if ((this.mode === 'show' || this.mode === 'edit') && this.data.id) {
       this.loadParticipants();
     }
   }
@@ -162,10 +161,11 @@ export class EventDialog implements OnInit {
       this.dialogRef.close({ action: 'created', event: response });
       return;
     }
-
-    const inviteCalls = this.invitations.map(friend =>
-      this.eventService.inviteFriendToEvent(response.id, friend.id)
-    );
+      const inviteCalls = this.invitations.map(friend =>
+          this.eventService.inviteFriendToEvent(response.id, friend.id).pipe(
+            catchError(() => of(null))
+          )
+        );
 
     forkJoin(inviteCalls).subscribe({
       next: () => {
@@ -323,8 +323,19 @@ export class EventDialog implements OnInit {
     return this.data.creatorUsername === username;
   }
 
-  isParticipant(username :string): boolean {
-    return this.participants.some(participant => participant.username === username);
+  get acceptedParticipants(): UserEventDTO[] {
+    return this.participants.filter(p => p.status === 'ACCEPTED');
+  }
+
+  get attendingFriends(): UserEventDTO[] {
+    return this.participants.filter(
+      p => p.status === 'ACCEPTED' && !this.isParticipantOwner(p.username)
+    );
+  }
+
+  getParticipantStatus(username: string): 'ACCEPTED' | 'PENDING' | 'DECLINED' | null {
+    const participant = this.participants.find(p => p.username === username);
+    return participant ? participant.status : null;
   }
 
   removeParticipant(username: string){
@@ -345,6 +356,31 @@ export class EventDialog implements OnInit {
       }
     })
 
+  }
+
+  leaveEvent(): void {
+    const currentUsername = localStorage.getItem('sepUser');
+    const self = this.participants.find(p => p.username === currentUsername);
+    if (!self) {
+      return;
+    }
+    this.openRemoveConfirm(self);
+  }
+
+  openRemoveConfirm(participant: UserEventDTO): void {
+    this.participantToRemove = participant;
+  }
+
+  cancelRemoveConfirm(): void {
+    this.participantToRemove = null;
+  }
+
+  confirmRemoveParticipant(): void {
+    if (!this.participantToRemove) {
+      return;
+    }
+    this.removeFriendFromEvent(this.participantToRemove);
+    this.participantToRemove = null;
   }
 
 }

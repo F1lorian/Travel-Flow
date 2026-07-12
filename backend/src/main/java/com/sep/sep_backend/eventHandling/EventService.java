@@ -347,14 +347,17 @@ public class EventService {
    */
   @Transactional
   public void removeFriendFromEvent(Long eventId, Long friendUserId, Long requestingUserId) {
-    if (!eventRepository.existsById(eventId)) {
-      throw new IllegalArgumentException("Event not found");
-    }
+    Event event =
+        eventRepository
+            .findById(eventId)
+            .orElseThrow(() -> new IllegalArgumentException("Event not found"));
 
-    boolean requesterIsParticipant =
-        userEventRepository.existsByEvent_IdAndUser_Id(eventId, requestingUserId);
-    if (!requesterIsParticipant) {
-      throw new IllegalArgumentException("Only participants can remove friends from events");
+    boolean isOwner = event.getOwner() != null && event.getOwner().getId() == requestingUserId;
+    boolean isSelf = friendUserId.equals(requestingUserId);
+
+    if (!isOwner && !isSelf) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the event owner can remove other participants");
     }
 
     if (!userEventRepository.existsByEvent_IdAndUser_Id(eventId, friendUserId)) {

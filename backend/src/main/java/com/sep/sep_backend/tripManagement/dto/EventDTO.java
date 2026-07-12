@@ -19,6 +19,7 @@ public class EventDTO {
   private double kosten; // cost in EUR (German "Kosten"); 0 = free
   private long tripId;
   private String categoryName;
+  private String ownerUsername;
 
   /**
    * Builds an EventDTO from an Event entity. The trip and category relations are flattened to a
@@ -35,6 +36,7 @@ public class EventDTO {
     // Defensive null-checks: an event may have no trip/category set.
     dto.tripId = event.getTrip() != null ? event.getTrip().getId() : 0L;
     dto.categoryName = event.getCategorie() != null ? event.getCategorie().getName() : null;
+    dto.ownerUsername = event.getOwner() != null ? event.getOwner().getName() : null;
     return dto;
   }
 
@@ -64,5 +66,9 @@ public class EventDTO {
 
   public String getCategoryName() {
     return categoryName;
+  }
+
+  public String getOwnerUsername() {
+    return ownerUsername;
   }
 }

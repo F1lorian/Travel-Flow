@@ -23,8 +23,9 @@ export interface Event {
   name: string;
   startTime?: string;
   endTime?: string;
-  kosten: number; // cost in EUR (German "Kosten"); 0 means free/no price
+  kosten: number;
   categoryName?: string;
+  ownerUsername?: string;
 }
 
 export interface Category {

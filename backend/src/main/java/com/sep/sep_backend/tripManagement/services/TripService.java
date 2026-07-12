@@ -178,17 +178,23 @@ public class TripService {
    */
   @Transactional
   public void removeFriendFromTrip(Long tripId, Long friendUserId, Long requestingUserId) {
-    if (!tripRepository.existsById(tripId)) {
-      throw new IllegalArgumentException("Trip not found: " + tripId);
+    Trip trip =
+        tripRepository
+            .findById(tripId)
+            .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
+
+    boolean isOwner = trip.getOwner() != null && trip.getOwner().getId() == requestingUserId;
+    boolean isSelf = friendUserId.equals(requestingUserId);
+
+    if (!isOwner && !isSelf) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip owner can remove other participants");
     }
 
-    UserTrip requesterTrip =
+    UserTrip friendTrip =
         userTripRepository
-            .findByIdUserIdAndIdTripId(requestingUserId, tripId)
+            .findByIdUserIdAndIdTripId(friendUserId, tripId)
             .orElseThrow(() -> new IllegalArgumentException("User is not part of this trip"));
-    if (requesterTrip.getStatus() != UserTrip.InviteStatus.ACCEPTED) {
-      throw new IllegalArgumentException("Only accepted trip members can remove friends");
-    }
 
     userTripRepository
         .findByIdUserIdAndIdTripId(friendUserId, tripId)
