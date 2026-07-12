@@ -70,6 +70,9 @@ test('Friends-Seite wird angezeigt', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Your friends' })).toBeVisible();
   await expect(page.getByText('Svetoslav Ivanov')).toBeVisible();
   await expect(page.getByText('@sveto')).toBeVisible();
+
+  await expect(page.getByRole('link', { name: 'Manage privacy settings' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Shared information' })).toBeVisible();
 });
 
 test('Suchergebnisse sind vor der Suche nicht sichtbar', async ({ page }) => {
