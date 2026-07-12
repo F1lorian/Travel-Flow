@@ -89,7 +89,8 @@ class EventControllerTest {
                 20,
                 LocalDateTime.of(2026, 5, 7, 14, 30),
                 LocalDateTime.of(2026, 5, 8, 14, 30),
-                1L));
+                1L,
+                "testuser"));
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
         .thenReturn(Optional.of(user));
@@ -248,13 +249,19 @@ class EventControllerTest {
     EventService eventService = mock(EventService.class);
     UserRepository userRepository = mock(UserRepository.class);
     EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
 
-    ResponseEntity<DeleteEventResponseDTO> response = eventController.DeleteEventFromDB(42L);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+
+    ResponseEntity<DeleteEventResponseDTO> response =
+        eventController.DeleteEventFromDB(42L, authentication);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody())
         .isEqualTo(new DeleteEventResponseDTO("Event erfolgreich gelöscht"));
-    verify(eventService).DeleteEventFromDB(42L);
+    verify(eventService).DeleteEventFromDB(42L, 7L);
   }
 
   @Test
@@ -262,6 +269,8 @@ class EventControllerTest {
     EventService eventService = mock(EventService.class);
     UserRepository userRepository = mock(UserRepository.class);
     EventController eventController = new EventController(eventService, userRepository);
+    Authentication authentication = authentication("testuser");
+    User user = user(7L);
     EventRequestDTO request =
         new EventRequestDTO(
             "Theater",
@@ -278,13 +287,16 @@ class EventControllerTest {
             LocalDateTime.of(2026, 7, 1, 22, 0),
             3L);
 
-    when(eventService.EditEvent(42L, request)).thenReturn(edited);
+    when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("testuser", ""))
+        .thenReturn(Optional.of(user));
+    when(eventService.EditEvent(42L, request, 7L)).thenReturn(edited);
 
-    ResponseEntity<EventResponseDTO> response = eventController.EditEvent(42L, request);
+    ResponseEntity<EventResponseDTO> response =
+        eventController.EditEvent(42L, request, authentication);
 
     assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     assertThat(response.getBody()).isSameAs(edited);
-    verify(eventService).EditEvent(42L, request);
+    verify(eventService).EditEvent(42L, request, 7L);
   }
 
   @Test

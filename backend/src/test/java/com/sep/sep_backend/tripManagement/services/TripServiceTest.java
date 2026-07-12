@@ -142,6 +142,10 @@ class TripServiceTest {
 
   @Test
   void deleteTrip_deletesRelatedDataBeforeTrip() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User owner = userWithTrips(7L);
+    trip.setOwner(owner);
     when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
     when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
         .thenReturn(Optional.of(acceptedMembership()));
@@ -166,35 +170,26 @@ class TripServiceTest {
   void deleteTrip_throwsWhenTripNotFound() {
     when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
-    ResponseStatusException exception =
-        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(99L, 7L));
+    assertThrows(IllegalArgumentException.class, () -> tripService.deleteTrip(99L, 7L));
 
-    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
+    verify(eventRepository, never()).deleteByTrip_Id(any());
+    verify(ausgabeRepository, never()).deleteByTrip_Id(any());
+    verify(userTripRepository, never()).deleteByIdTripId(any());
     verify(tripRepository, never()).deleteById(any());
   }
 
   @Test
-  void deleteTrip_emailsTheUserAboutTheDeletion() {
-    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
-        .thenReturn(Optional.of(acceptedMembership()));
-    User user = userWithId(7L);
-    user.setEmail("max@example.com");
-    when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+  void deleteTrip_rejectsWhenRequesterIsNotOwner() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User owner = userWithTrips(7L);
+    trip.setOwner(owner);
 
-    tripService.deleteTrip(1L, 7L);
-
-    verify(emailNotificationService)
-        .sendBestEffort(eq("max@example.com"), contains("Paris"), contains("deleted"));
-  }
-
-  @Test
-  void deleteTrip_throws403_whenUserIsNotAMember() {
-    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L)).thenReturn(Optional.empty());
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
 
     ResponseStatusException exception =
-        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(1L, 7L));
+        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(1L, 8L));
 
     assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
     verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
@@ -204,14 +199,46 @@ class TripServiceTest {
     verify(tripRepository, never()).deleteById(any());
   }
 
+    @Test
+    void deleteTrip_emailsTheUserAboutTheDeletion() {
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
+        when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+                .thenReturn(Optional.of(acceptedMembership()));
+        User user = userWithId(7L);
+        user.setEmail("max@example.com");
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+
+        tripService.deleteTrip(1L, 7L);
+
+        verify(emailNotificationService)
+                .sendBestEffort(eq("max@example.com"), contains("Paris"), contains("deleted"));
+    }
+
+    @Test
+    void deleteTrip_throws403_whenUserIsNotAMember() {
+        when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
+        when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception =
+                assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(1L, 7L));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
+        verify(eventRepository, never()).deleteByTrip_Id(any());
+        verify(ausgabeRepository, never()).deleteByTrip_Id(any());
+        verify(userTripRepository, never()).deleteByIdTripId(any());
+        verify(tripRepository, never()).deleteById(any());
+    }
+
   @Test
-  void removeFriendFromTripDeletesFriendFromTripAndTripEvents() {
+  void removeFriendFromTripDeletesFriendFromTripAndTripEventsWhenRequesterIsOwner() {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    User requester = userWithId(7L);
+    User owner = userWithId(7L);
+    trip.setOwner(owner);
     User friend = userWithId(8L);
-    UserTrip requesterTrip = new UserTrip(requester, trip, null, UserTrip.InviteStatus.ACCEPTED);
-    UserTrip friendTrip = new UserTrip(friend, trip, requester, UserTrip.InviteStatus.ACCEPTED);
+      UserTrip requesterTrip = new UserTrip(owner, trip, null, UserTrip.InviteStatus.ACCEPTED);
+      UserTrip friendTrip = new UserTrip(friend, trip, owner, UserTrip.InviteStatus.ACCEPTED);
 
     when(tripRepository.existsById(1L)).thenReturn(true);
     when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
@@ -226,30 +253,66 @@ class TripServiceTest {
   }
 
   @Test
-  void removeFriendFromTripRejectsWhenRequesterIsNotAcceptedTripMember() {
+  void removeFriendFromTripAllowsUserToRemoveThemselves() {
     Trip trip = new Trip("Paris");
     trip.setId(1L);
-    User requester = userWithId(7L);
-    UserTrip requesterTrip = new UserTrip(requester, trip, null, UserTrip.InviteStatus.PENDING);
+    User owner = userWithId(7L);
+    trip.setOwner(owner);
+    User friend = userWithTrips(8L);
+    UserTrip friendTrip = new UserTrip(friend, trip, owner, UserTrip.InviteStatus.ACCEPTED);
 
-    when(tripRepository.existsById(1L)).thenReturn(true);
-    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
-        .thenReturn(Optional.of(requesterTrip));
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L)).thenReturn(Optional.of(friendTrip));
 
-    IllegalArgumentException exception =
+    tripService.removeFriendFromTrip(1L, 8L, 8L);
+
+    verify(userEventRepository).deleteByEvent_Trip_IdAndUser_Id(1L, 8L);
+    verify(userTripRepository).deleteById(new UserTripId(8L, 1L));
+  }
+
+  @Test
+  void removeFriendFromTripRejectsWhenRequesterIsNeitherOwnerNorSelf() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User owner = userWithTrips(7L);
+    trip.setOwner(owner);
+
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+
+    ResponseStatusException exception =
         assertThrows(
-            IllegalArgumentException.class, () -> tripService.removeFriendFromTrip(1L, 8L, 7L));
+            ResponseStatusException.class, () -> tripService.removeFriendFromTrip(1L, 8L, 9L));
 
-    assertEquals("Only accepted trip members can remove friends", exception.getMessage());
+    assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
     verify(userEventRepository, never()).deleteByEvent_Trip_IdAndUser_Id(any(), any());
     verify(userTripRepository, never()).deleteById(any());
   }
 
-  private User userWithId(long id) {
+  @Test
+  void removeFriendFromTripThrowsWhenFriendNotPartOfTrip() {
+    Trip trip = new Trip("Paris");
+    trip.setId(1L);
+    User owner = userWithTrips(7L);
+    trip.setOwner(owner);
+
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        IllegalArgumentException.class, () -> tripService.removeFriendFromTrip(1L, 8L, 7L));
+  }
+
+  private User userWithTrips(long id) {
     User user = new User();
     user.setId(id);
     return user;
   }
+
+    private User userWithId(long id) {
+        User user = new User();
+        user.setId(id);
+        return user;
+    }
 
   private UserTrip acceptedMembership() {
     UserTrip membership = new UserTrip();
