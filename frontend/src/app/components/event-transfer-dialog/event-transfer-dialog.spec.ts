@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { EventTransferDialog } from './event-transfer-dialog';
 import { EventService } from '../../../event-adding-manual/service/event.service';
@@ -63,6 +63,7 @@ describe('EventTransferDialog (Gmail import)', () => {
       'connect',
       'getMessages',
       'autoParse',
+      'disconnect',
       'buildConsentUrl',
     ]);
     dialogRefSpy = jasmine.createSpyObj<MatDialogRef<EventTransferDialog>>('MatDialogRef', [
@@ -121,6 +122,66 @@ describe('EventTransferDialog (Gmail import)', () => {
     );
     expect(connectButton).toBeTruthy();
     expect(component.gmailConnected).toBeFalse();
+  });
+
+  it('offers to switch account when Gmail is connected', () => {
+    gmailServiceSpy.getStatus.and.returnValue(of({ connected: true, email: 'user@gmail.com' }));
+
+    component.importSource = 'gmail';
+    component.onImportSourceChange();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const switchButton = Array.from(host.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Use another account'),
+    );
+    expect(switchButton).toBeTruthy();
+  });
+
+  it('disconnecting clears the connection and the loaded messages', () => {
+    gmailServiceSpy.disconnect.and.returnValue(of(void 0));
+    component.gmailConnected = true;
+    component.gmailEmail = 'user@gmail.com';
+    component.gmailMessages = [preview, preview2];
+    component.selectedGmailIds = new Set(['m1', 'm2']);
+
+    component.disconnectGmail();
+
+    expect(gmailServiceSpy.disconnect).toHaveBeenCalled();
+    expect(component.gmailConnected).toBeFalse();
+    expect(component.gmailEmail).toBeNull();
+    expect(component.gmailMessages).toEqual([]);
+    expect(component.selectedGmailCount).toBe(0);
+    expect(component.isDisconnectingGmail).toBeFalse();
+  });
+
+  it('shows the Connect button again after disconnecting', () => {
+    gmailServiceSpy.getStatus.and.returnValue(of({ connected: true, email: 'user@gmail.com' }));
+    gmailServiceSpy.disconnect.and.returnValue(of(void 0));
+
+    component.importSource = 'gmail';
+    component.onImportSourceChange();
+    component.disconnectGmail();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const connectButton = Array.from(host.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Connect Gmail'),
+    );
+    expect(connectButton).toBeTruthy();
+  });
+
+  it('keeps the connection when disconnecting fails', () => {
+    gmailServiceSpy.disconnect.and.returnValue(throwError(() => ({ error: 'boom' })));
+    component.gmailConnected = true;
+    component.gmailEmail = 'user@gmail.com';
+
+    component.disconnectGmail();
+
+    expect(component.gmailConnected).toBeTrue();
+    expect(component.gmailEmail).toBe('user@gmail.com');
+    expect(component.isDisconnectingGmail).toBeFalse();
+    expect(dialogSpy.open).toHaveBeenCalled();
   });
 
   it('starts the OAuth flow: stores a state and redirects to the consent URL', () => {
