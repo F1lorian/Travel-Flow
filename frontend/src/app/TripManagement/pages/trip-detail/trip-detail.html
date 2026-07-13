@@ -3,7 +3,10 @@
 
   @if (trip()) {
     <div class="trip-header">
-      <h1>{{ trip()!.name }}</h1>
+      <div>
+        <h1>{{ trip()!.name }}</h1>
+        <p class="trip-total">Total costs: {{ totalCost() | number:'1.0-2' }} €</p>
+      </div>
       <div class="trip-header-actions">
         <button class="add-event-btn" (click)="openCreateDialog()">Add Event</button>
         @if (isOwner()) {
@@ -33,11 +36,15 @@
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
                     <span class="event-date">
-    {{ formatDateTime(event.startTime) }}
-                      @if (event.endTime) {
-                        – {{ formatDateTime(event.endTime) }}
+                      @if (isAllDay(event)) {
+                        {{ formatAllDayRange(event) }} · All day
+                      } @else {
+                        {{ formatDateTime(event.startTime) }}
+                        @if (event.endTime) {
+                          – {{ formatDateTime(event.endTime) }}
+                        }
                       }
-  </span>
+                    </span>
                   }
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
