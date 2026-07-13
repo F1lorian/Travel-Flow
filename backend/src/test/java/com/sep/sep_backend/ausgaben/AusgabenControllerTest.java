@@ -40,12 +40,12 @@ public class AusgabenControllerTest {
 
     when(authentication.isAuthenticated()).thenReturn(true);
     when(authentication.getName()).thenReturn("maxmuster");
-    when(ausgabeService.forecast(today, "maxmuster")).thenReturn(expected);
+    when(ausgabeService.forecast(today, "Berlin", "maxmuster")).thenReturn(expected);
 
-    ForecastDTO result = ausgabeController.forecast(today, authentication);
+    ForecastDTO result = ausgabeController.forecast(today, "Berlin", authentication);
 
     assertThat(result).isSameAs(expected);
-    verify(ausgabeService).forecast(today, "maxmuster");
+    verify(ausgabeService).forecast(today, "Berlin", "maxmuster");
   }
 
   @Test

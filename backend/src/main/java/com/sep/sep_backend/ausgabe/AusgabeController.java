@@ -302,15 +302,19 @@ public class AusgabeController {
         .body(csv);
   }
 
-  /**
-   * Returns an expense forecast for the authenticated user for the next seven days.
-   *
-   * @param today reference date used for the forecast calculation
-   * @param authentication current request authentication
-   * @return forecast containing the predicted daily average and seven-day total
-   */
+  /** Returns an expense forecast for one trip for the next seven days. */
   @GetMapping(value = "/forecast")
-  public ForecastDTO forecast(@RequestParam LocalDate today, Authentication authentication){
-    return ausgabeService.forecast(today, getCurrentUsername(authentication));
+  public ForecastDTO forecast(
+      @RequestParam LocalDate today,
+      @RequestParam String tripname,
+      Authentication authentication) {
+    ForecastDTO result =
+        ausgabeService.forecast(today, tripname, getCurrentUsername(authentication));
+
+    if (result == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+    }
+
+    return result;
   }
 }

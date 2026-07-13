@@ -49,16 +49,17 @@ public class AusgabenServiceTest {
             userTripRepository);
 
     LocalDate today = LocalDate.of(2026, 7, 12);
-    LocalDate start = today.minusDays(30);
-    LocalDate end = today.minusDays(1);
+    LocalDate start = today.minusDays(10);
     User user = new User("maxmuster", "max@example.com", "hash", "answer");
     Trip trip = new Trip("Berlin");
+    trip.setId(42L);
+    trip.setStartDate(start);
     Categories category = new Categories("Freizeit");
 
-    // Die Ausgaben folgen exakt der Geraden y = x + 1.
-    // Dadurch muessen fuer die naechsten Tage die Werte 31 bis 37 entstehen.
+    // Die Ausgaben folgen seit Reisebeginn exakt der Geraden y = x + 1.
+    // Dadurch muessen fuer die naechsten Tage die Werte 11 bis 17 entstehen.
     List<Ausgabe> expenses = new java.util.ArrayList<>();
-    for (int dayIndex = 0; dayIndex < 30; dayIndex++) {
+    for (int dayIndex = 0; dayIndex < 10; dayIndex++) {
       Ausgabe expense =
           new Ausgabe(dayIndex + 1, trip, start.plusDays(dayIndex), category);
       expense.setUser(user);
@@ -67,16 +68,15 @@ public class AusgabenServiceTest {
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("maxmuster", "maxmuster"))
         .thenReturn(Optional.of(user));
-    when(ausgabeRepository.findByUserAndDateBetween(user, start, end)).thenReturn(expenses);
-    when(eventRepository.findByUsersContainingAndStartTimeBetween(
-            user, start.atStartOfDay(), end.atStartOfDay()))
-        .thenReturn(List.of());
+    when(tripRepository.findByName("Berlin")).thenReturn(trip);
+    when(ausgabeRepository.findByUserAndTrip(user, trip)).thenReturn(expenses);
+    when(eventRepository.findByUsersContainingAndTrip_Id(user, 42L)).thenReturn(List.of());
 
-    ForecastDTO result = ausgabeService.forecast(today, "maxmuster");
+    ForecastDTO result = ausgabeService.forecast(today, "Berlin", "maxmuster");
 
-    assertThat(result.getDaily()).isEqualTo(34.0);
-    assertThat(result.getWeek()).isEqualTo(238.0);
-    verify(ausgabeRepository).findByUserAndDateBetween(user, start, end);
+    assertThat(result.getDaily()).isEqualTo(14.0);
+    assertThat(result.getWeek()).isEqualTo(98.0);
+    verify(ausgabeRepository).findByUserAndTrip(user, trip);
   }
 
   @Test
