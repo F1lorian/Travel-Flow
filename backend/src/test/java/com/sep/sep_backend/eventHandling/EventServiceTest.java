@@ -3,12 +3,18 @@ package com.sep.sep_backend.eventHandling;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.genai.errors.ClientException;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
@@ -17,6 +23,7 @@ import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.eventHandling.dto.EventCalendarDTO;
 import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
 import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
+import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
@@ -38,6 +45,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -606,6 +614,100 @@ class EventServiceTest {
         """
             .formatted(name, startDate);
     return jsonLdMail(json);
+  }
+
+  @Test
+  void parseMailFileIfEventUeberspringtMailDieGeminiAlsNichtEventEinstuft() throws Exception {
+    // Regression: hasEvent used to be ignored, so any mail carrying a parseable date -- a
+    // newsletter, an invoice -- was imported as a calendar event.
+    EventService service =
+        detectionService(
+            """
+            {
+              "hasEvent": false,
+              "name": "Newsletter",
+              "kosten": 0,
+              "startDate": "2026-06-01T20:00:00",
+              "endDate": "2026-06-01T22:00:00"
+            }
+            """);
+
+    Optional<EventResponseDTO> result = service.parseMailFileIfEvent(textMail("Newsletter Juni"));
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void parseMailFileIfEventLiefertEventWennGeminiEinesErkennt() throws Exception {
+    EventService service =
+        detectionService(
+            """
+            {
+              "hasEvent": true,
+              "name": "Konzert",
+              "kosten": 49,
+              "startDate": "2026-06-01T20:00:00",
+              "endDate": "2026-06-01T22:00:00"
+            }
+            """);
+
+    Optional<EventResponseDTO> result = service.parseMailFileIfEvent(textMail("Einladung"));
+
+    assertThat(result).isPresent();
+    assertThat(result.get().getName()).isEqualTo("Konzert");
+    assertThat(result.get().getKosten()).isEqualTo(49);
+    assertThat(result.get().getStart()).isEqualTo(LocalDateTime.of(2026, 6, 1, 20, 0));
+    assertThat(result.get().getEnd()).isEqualTo(LocalDateTime.of(2026, 6, 1, 22, 0));
+  }
+
+  @Test
+  void parseMailFileIfEventUeberspringtEventOhneBrauchbaresStartdatum() throws Exception {
+    EventService service =
+        detectionService(
+            """
+            {
+              "hasEvent": true,
+              "name": "Konzert",
+              "kosten": 0,
+              "startDate": "irgendwann"
+            }
+            """);
+
+    Optional<EventResponseDTO> result = service.parseMailFileIfEvent(textMail("Einladung"));
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void parseMailFileIfEventWiederholtBeiRateLimitUndMeldetDannFehler() throws Exception {
+    EventService service = detectionService(null);
+    doThrow(new ClientException(429, "RESOURCE_EXHAUSTED", "quota exceeded"))
+        .when(service)
+        .callGemini(anyString());
+
+    assertThatThrownBy(() -> service.parseMailFileIfEvent(textMail("Einladung")))
+        .isInstanceOf(EventDetectionException.class);
+
+    // A rate limit must be reported as "could not be checked", never as "no event found".
+    // detectionMaxRetries defaults to 3, so the initial attempt plus 3 retries.
+    verify(service, times(4)).callGemini(anyString());
+  }
+
+  /**
+   * A spy whose Gemini call is stubbed to return {@code geminiJson}, so detection can be exercised
+   * without the network. Backoffs are cut to 1ms so the retry test does not actually wait seconds.
+   */
+  private EventService detectionService(String geminiJson) {
+    EventService service = spy(serviceWithRealObjectMapper());
+    ReflectionTestUtils.setField(service, "geminiApiKey", "test-key");
+    ReflectionTestUtils.setField(service, "geminiModel", "gemini-2.5-flash");
+    ReflectionTestUtils.setField(service, "detectionBackoffMillis", 1L);
+    ReflectionTestUtils.setField(service, "detectionRateLimitBackoffMillis", 1L);
+
+    if (geminiJson != null) {
+      doReturn(geminiJson).when(service).callGemini(anyString());
+    }
+    return service;
   }
 
   private EventService serviceWithRealObjectMapper() {
