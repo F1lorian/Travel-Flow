@@ -61,6 +61,7 @@ import org.springframework.web.server.ResponseStatusException;
 /** Service for creating, importing, listing, editing, and deleting events. */
 @Service
 public class EventService {
+  private static final ZoneId MAIL_REFERENCE_ZONE = ZoneId.of("Europe/Berlin");
 
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EventService.class);
 
@@ -884,6 +885,12 @@ public class EventService {
   private String buildGeminiPrompt(String subject, String mailText, LocalDateTime sentDate) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
+
+                Referenzdatum: %s
+                Zeitzone: Europe/Berlin
+                Relative Datumsangaben wie "heute", "morgen" oder "nächste Woche"
+                beziehen sich auf das Referenzdatum.
+
                 Antworte nur mit JSON:
                 {
                   "name": "Eventname",
@@ -902,7 +909,7 @@ public class EventService {
                 - Nutze immer das im Text genannte konkrete Datum, wenn vorhanden.
                 - Falls kein Preis gefunden wird: kosten 0.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
-                - Erfinde keine Daten.
+                - Erfinde keine Daten außer fehlender Uhrzeit nach obiger Regel.
 
                 Betreff:
                 %s
