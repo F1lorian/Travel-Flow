@@ -811,9 +811,9 @@ class EventServiceTest {
     event.setId(42L);
     User requester = userWithEvents(7L);
     User friend = userWithEvents(8L);
+    event.setOwner(requester);
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(false);
     when(userRepository.findById(8L)).thenReturn(Optional.of(friend));
     when(userRepository.findById(7L)).thenReturn(Optional.of(requester));
@@ -833,13 +833,14 @@ class EventServiceTest {
     Event event =
         new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
+    event.setOwner(userWithEvents(9L));
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Only participants can invite friends");
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
 
     verify(userEventRepository, never()).save(any(UserEvent.class));
   }
@@ -849,9 +850,9 @@ class EventServiceTest {
     Event event =
         new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
+    event.setOwner(userWithEvents(7L));
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))

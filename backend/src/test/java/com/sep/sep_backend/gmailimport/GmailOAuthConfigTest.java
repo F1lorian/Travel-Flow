@@ -44,8 +44,13 @@ class GmailOAuthConfigTest {
    * file.
    */
   @Test
-  void gmailOAuthSecretResolvesWhenLocalEnvPresent() {
-    assumeTrue(Files.exists(Path.of("..", ".env")), "repo-root .env present");
+  void gmailOAuthSecretResolvesWhenLocalEnvPresent() throws Exception {
+    Path envFile = Path.of("..", ".env");
+    assumeTrue(Files.exists(envFile), "repo-root .env present");
+    assumeTrue(
+        Files.readAllLines(envFile).stream()
+            .anyMatch(line -> line.startsWith("GOOGLE_OAUTH_CLIENT_SECRET=") && line.length() > 27),
+        "repo-root .env configures GOOGLE_OAUTH_CLIENT_SECRET");
 
     try (ConfigurableApplicationContext ctx =
         new SpringApplicationBuilder(EmptyConfig.class).web(WebApplicationType.NONE).run()) {

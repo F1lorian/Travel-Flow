@@ -146,7 +146,7 @@ class TripServiceTest {
     trip.setId(1L);
     User owner = userWithTrips(7L);
     trip.setOwner(owner);
-    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
         .thenReturn(Optional.of(acceptedMembership()));
 
@@ -170,8 +170,10 @@ class TripServiceTest {
   void deleteTrip_throwsWhenTripNotFound() {
     when(tripRepository.findById(99L)).thenReturn(Optional.empty());
 
-    assertThrows(IllegalArgumentException.class, () -> tripService.deleteTrip(99L, 7L));
+    ResponseStatusException exception =
+        assertThrows(ResponseStatusException.class, () -> tripService.deleteTrip(99L, 7L));
 
+    assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     verify(userEventRepository, never()).deleteByEvent_Trip_Id(any());
     verify(eventRepository, never()).deleteByTrip_Id(any());
     verify(ausgabeRepository, never()).deleteByTrip_Id(any());
@@ -201,11 +203,13 @@ class TripServiceTest {
 
   @Test
   void deleteTrip_emailsTheUserAboutTheDeletion() {
-    when(tripRepository.findById(1L)).thenReturn(Optional.of(new Trip("Paris")));
-    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
-        .thenReturn(Optional.of(acceptedMembership()));
     User user = userWithId(7L);
     user.setEmail("max@example.com");
+    Trip trip = new Trip("Paris");
+    trip.setOwner(user);
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
+    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
+        .thenReturn(Optional.of(acceptedMembership()));
     when(userRepository.findById(7L)).thenReturn(Optional.of(user));
 
     tripService.deleteTrip(1L, 7L);
@@ -237,12 +241,9 @@ class TripServiceTest {
     User owner = userWithId(7L);
     trip.setOwner(owner);
     User friend = userWithId(8L);
-    UserTrip requesterTrip = new UserTrip(owner, trip, null, UserTrip.InviteStatus.ACCEPTED);
     UserTrip friendTrip = new UserTrip(friend, trip, owner, UserTrip.InviteStatus.ACCEPTED);
 
-    when(tripRepository.existsById(1L)).thenReturn(true);
-    when(userTripRepository.findByIdUserIdAndIdTripId(7L, 1L))
-        .thenReturn(Optional.of(requesterTrip));
+    when(tripRepository.findById(1L)).thenReturn(Optional.of(trip));
     when(userTripRepository.findByIdUserIdAndIdTripId(8L, 1L)).thenReturn(Optional.of(friendTrip));
 
     tripService.removeFriendFromTrip(1L, 8L, 7L);

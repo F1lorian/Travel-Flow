@@ -51,15 +51,13 @@ class TripInviteServiceTest {
     User friend = user(2L, "anna");
     friend.setEmail("anna@example.com");
     Trip trip = trip(10L);
-    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
+    trip.setOwner(currentUser);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
     currentUser.getFriends().add(friend);
-    when(userTripRepository.findByUserAndTrip(currentUser, trip))
-        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.empty());
 
     TripInviteResponseDTO result = service.inviteFriendToTrip("max", 10L, 2L);
@@ -114,15 +112,13 @@ class TripInviteServiceTest {
     User currentUser = user(1L, "max");
     User friend = user(2L, "anna");
     Trip trip = trip(10L);
+    trip.setOwner(user(3L, "owner"));
     currentUser.getFriends().add(friend);
-    UserTrip pendingEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-    when(userTripRepository.findByUserAndTrip(currentUser, trip))
-        .thenReturn(Optional.of(pendingEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
         .isInstanceOf(ResponseStatusException.class)
@@ -138,16 +134,14 @@ class TripInviteServiceTest {
     User currentUser = user(1L, "max");
     User friend = user(2L, "anna");
     Trip trip = trip(10L);
+    trip.setOwner(currentUser);
     currentUser.getFriends().add(friend);
-    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
     UserTrip friendEntry = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.ACCEPTED);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-    when(userTripRepository.findByUserAndTrip(currentUser, trip))
-        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(friendEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
@@ -162,16 +156,14 @@ class TripInviteServiceTest {
     User currentUser = user(1L, "max");
     User friend = user(2L, "anna");
     Trip trip = trip(10L);
+    trip.setOwner(currentUser);
     currentUser.getFriends().add(friend);
-    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
     UserTrip friendEntry = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.PENDING);
 
     when(userRepository.findByNameIgnoreCaseOrEmailIgnoreCase("max", "max"))
         .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-    when(userTripRepository.findByUserAndTrip(currentUser, trip))
-        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(friendEntry));
 
     assertThatThrownBy(() -> service.inviteFriendToTrip("max", 10L, 2L))
@@ -186,8 +178,8 @@ class TripInviteServiceTest {
     User currentUser = user(1L, "max");
     User friend = user(2L, "anna");
     Trip trip = trip(10L);
+    trip.setOwner(currentUser);
     currentUser.getFriends().add(friend);
-    UserTrip creatorEntry = new UserTrip(currentUser, trip, null, UserTrip.InviteStatus.ACCEPTED);
     UserTrip declinedEntry =
         new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.DECLINED);
 
@@ -195,8 +187,6 @@ class TripInviteServiceTest {
         .thenReturn(Optional.of(currentUser));
     when(userRepository.findById(2L)).thenReturn(Optional.of(friend));
     when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-    when(userTripRepository.findByUserAndTrip(currentUser, trip))
-        .thenReturn(Optional.of(creatorEntry));
     when(userTripRepository.findByUserAndTrip(friend, trip)).thenReturn(Optional.of(declinedEntry));
 
     service.inviteFriendToTrip("max", 10L, 2L);

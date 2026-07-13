@@ -2,7 +2,6 @@ package com.sep.sep_backend.repos;
 
 import com.sep.sep_backend.entities.Trip;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +17,4 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     WHERE u.id = :userId
 """)
   List<Trip> findAllByUserId(@Param("userId") Long userId);
-
-  Optional<Trip> findById(long id);
 }
