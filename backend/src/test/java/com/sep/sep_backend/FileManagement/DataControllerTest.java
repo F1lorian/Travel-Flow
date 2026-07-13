@@ -12,10 +12,12 @@ class DataControllerTest {
 
   @Test
   void exportAllEventsReturnsDownloadableIcalResponse() {
-    com.sep.sep_backend.FileManagement.DataService dataService = mock(com.sep.sep_backend.FileManagement.DataService.class);
+    com.sep.sep_backend.FileManagement.DataService dataService =
+        mock(com.sep.sep_backend.FileManagement.DataService.class);
     when(dataService.exportAllEventsAsIcal()).thenReturn("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n");
 
-    ResponseEntity<String> response = new com.sep.sep_backend.FileManagement.DataController(dataService).exportAllEvents();
+    ResponseEntity<String> response =
+        new com.sep.sep_backend.FileManagement.DataController(dataService).exportAllEvents();
 
     assertThat(response.getHeaders().getContentType().toString())
         .isEqualTo("text/calendar;charset=UTF-8");
