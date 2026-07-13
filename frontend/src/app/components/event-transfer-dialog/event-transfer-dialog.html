@@ -160,9 +160,29 @@
             Connect Gmail
           </button>
         } @else {
-          <p class="text-sm text-slate-600">
-            Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
-          </p>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm text-slate-600">
+              Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
+            </p>
+
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                (click)="useAnotherGmailAccount()"
+                class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
+                Use another account
+              </button>
+
+              <button
+                type="button"
+                (click)="disconnectGmail()"
+                [disabled]="isDisconnectingGmail"
+                class="text-sm font-medium text-red-600 transition hover:text-red-700
+                 disabled:cursor-not-allowed disabled:text-slate-400">
+                {{ isDisconnectingGmail ? 'Disconnecting...' : 'Disconnect' }}
+              </button>
+            </div>
+          </div>
 
           <button
             (click)="loadGmailMessages()"

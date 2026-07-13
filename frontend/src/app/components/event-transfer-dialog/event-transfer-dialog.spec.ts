@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { EventTransferDialog } from './event-transfer-dialog';
 import { EventService } from '../../../event-adding-manual/service/event.service';
@@ -64,6 +64,7 @@ describe('EventTransferDialog (Gmail import)', () => {
       'getMessages',
       'autoParse',
       'buildConsentUrl',
+      'disconnect',
     ]);
     dialogRefSpy = jasmine.createSpyObj<MatDialogRef<EventTransferDialog>>('MatDialogRef', [
       'close',
@@ -135,6 +136,61 @@ describe('EventTransferDialog (Gmail import)', () => {
     expect(gmailServiceSpy.buildConsentUrl).toHaveBeenCalledWith(storedState!);
     const redirect = (component as unknown as { redirectTo: jasmine.Spy }).redirectTo;
     expect(redirect).toHaveBeenCalledWith('https://accounts.google.com/o/oauth2/v2/auth?x=1');
+  });
+
+  describe('changing the connected account', () => {
+    beforeEach(() => {
+      gmailServiceSpy.getStatus.and.returnValue(of({ connected: true, email: 'old@gmail.com' }));
+      component.importSource = 'gmail';
+      component.onImportSourceChange();
+      fixture.detectChanges();
+    });
+
+    it('offers a way out once an account is connected', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const labels = Array.from(host.querySelectorAll('button')).map((b) => b.textContent?.trim());
+
+      expect(labels).toContain('Disconnect');
+      expect(labels).toContain('Use another account');
+    });
+
+    it('disconnect() clears the connection and the loaded messages', () => {
+      gmailServiceSpy.disconnect.and.returnValue(of(void 0));
+      component.gmailMessages = [preview];
+      component.selectedGmailIds = new Set(['m1']);
+
+      component.disconnectGmail();
+
+      expect(gmailServiceSpy.disconnect).toHaveBeenCalledTimes(1);
+      expect(component.gmailConnected).toBeFalse();
+      expect(component.gmailEmail).toBeNull();
+      expect(component.gmailMessages).toEqual([]);
+      expect(component.selectedGmailCount).toBe(0);
+      expect(component.isDisconnectingGmail).toBeFalse();
+    });
+
+    it('keeps the connection when disconnecting fails', () => {
+      gmailServiceSpy.disconnect.and.returnValue(
+        throwError(() => ({ error: 'nope' })) as unknown as ReturnType<GmailService['disconnect']>,
+      );
+
+      component.disconnectGmail();
+
+      expect(component.gmailConnected).toBeTrue();
+      expect(component.gmailEmail).toBe('old@gmail.com');
+      expect(component.isDisconnectingGmail).toBeFalse();
+      expect(dialogSpy.open).toHaveBeenCalled();
+    });
+
+    it('"use another account" re-runs consent so Google can offer a different mailbox', () => {
+      gmailServiceSpy.buildConsentUrl.and.returnValue('https://accounts.google.com/consent');
+
+      component.useAnotherGmailAccount();
+
+      const redirect = (component as unknown as { redirectTo: jasmine.Spy }).redirectTo;
+      expect(redirect).toHaveBeenCalledWith('https://accounts.google.com/consent');
+      expect(sessionStorage.getItem(GMAIL_OAUTH_STATE_KEY)).toBeTruthy();
+    });
   });
 
   it('loads recent messages and selects them all by default', () => {

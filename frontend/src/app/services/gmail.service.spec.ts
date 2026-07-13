@@ -88,6 +88,18 @@ describe('GmailService', () => {
     expect(actual).toEqual(expected);
   });
 
+  it('disconnect() DELETEs /api/gmail/disconnect', () => {
+    let completed = false;
+
+    service.disconnect().subscribe(() => (completed = true));
+
+    const req = httpMock.expectOne('/api/gmail/disconnect');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    expect(completed).toBeTrue();
+  });
+
   it('propagates HTTP errors to the caller', () => {
     let errored = false;
 
@@ -113,11 +125,20 @@ describe('GmailService', () => {
       expect(params.get('response_type')).toBe('code');
       expect(params.get('scope')).toBe('https://www.googleapis.com/auth/gmail.readonly');
       expect(params.get('access_type')).toBe('offline');
-      expect(params.get('prompt')).toBe('consent');
       expect(params.get('include_granted_scopes')).toBe('true');
       expect(params.get('state')).toBe('state-123');
       expect(params.get('redirect_uri')).toBe(`${window.location.origin}/gmail-import`);
       expect(params.has('client_id')).toBeTrue();
+    });
+
+    it('asks Google for the account chooser so a different mailbox can be connected', () => {
+      const url = new URL(service.buildConsentUrl('state-123'));
+      const prompt = url.searchParams.get('prompt') ?? '';
+
+      // select_account -> Google shows the chooser instead of reusing the signed-in account.
+      // consent -> Google still returns a refresh token on a re-connect.
+      expect(prompt.split(' ')).toContain('select_account');
+      expect(prompt.split(' ')).toContain('consent');
     });
 
     it('echoes the given state so the redirect can verify it', () => {

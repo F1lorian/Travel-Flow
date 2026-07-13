@@ -53,6 +53,11 @@ export class GmailService {
     return this.http.get<GmailMessagePreview[]>(`${this.apiUrl}/messages`);
   }
 
+  /** Removes the stored Gmail connection so another account can be connected. */
+  disconnect(): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/disconnect`);
+  }
+
   /**
    * Parses the given messages for automatic import. The backend uses Gemini to keep only the ones
    * that actually contain a real, named event and reports how many messages could not be checked.
@@ -65,6 +70,10 @@ export class GmailService {
    * Builds the Google consent URL for read-only Gmail access. `state` is echoed back to the
    * redirect and must be verified there to guard against CSRF. The redirect URI is derived from the
    * current origin and must match the backend's configured google.oauth.redirect-uri.
+   *
+   * `select_account` is required alongside `consent`: with `consent` alone Google silently reuses
+   * the account the browser is already signed into, so the user can never switch mailboxes. The
+   * `consent` half must stay, or Google omits the refresh token on a re-connect.
    */
   buildConsentUrl(state: string): string {
     const params = new URLSearchParams({
@@ -73,7 +82,7 @@ export class GmailService {
       response_type: 'code',
       scope: GMAIL_READONLY_SCOPE,
       access_type: 'offline',
-      prompt: 'consent',
+      prompt: 'select_account consent',
       include_granted_scopes: 'true',
       state,
     });
