@@ -1,3 +1,11 @@
+/* Pin the dialog to a declared width so content swaps (e.g. the all-day toggle switching
+   datetime inputs to date inputs) cannot resize it. min() keeps it responsive within
+   Material's default 80vw dialog cap. */
+:host {
+  display: block;
+  width: min(34rem, 80vw);
+}
+
 ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
   display: flex !important;
   flex-direction: column !important;

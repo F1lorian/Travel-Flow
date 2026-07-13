@@ -6,28 +6,28 @@
   @if (mode === 'show') {
     <div class="border-t border-gray-200 px-6 py-4">
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-gray-50 rounded-lg p-3">
+        <div class="bg-gray-50 rounded-lg p-3 text-center">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
             Start
           </p>
-          <p class="text-base text-slate-800">{{ start | date:'dd.MM.yyyy, HH:mm' }}</p>
+          <p class="text-base text-slate-800">{{ start | date: (allDay ? 'dd.MM.yyyy' : 'dd.MM.yyyy, HH:mm') }}</p>
         </div>
-        <div class="bg-gray-50 rounded-lg p-3">
+        <div class="bg-gray-50 rounded-lg p-3 text-center">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">calendar_today</mat-icon>
             End
           </p>
-          <p class="text-base text-slate-800">{{ end | date:'dd.MM.yyyy, HH:mm' }}</p>
+          <p class="text-base text-slate-800">{{ end | date: (allDay ? 'dd.MM.yyyy' : 'dd.MM.yyyy, HH:mm') }}</p>
         </div>
-        <div class="bg-gray-50 rounded-lg p-3">
+        <div class="bg-gray-50 rounded-lg p-3 text-center">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">euro</mat-icon>
             Cost
           </p>
           <p class="text-base text-slate-800">{{ data.kosten }} €</p>
         </div>
-        <div class="bg-gray-50 rounded-lg p-3">
+        <div class="bg-gray-50 rounded-lg p-3 text-center">
           <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
             <mat-icon class="text-sm align-middle mr-1">map</mat-icon>
             Trip
@@ -39,9 +39,9 @@
     <div class="border-t border-gray-200 px-6 py-4">
       <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">
         <mat-icon class="text-sm align-middle mr-1">group</mat-icon>
-        Attending friends · {{ acceptedParticipants.length }}
+        Attending friends · {{ attendingOthers.length }}
       </p>
-      @for (participant of acceptedParticipants; track participant.userId) {
+      @for (participant of attendingOthers; track participant.userId) {
         <div class="flex items-center justify-between gap-3 mb-2">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-700 shrink-0">
@@ -59,7 +59,7 @@
           }
         </div>
       }
-      @if (acceptedParticipants.length === 0) {
+      @if (attendingOthers.length === 0) {
         <p class="text-sm text-gray-400">No friends are currently attending</p>
       }
     </div>
@@ -111,30 +111,53 @@
     <div class="border-t border-gray-200 px-6 py-4">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">start-time</label>
-          <input
-            [(ngModel)]="start"
-            type="datetime-local"
-            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
-         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="start">{{ allDay ? 'start-date' : 'start-time' }}</label>
+          @if (allDay) {
+            <input
+              [(ngModel)]="startDay"
+              type="date"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 placeholder:text-slate-400
+           outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          } @else {
+            <input
+              [(ngModel)]="start"
+              type="datetime-local"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 placeholder:text-slate-400
+           outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          }
         </div>
         <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">end-time</label>
-          <input
-            [(ngModel)]="end"
-            type="datetime-local"
-            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-         text-slate-900 placeholder:text-slate-400
-         outline-none transition
-         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="end">{{ allDay ? 'end-date' : 'end-time' }}</label>
+          @if (allDay) {
+            <input
+              [(ngModel)]="endDay"
+              type="date"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 placeholder:text-slate-400
+           outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          } @else {
+            <input
+              [(ngModel)]="end"
+              type="datetime-local"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+           text-slate-900 placeholder:text-slate-400
+           outline-none transition
+           focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+          }
         </div>
       </div>
-      <!--<label class="flex items-center gap-2">
-        <input type="checkbox" [(ngModel)]="allDay">
-        all-day
-      </label>-->
+      <label class="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <input
+          type="checkbox"
+          [(ngModel)]="allDay"
+          class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+        All-day
+      </label>
       <div class="relative mt-4">
         <button
           type="button"
