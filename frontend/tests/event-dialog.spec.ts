@@ -39,9 +39,9 @@ test('Alle Elemente werden angezeigt wenn mode = edit (Owner)', async ({ page })
   await mockCalendarEvents(page, [
     {
       id: '1',
-      name: 'Test Event',
-      startTime: `${eventDate}T10:00:00`,
-      endTime: `${eventDate}T11:00:00`,
+      title: 'Test Event',
+      start: `${eventDate}T10:00:00`,
+      end: `${eventDate}T11:00:00`,
       kosten: 20,
       creatorUsername: 'playwright',
     },
@@ -125,7 +125,7 @@ test('Klick auf Delete im Show-Dialog entfernt das Event ohne Reload', async ({ 
   await page.getByText('Test Event').click();
   await page.getByRole('button', { name: 'Delete' }).click();
 
-  await expect(page.getByText('Test Event')).toBeHidden();
+  await expect(page.locator('.fc-event-title', { hasText: 'Test Event' })).toBeHidden();
 });
 
 test('Attending-friends-Liste zeigt nur akzeptierte Teilnehmer im Show-Dialog', async ({ page }) => {
@@ -205,14 +205,14 @@ test('Entfernen eines Teilnehmers erfordert Bestätigung', async ({ page }) => {
   await page.getByTitle('Remove friend').click();
 
   await expect(page.getByText('Remove friend?')).toBeVisible();
-  await expect(page.getByText('Svetoslav Ivanov', { exact: false })).toBeVisible();
+  await expect(page.locator('strong', { hasText: 'Svetoslav Ivanov' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Cancel' }).last().click();
   await expect(page.getByText('Remove friend?')).toBeHidden();
   await expect(page.getByText('Svetoslav Ivanov')).toBeVisible();
 
   await page.getByTitle('Remove friend').click();
-  await page.getByRole('button', { name: 'Remove' }).click();
+  await page.getByRole('button', { name: 'Remove', exact: true }).click();
 
-  await expect(page.getByText('Svetoslav Ivanov')).toBeHidden();
+  await expect(page.locator('mat-dialog-content').getByText('Svetoslav Ivanov')).toBeHidden();
 });

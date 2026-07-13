@@ -71,9 +71,9 @@ test('Owner kann Teilnehmer entfernen (mit Bestätigung)', async ({ page }) => {
   await svetoRow.getByTitle('Remove participant').click();
 
   await expect(page.getByText('Remove friend?')).toBeVisible();
-  await page.getByRole('button', { name: 'Remove' }).click();
+  await page.getByRole('button', { name: 'Remove', exact: true }).click();
 
-  await expect(page.getByText('Svetoslav Ivanov')).toBeHidden();
+  await expect(page.locator('.participant-list').getByText('Svetoslav Ivanov')).toBeHidden();
 });
 
 test('Delete Trip zeigt Bestätigungsmodal mit allen Events', async ({ page }) => {
@@ -90,7 +90,7 @@ test('Delete Trip zeigt Bestätigungsmodal mit allen Events', async ({ page }) =
   await page.getByRole('button', { name: 'Delete Trip' }).click();
 
   await expect(page.getByText('Are you sure you want to delete this trip?')).toBeVisible();
-  await expect(page.getByText('Kolosseum')).toBeVisible();
+  await expect(page.locator('.modal').getByText('Kolosseum')).toBeVisible();
 });
 
 test('Bestätigtes Delete Trip navigiert zurück zur Trip-Übersicht', async ({ page }) => {
@@ -122,8 +122,8 @@ test('Leave Trip öffnet Bestätigung für sich selbst', async ({ page }) => {
   await page.goto('/trips/1');
   await page.getByRole('button', { name: 'Leave Trip' }).click();
 
-  await expect(page.getByText('Remove friend?')).toBeVisible();
-  await page.getByRole('button', { name: 'Remove' }).click();
+  await expect(page.getByText('Leave Trip?')).toBeVisible();
+  await page.getByRole('button', { name: 'Leave', exact: true }).click();
 
   await expect(page.getByText('Play Wright')).toBeHidden();
 });
