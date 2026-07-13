@@ -59,6 +59,7 @@ export class EventTransferDialog implements OnInit {
   selectedGmailIds = new Set<string>();
   isLoadingGmailMessages = false;
   isImportingGmail = false;
+  isDisconnectingGmail = false;
 
   constructor() {
     if (this.data) {
@@ -188,6 +189,41 @@ export class EventTransferDialog implements OnInit {
     const state = this.createOAuthState();
     sessionStorage.setItem(GMAIL_OAUTH_STATE_KEY, state);
     this.redirectTo(this.gmailService.buildConsentUrl(state));
+  }
+
+  /**
+   * Connects a different mailbox. The consent URL asks Google to show the account chooser, and the
+   * backend overwrites the stored account for this user, so no disconnect is needed first.
+   */
+  useAnotherGmailAccount() {
+    this.connectGmail();
+  }
+
+  /**
+   * Drops the stored Gmail connection and returns the dialog to the "Connect Gmail" state so a
+   * different account can be connected.
+   */
+  disconnectGmail() {
+    this.isDisconnectingGmail = true;
+
+    this.gmailService.disconnect().subscribe({
+      next: () => {
+        this.isDisconnectingGmail = false;
+        this.resetGmailConnection();
+      },
+      error: err => {
+        this.isDisconnectingGmail = false;
+        this.showMessage(err.error || 'Gmail-Verbindung konnte nicht getrennt werden.');
+      },
+    });
+  }
+
+  /** Clears every piece of state tied to the previously connected mailbox. */
+  private resetGmailConnection() {
+    this.gmailConnected = false;
+    this.gmailEmail = null;
+    this.gmailMessages = [];
+    this.selectedGmailIds.clear();
   }
 
   /** Seam around the top-level navigation so it can be stubbed in tests. */

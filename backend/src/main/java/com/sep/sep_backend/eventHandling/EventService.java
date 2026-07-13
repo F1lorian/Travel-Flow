@@ -3,8 +3,10 @@ package com.sep.sep_backend.eventHandling;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
+import com.google.genai.errors.ApiException;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.HttpOptions;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
@@ -48,6 +50,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -76,6 +79,25 @@ public class EventService {
 
   @Value("${gemini.model}")
   private String geminiModel;
+
+  /** Request timeout for a Gemini call. Without one, a hung call has no backstop. */
+  @Value("${gemini.timeout-seconds:60}")
+  private int geminiTimeoutSeconds = 60;
+
+  /** How many times a failed Gemini detection call is retried before giving up. */
+  @Value("${gemini.detection.max-retries:3}")
+  private int detectionMaxRetries = 3;
+
+  /** Base backoff for a transient (non-rate-limit) detection failure; doubles each attempt. */
+  @Value("${gemini.detection.backoff-millis:500}")
+  private long detectionBackoffMillis = 500;
+
+  /**
+   * Base backoff for an HTTP 429. Gemini's quota resets per minute, not per second, so a sub-second
+   * retry just burns an attempt against the same exhausted quota and fails the whole batch.
+   */
+  @Value("${gemini.detection.rate-limit-backoff-millis:5000}")
+  private long detectionRateLimitBackoffMillis = 5000;
 
   /**
    * Creates an event service with repository access and helper services.
@@ -467,9 +489,6 @@ public class EventService {
     return name != null && !name.isBlank() && !name.equals(UNKNOWN_EVENT_NAME);
   }
 
-  /** How many times a throttled/failed Gemini detection call is retried before giving up. */
-  private static final int DETECTION_MAX_RETRIES = 2;
-
   /**
    * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
    *
@@ -487,54 +506,107 @@ public class EventService {
       throw new EventDetectionException("Gemini API key is not configured");
     }
 
+    String prompt = buildGeminiEventDetectionPrompt(subject, mailText, sentDate);
+
     int attempt = 0;
     while (true) {
       try {
-        Client client = Client.builder().apiKey(geminiApiKey).build();
-
-        GenerateContentConfig config =
-            GenerateContentConfig.builder()
-                .responseMimeType("application/json")
-                .temperature(0.1f)
-                .build();
-
-        GenerateContentResponse response =
-            client.models.generateContent(
-                geminiModel, buildGeminiEventDetectionPrompt(subject, mailText, sentDate), config);
-
-        String raw = response.text();
+        String raw = callGemini(prompt);
         log.info("Gmail event detection for [{}] -> {}", subject, raw);
-        JsonNode node = objectMapper.readTree(raw);
-
-        // An event needs a real, parseable start date. Without one we skip the mail instead of
-        // importing it to "now" (today), which previously scattered dateless mails onto the import
-        // day. A blank/unparseable date therefore yields "no event", not a failure.
-        Optional<LocalDateTime> startOpt = tryParseDatetime(node.path("startDate").asText(""));
-        if (startOpt.isEmpty()) {
-          return Optional.empty();
-        }
-
-        LocalDateTime start = startOpt.get();
-        LocalDateTime end =
-            tryParseDatetime(node.path("endDate").asText(""))
-                .orElseGet(() -> resolveEndTime(null, start));
-        String name = node.path("name").asText(subject);
-        int kosten = node.path("kosten").asInt(0);
-        return Optional.of(new EventResponseDTO(name, kosten, start, end));
+        return mapDetectionResponse(objectMapper.readTree(raw), subject);
       } catch (Exception exception) {
-        if (attempt++ >= DETECTION_MAX_RETRIES) {
+        if (attempt++ >= detectionMaxRetries) {
           log.warn("Gmail event detection failed for [{}] after {} attempts", subject, attempt);
           throw new EventDetectionException("Gemini event detection failed", exception);
         }
-        // Back off briefly before retrying a throttled/transient failure.
-        try {
-          Thread.sleep(400L * attempt);
-        } catch (InterruptedException interrupted) {
-          Thread.currentThread().interrupt();
-          throw new EventDetectionException("Event detection interrupted", interrupted);
-        }
+        sleepBeforeRetry(exception, attempt, subject);
       }
     }
+  }
+
+  /**
+   * Maps one Gemini detection response onto an event.
+   *
+   * <p>Empty means "this mail is not an event", for either of two reasons. Gemini said so via
+   * {@code hasEvent} — the prompt defines that flag as the verdict, and ignoring it (as this code
+   * once did) turns any newsletter carrying a date-like string into a calendar entry. Or the start
+   * date is missing/unparseable, in which case the event cannot be placed anyway; importing it
+   * would pin the mail to "now" and scatter dateless mails across the import day.
+   */
+  private Optional<EventResponseDTO> mapDetectionResponse(JsonNode node, String subject) {
+    if (!node.path("hasEvent").asBoolean(false)) {
+      return Optional.empty();
+    }
+
+    Optional<LocalDateTime> startOpt = tryParseDatetime(node.path("startDate").asText(""));
+    if (startOpt.isEmpty()) {
+      return Optional.empty();
+    }
+
+    LocalDateTime start = startOpt.get();
+    LocalDateTime end =
+        tryParseDatetime(node.path("endDate").asText(""))
+            .orElseGet(() -> resolveEndTime(null, start));
+    String name = node.path("name").asText(subject);
+    int kosten = node.path("kosten").asInt(0);
+    return Optional.of(new EventResponseDTO(name, kosten, start, end));
+  }
+
+  /**
+   * The raw Gemini detection call. Kept as its own method so tests can stub the network away, and
+   * so the client is built once per message rather than once per retry.
+   */
+  String callGemini(String prompt) {
+    Client client =
+        Client.builder()
+            .apiKey(geminiApiKey)
+            .httpOptions(HttpOptions.builder().timeout(geminiTimeoutSeconds * 1000).build())
+            .build();
+
+    GenerateContentConfig config =
+        GenerateContentConfig.builder()
+            .responseMimeType("application/json")
+            .temperature(0.1f)
+            .build();
+
+    GenerateContentResponse response = client.models.generateContent(geminiModel, prompt, config);
+    return response.text();
+  }
+
+  /**
+   * Waits before the next detection attempt: exponential backoff with jitter, and a far longer base
+   * for a rate limit, because Gemini's quota resets per minute and a sub-second retry would just
+   * hit the same exhausted quota again.
+   */
+  private void sleepBeforeRetry(Exception failure, int attempt, String subject) {
+    boolean rateLimited = isRateLimited(failure);
+    long base = rateLimited ? detectionRateLimitBackoffMillis : detectionBackoffMillis;
+    long backoff = base * (1L << (attempt - 1));
+    long jittered = backoff + ThreadLocalRandom.current().nextLong(backoff / 4 + 1);
+
+    if (rateLimited) {
+      log.warn("Gemini rate-limited detection for [{}]; retrying in {} ms", subject, jittered);
+    }
+
+    try {
+      Thread.sleep(jittered);
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      throw new EventDetectionException("Event detection interrupted", interrupted);
+    }
+  }
+
+  /** True when Gemini refused the call because the quota is exhausted (HTTP 429). */
+  private boolean isRateLimited(Throwable failure) {
+    for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+      if (cause instanceof ApiException api && api.code() == 429) {
+        return true;
+      }
+      if (cause.getCause() == cause) {
+        break;
+      }
+    }
+    return false;
   }
 
   private String buildGeminiEventDetectionPrompt(
