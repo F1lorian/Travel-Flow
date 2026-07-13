@@ -1,4 +1,4 @@
-package com.sep.sep_backend.filemanagement;
+package com.sep.sep_backend.FileManagement;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

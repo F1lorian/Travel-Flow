@@ -1,4 +1,4 @@
-package com.sep.sep_backend.filemanagement;
+package com.sep.sep_backend.FileManagement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -12,10 +12,10 @@ class DataControllerTest {
 
   @Test
   void exportAllEventsReturnsDownloadableIcalResponse() {
-    DataService dataService = mock(DataService.class);
+    com.sep.sep_backend.FileManagement.DataService dataService = mock(com.sep.sep_backend.FileManagement.DataService.class);
     when(dataService.exportAllEventsAsIcal()).thenReturn("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n");
 
-    ResponseEntity<String> response = new DataController(dataService).exportAllEvents();
+    ResponseEntity<String> response = new com.sep.sep_backend.FileManagement.DataController(dataService).exportAllEvents();
 
     assertThat(response.getHeaders().getContentType().toString())
         .isEqualTo("text/calendar;charset=UTF-8");

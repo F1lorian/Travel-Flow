@@ -1,4 +1,4 @@
-package com.sep.sep_backend.filemanagement;
+package com.sep.sep_backend.FileManagement;
 
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
