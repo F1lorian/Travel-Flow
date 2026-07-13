@@ -41,6 +41,11 @@ test('Alle Elemente werden angezeigt', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Add Event' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Import Event' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Event' })).toBeVisible();
+
+  await expect(page.getByText('My events')).toBeVisible();
+  await expect(page.getByText("Friends' events")).toBeVisible();
+  await expect(page.getByText('My trips')).toBeVisible();
+  await expect(page.getByText("Friends' trips")).toBeVisible();
 });
 
 test('Event wird über Dialog erstellt', async ({ page }) => {

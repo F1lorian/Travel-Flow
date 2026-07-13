@@ -261,7 +261,8 @@ test('Trip-Einladung annehmen entfernt sie aus der Liste', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Accept' }).click();
 
-  await expect(page.getByText('Rom-Trip')).toBeHidden();
+  // exact:true keeps the success snackbar ('Joined trip "Rom-Trip"') from matching too.
+  await expect(page.getByText('Rom-Trip', { exact: true })).toBeHidden();
   await expect(page.getByText('No open invitations.')).toBeVisible();
 });
 
@@ -284,7 +285,8 @@ test('Trip-Einladung ablehnen entfernt sie aus der Liste', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Decline' }).click();
 
-  await expect(page.getByText('Rom-Trip')).toBeHidden();
+  // exact:true keeps the snackbar ('Declined invite to "Rom-Trip"') from matching too.
+  await expect(page.getByText('Rom-Trip', { exact: true })).toBeHidden();
   await expect(page.getByText('No open invitations.')).toBeVisible();
 });
 
@@ -311,7 +313,8 @@ test('Event-Einladung annehmen entfernt sie aus der Liste', async ({ page }) => 
 
   await page.getByRole('button', { name: 'Accept' }).click();
 
-  await expect(page.getByText('Konzert')).toBeHidden();
+  // exact:true keeps the success snackbar ('Joined event "Konzert"') from matching too.
+  await expect(page.getByText('Konzert', { exact: true })).toBeHidden();
   await expect(page.getByText('No open invitations.')).toBeVisible();
 });
 
@@ -326,7 +329,8 @@ test('Event-Einladung ablehnen entfernt sie aus der Liste', async ({ page }) => 
 
   await page.getByRole('button', { name: 'Decline' }).click();
 
-  await expect(page.getByText('Konzert')).toBeHidden();
+  // exact:true keeps the snackbar ('Declined invite to "Konzert"') from matching too.
+  await expect(page.getByText('Konzert', { exact: true })).toBeHidden();
   await expect(page.getByText('No open invitations.')).toBeVisible();
 });
 

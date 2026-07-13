@@ -14,13 +14,14 @@ import { EventService as CalendarEventService } from '../../../../event-adding-m
 import { ConflictDialog } from '../../../components/conflict-dialog/conflict-dialog';
 import { EventDialog } from '../../../components/event-dialog/event-dialog';
 import { InviteDialog } from '../../../components/invite-dialog/invite-dialog';
-import {SlicePipe} from '@angular/common';
+import {DecimalPipe, SlicePipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
+import {addDays, isAllDayRange} from '../../../services/all-day';
 
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, EventSearchComponent, SlicePipe, MatIcon],
+  imports: [FormsModule, RouterLink, EventSearchComponent, SlicePipe, DecimalPipe, MatIcon],
   templateUrl: './trip-detail.html',
   styleUrl: './trip-detail.css'
 })
@@ -41,6 +42,9 @@ export class TripDetail implements OnInit {
   participants = signal<TripParticipantDTO[]>([]);
   acceptedParticipants = computed(() =>
     this.participants().filter(p => p.status === 'ACCEPTED')
+  );
+  totalCost = computed(() =>
+    this.events().reduce((sum, event) => sum + (event.kosten || 0), 0)
   );
   participantToRemove: TripParticipantDTO | null = null;
 
@@ -219,6 +223,21 @@ export class TripDetail implements OnInit {
 
   formatDateTime(dt?: string): string {
     return dt ? new Date(dt).toLocaleString() : '';
+  }
+
+  isAllDay(event: Event): boolean {
+    return isAllDayRange(event.startTime, event.endTime);
+  }
+
+  /** Date(s) of an all-day event; the stored end is exclusive, so the last day is end - 1. */
+  formatAllDayRange(event: Event): string {
+    const startDay = event.startTime!.substring(0, 10);
+    const lastDay = addDays(event.endTime!, -1);
+    const start = new Date(`${startDay}T12:00:00`).toLocaleDateString();
+    if (lastDay === startDay) {
+      return start;
+    }
+    return `${start} – ${new Date(`${lastDay}T12:00:00`).toLocaleDateString()}`;
   }
 
   openDeleteConfirm() {

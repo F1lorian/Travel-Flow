@@ -1,276 +1,289 @@
-<div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
+<!-- w-full fills whatever width the dialog was opened with (import passes 600px);
+     min-w keeps the export dialog, which has no width config, from collapsing. -->
+<div class="w-full min-w-[min(34rem,80vw)]">
   @if(mode === 'import'){
-    <h2 class="mb-1 text-3xl font-bold tracking-tight text-slate-900">Event Import</h2>
+    <h2 class="px-6 pt-5 pb-3 text-3xl font-bold tracking-tight text-slate-900">Event Import</h2>
 
-    <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="import-source">
-      Import method
-    </label>
-    <select
-      id="import-source"
-      [(ngModel)]="importSource"
-      (ngModelChange)="onImportSourceChange()"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-       text-slate-900 outline-none transition
-       focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-      <option value="drag-drop">Drag and drop</option>
-      <option value="imap">IMAP</option>
-      <option value="gmail">Gmail</option>
-    </select>
-
-    <div class="mt-4 flex flex-col gap-2">
-      <label class="font-semibold text-sm" for="event-file">
-        Import event file
+    <div class="border-t border-gray-200 px-6 py-4">
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="import-source">
+        Import method
       </label>
+      <select
+        id="import-source"
+        [(ngModel)]="importSource"
+        (ngModelChange)="onImportSourceChange()"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+        <option value="drag-drop">Drag and drop</option>
+        <option value="imap">IMAP</option>
+        <option value="gmail">Gmail</option>
+      </select>
+    </div>
 
-      @if(importSource === 'drag-drop'){
-        <div
-          role="button"
-          tabindex="0"
-          class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
-           text-center transition
-           hover:border-blue-500 hover:bg-blue-50/40"
+    <div class="border-t border-gray-200 px-6 py-4">
+      <div class="flex flex-col gap-2">
+        <label class="mb-2 block text-sm font-semibold text-slate-700" for="event-file">
+          Import event file
+        </label>
 
-          (click)="fileInput.click()"
-          (keydown.enter)="fileInput.click()"
-          (dragover)="onDragOver($event)"
-          (drop)="onFileDrop($event)">
+        @if(importSource === 'drag-drop'){
+          <div
+            role="button"
+            tabindex="0"
+            class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10
+             text-center transition
+             hover:border-blue-500 hover:bg-blue-50/40"
 
-          @if (!fileName){
-            <p class="text-base font-semibold text-slate-800">
-              Drop the file here
-            </p>
+            (click)="fileInput.click()"
+            (keydown.enter)="fileInput.click()"
+            (dragover)="onDragOver($event)"
+            (drop)="onFileDrop($event)">
 
-            <p class="mt-1 text-sm text-slate-500">
-              or click to upload
-            </p>
+            @if (!fileName){
+              <p class="text-base font-semibold text-slate-800">
+                Drop the file here
+              </p>
 
-          }
+              <p class="mt-1 text-sm text-slate-500">
+                or click to upload
+              </p>
 
-          @if(fileName){
-            <p class="text-base font-semibold text-slate-800">
-              {{ fileName }}
-            </p>
-          }
-        </div>
+            }
 
-        <input
-          #fileInput
-          id="event-file"
-          hidden
-          type="file"
-          accept=".eml"
-          (change)="onFileSelected($event)">
-      }
+            @if(fileName){
+              <p class="text-base font-semibold text-slate-800">
+                {{ fileName }}
+              </p>
+            }
+          </div>
 
-      @if(importSource === 'imap'){
-        <div class="grid grid-cols-2 gap-3">
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Host
-            <input
-              [(ngModel)]="imapHost"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-              placeholder="imap.example.com">
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Port
-            <input
-              [(ngModel)]="imapPort"
-              type="number"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Username
-            <input
-              [(ngModel)]="imapUsername"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Password
-            <input
-              [(ngModel)]="imapPassword"
-              type="password"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Folder
-            <input
-              [(ngModel)]="imapFolder"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Limit
-            <input
-              [(ngModel)]="imapLimit"
-              type="number"
-              min="1"
-              max="50"
-              class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-          </label>
-        </div>
-
-        <button
-          (click)="loadImapMessages()"
-          [disabled]="isLoadingImapMessages"
-          class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-           transition hover:bg-slate-700 active:scale-[0.99]
-           disabled:cursor-not-allowed disabled:bg-slate-400">
-          {{ isLoadingImapMessages ? 'Loading...' : 'Load mails' }}
-        </button>
-
-        @if(imapMessages.length > 0){
-          <label class="mt-2 flex flex-col gap-1 text-sm font-semibold text-slate-700">
-            Message
-            <select
-              [(ngModel)]="selectedImapUid"
-              class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900 outline-none
-               focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
-              @for(message of imapMessages; track message.uid){
-                <option [ngValue]="message.uid">
-                  {{ message.subject || '(No subject)' }} - {{ message.from }}
-                </option>
-              }
-            </select>
-          </label>
+          <input
+            #fileInput
+            id="event-file"
+            hidden
+            type="file"
+            accept=".eml"
+            (change)="onFileSelected($event)">
         }
-      }
 
-      @if(importSource === 'gmail'){
-        @if(isCheckingGmailStatus){
-          <p class="text-sm text-slate-500">Checking Gmail connection…</p>
-        } @else if(!gmailConnected){
-          <p class="text-sm text-slate-600">
-            Connect your Gmail account to import events from your inbox.
-          </p>
+        @if(importSource === 'imap'){
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Host
+              <input
+                [(ngModel)]="imapHost"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                placeholder="imap.example.com">
+            </label>
 
-          <button
-            (click)="connectGmail()"
-            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-             transition hover:bg-slate-700 active:scale-[0.99]">
-            Connect Gmail
-          </button>
-        } @else {
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="text-sm text-slate-600">
-              Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
-            </p>
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Port
+              <input
+                [(ngModel)]="imapPort"
+                type="number"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+            </label>
 
-            <div class="flex items-center gap-3">
-              <button
-                type="button"
-                (click)="useAnotherGmailAccount()"
-                class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
-                Use another account
-              </button>
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Username
+              <input
+                [(ngModel)]="imapUsername"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+            </label>
 
-              <button
-                type="button"
-                (click)="disconnectGmail()"
-                [disabled]="isDisconnectingGmail"
-                class="text-sm font-medium text-red-600 transition hover:text-red-700
-                 disabled:cursor-not-allowed disabled:text-slate-400">
-                {{ isDisconnectingGmail ? 'Disconnecting...' : 'Disconnect' }}
-              </button>
-            </div>
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Password
+              <input
+                [(ngModel)]="imapPassword"
+                type="password"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+            </label>
+
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Folder
+              <input
+                [(ngModel)]="imapFolder"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+            </label>
+
+            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Limit
+              <input
+                [(ngModel)]="imapLimit"
+                type="number"
+                min="1"
+                max="50"
+                class="rounded-lg border border-slate-300 px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+            </label>
           </div>
 
           <button
-            (click)="loadGmailMessages()"
-            [disabled]="isLoadingGmailMessages"
-            class="mt-2 rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-             transition hover:bg-slate-700 active:scale-[0.99]
+            (click)="loadImapMessages()"
+            [disabled]="isLoadingImapMessages"
+            class="mt-2 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
+             transition hover:bg-blue-700 active:scale-[0.99]
              disabled:cursor-not-allowed disabled:bg-slate-400">
-            {{ isLoadingGmailMessages ? 'Loading...' : 'Load messages' }}
+            {{ isLoadingImapMessages ? 'Loading...' : 'Load mails' }}
           </button>
 
-          @if(gmailMessages.length > 0){
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-sm font-semibold text-slate-700">Messages</span>
-              <button
-                type="button"
-                (click)="toggleSelectAllGmail()"
-                class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
-                {{ allGmailSelected ? 'Deselect all' : 'Select all' }}
-              </button>
-            </div>
-
-            <div class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
-              @for(message of gmailMessages; track message.id){
-                <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2">
-                  <input
-                    type="checkbox"
-                    [checked]="isGmailSelected(message.id)"
-                    (change)="toggleGmailSelection(message.id)"
-                    class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                  <span class="min-w-0">
-                    <span class="block truncate text-sm font-semibold text-slate-800">
-                      {{ message.subject || '(No subject)' }}
-                    </span>
-                    <span class="block truncate text-xs text-slate-500">
-                      {{ message.from }}
-                    </span>
-                  </span>
-                </label>
-              }
-            </div>
+          @if(imapMessages.length > 0){
+            <label class="mt-2 flex flex-col gap-1 text-sm font-semibold text-slate-700">
+              Message
+              <select
+                [(ngModel)]="selectedImapUid"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal text-slate-900 outline-none
+                 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+                @for(message of imapMessages; track message.uid){
+                  <option [ngValue]="message.uid">
+                    {{ message.subject || '(No subject)' }} - {{ message.from }}
+                  </option>
+                }
+              </select>
+            </label>
           }
         }
-      }
+
+        @if(importSource === 'gmail'){
+          @if(isCheckingGmailStatus){
+            <p class="text-sm text-slate-500">Checking Gmail connection…</p>
+          } @else if(!gmailConnected){
+            <p class="text-sm text-slate-600">
+              Connect your Gmail account to import events from your inbox.
+            </p>
+
+            <button
+              (click)="connectGmail()"
+              class="mt-2 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
+               transition hover:bg-blue-700 active:scale-[0.99]">
+              Connect Gmail
+            </button>
+          } @else {
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-sm text-slate-600">
+                Connected as <span class="font-semibold text-slate-800">{{ gmailEmail }}</span>
+              </p>
+
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  (click)="useAnotherGmailAccount()"
+                  class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
+                  Use another account
+                </button>
+
+                <button
+                  type="button"
+                  (click)="disconnectGmail()"
+                  [disabled]="isDisconnectingGmail"
+                  class="text-sm font-medium text-red-600 transition hover:text-red-700
+                   disabled:cursor-not-allowed disabled:text-slate-400">
+                  {{ isDisconnectingGmail ? 'Disconnecting...' : 'Disconnect' }}
+                </button>
+              </div>
+            </div>
+
+            <button
+              (click)="loadGmailMessages()"
+              [disabled]="isLoadingGmailMessages"
+              class="mt-2 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white
+               transition hover:bg-blue-700 active:scale-[0.99]
+               disabled:cursor-not-allowed disabled:bg-slate-400">
+              {{ isLoadingGmailMessages ? 'Loading...' : 'Load messages' }}
+            </button>
+
+            @if(gmailMessages.length > 0){
+              <div class="mt-2 flex items-center justify-between">
+                <span class="text-sm font-semibold text-slate-700">Messages</span>
+                <button
+                  type="button"
+                  (click)="toggleSelectAllGmail()"
+                  class="text-sm font-medium text-blue-600 transition hover:text-blue-700">
+                  {{ allGmailSelected ? 'Deselect all' : 'Select all' }}
+                </button>
+              </div>
+
+              <div class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2">
+                @for(message of gmailMessages; track message.id){
+                  <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-white px-3 py-2">
+                    <input
+                      type="checkbox"
+                      [checked]="isGmailSelected(message.id)"
+                      (change)="toggleGmailSelection(message.id)"
+                      class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span class="min-w-0">
+                      <span class="block truncate text-sm font-semibold text-slate-800">
+                        {{ message.subject || '(No subject)' }}
+                      </span>
+                      <span class="block truncate text-xs text-slate-500">
+                        {{ message.from }}
+                      </span>
+                    </span>
+                  </label>
+                }
+              </div>
+            }
+          }
+        }
+      </div>
     </div>
 
-    <label class="mt-4 mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
-    <select
-      id="tripId"
-      [(ngModel)]="tripId"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
-       text-slate-900 outline-none transition
-       focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+    <div class="border-t border-gray-200 px-6 py-4">
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="tripId">Choose trip</label>
+      <select
+        id="tripId"
+        [(ngModel)]="tripId"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
 
-      <option [ngValue]="undefined" disabled>
-        Please choose a trip
-      </option>
-
-      <option [ngValue]="undefined">
-        The Event doesnÂ´t belong to a trip
-      </option>
-
-      @for (trip of trips; track trip.id) {
-
-        <option [ngValue]="trip.id">
-          {{ trip.name }}
+        <option [ngValue]="undefined" disabled>
+          Please choose a trip
         </option>
 
-      }
-    </select>
+        <option [ngValue]="undefined">
+          The Event doesn´t belong to a trip
+        </option>
+
+        @for (trip of trips; track trip.id) {
+
+          <option [ngValue]="trip.id">
+            {{ trip.name }}
+          </option>
+
+        }
+      </select>
+    </div>
   }
 
   @if(mode === 'export'){
-    <h1 class="text-2xl font-bold mb-4">Event Export</h1>
-    <button
-      (click)="downloadEvents()"
-      class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-       transition hover:bg-slate-700 active:scale-[0.99]">
+    <h2 class="px-6 pt-5 pb-3 text-3xl font-bold tracking-tight text-slate-900">Event Export</h2>
 
-      Download
-    </button>
+    <div class="border-t border-gray-200 px-6 py-4">
+      <button
+        (click)="downloadEvents()"
+        class="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+         font-semibold text-white
+         transition hover:bg-blue-700 active:scale-[0.99]">
+
+        Download
+      </button>
+    </div>
   }
 
-  <div class="mt-6 flex justify-end gap-2">
+  <div class="border-t border-gray-200 px-6 py-4 flex gap-3">
     @if(importSource === 'drag-drop' && file){
       <button
         (click)="uploadFile()"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
+        class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+         font-semibold text-white
+         transition hover:bg-blue-700 active:scale-[0.99]">
 
         Import
       </button>
@@ -279,8 +292,9 @@
     @if(importSource === 'imap' && selectedImapUid !== undefined){
       <button
         (click)="importSelectedImapMessage()"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]">
+        class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+         font-semibold text-white
+         transition hover:bg-blue-700 active:scale-[0.99]">
 
         Import
       </button>
@@ -290,8 +304,9 @@
       <button
         (click)="importSelectedGmailMessages()"
         [disabled]="isImportingGmail"
-        class="rounded-lg bg-slate-900 px-5 py-3 font-semibold text-white
-         transition hover:bg-slate-700 active:scale-[0.99]
+        class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3
+         font-semibold text-white
+         transition hover:bg-blue-700 active:scale-[0.99]
          disabled:cursor-not-allowed disabled:bg-slate-400">
 
         {{ isImportingGmail ? 'Importing...' : 'Import ' + selectedGmailCount + ' selected' }}
@@ -300,7 +315,7 @@
 
     <button
       (click)="close()"
-      class="rounded-lg border border-slate-300 bg-white px-5 py-3
+      class="flex-1 rounded-lg border border-slate-300 bg-white px-5 py-3
        font-semibold text-slate-700
        transition hover:bg-slate-100">
       Close

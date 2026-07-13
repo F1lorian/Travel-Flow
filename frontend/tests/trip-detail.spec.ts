@@ -76,6 +76,36 @@ test('Owner kann Teilnehmer entfernen (mit Bestätigung)', async ({ page }) => {
   await expect(page.locator('.participant-list').getByText('Svetoslav Ivanov')).toBeHidden();
 });
 
+test('Trip-Header zeigt Gesamtkosten und All-day-Events werden markiert', async ({ page }) => {
+  const tripWithEvents = {
+    ...trip,
+    events: [
+      {
+        id: 10,
+        name: 'Kolosseum',
+        kosten: 25,
+        startTime: '2026-08-02T10:00:00',
+        endTime: '2026-08-02T12:00:00',
+      },
+      {
+        id: 11,
+        name: 'Strandtag',
+        kosten: 10.5,
+        startTime: '2026-08-03T00:00:00',
+        endTime: '2026-08-04T00:00:00',
+      },
+    ],
+  };
+  await mockJson(page, '**/api/trips/1', tripWithEvents);
+  await mockJson(page, '**/api/trips/1/participants', participants);
+
+  await page.goto('/trips/1');
+
+  await expect(page.getByText(/Total costs: 35[.,]5 €/)).toBeVisible();
+  await expect(page.locator('li', { hasText: 'Strandtag' }).getByText('All day')).toBeVisible();
+  await expect(page.locator('li', { hasText: 'Kolosseum' }).getByText('All day')).toBeHidden();
+});
+
 test('Delete Trip zeigt Bestätigungsmodal mit allen Events', async ({ page }) => {
   const tripWithEvents = {
     ...trip,

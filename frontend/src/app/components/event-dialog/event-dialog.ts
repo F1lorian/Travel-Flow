@@ -17,6 +17,7 @@ import { UserEventDTO } from '../../../event-adding-manual/models/UserEventDTO';
 import {catchError, forkJoin, of} from 'rxjs';
 import {NotificationService} from '../notification-menu/notification.service';
 import {FeedbackService} from '../../services/feedback.service';
+import {addDays, isAllDayRange} from '../../services/all-day';
 
 interface EventDialogData {
   mode?: 'create' | 'edit' | 'show';
@@ -78,6 +79,14 @@ export class EventDialog implements OnInit {
       this.tripId = this.data.tripId || undefined;
       this.start = this.data.start || "";
       this.end = this.data.end || "";
+
+      // All-day events arrive with an exclusive end (midnight after the last day);
+      // the form works with the inclusive last day so users see the range they picked.
+      this.allDay = isAllDayRange(this.start, this.end);
+      if (this.allDay) {
+        this.start = this.start.substring(0, 10) + 'T00:00';
+        this.end = addDays(this.end, -1) + 'T00:00';
+      }
     }
   }
 
@@ -95,8 +104,10 @@ export class EventDialog implements OnInit {
    * If conflicts exist, the user can confirm that the event should still be saved.
    */
   save() {
+    const { start, end } = this.normalizedRange();
+
     if (this.mode === 'create') {
-      this.eventService.getConflictEvents(this.start, this.end).subscribe({
+      this.eventService.getConflictEvents(start, end).subscribe({
         next: conflicts => {
           if (conflicts.length > 0) {
             const dialogRef = this.dialog.open(ConflictDialog, {
@@ -106,20 +117,20 @@ export class EventDialog implements OnInit {
 
             dialogRef.afterClosed().subscribe(confirmed => {
               if (confirmed) {
-                this.createEvent();
+                this.createEvent(start, end);
               }
             });
             return;
           }
 
-          this.createEvent();
+          this.createEvent(start, end);
         },
         error: err => this.showError(err)
       });
     }
 
     if (this.mode === 'edit') {
-      this.eventService.getConflictEvents(this.start, this.end).subscribe({
+      this.eventService.getConflictEvents(start, end).subscribe({
         next: conflicts => {
           // Do not warn about the event currently being edited.
           const otherConflicts = conflicts.filter(conflict => conflict.id !== this.data.id);
@@ -132,13 +143,13 @@ export class EventDialog implements OnInit {
 
             dialogRef.afterClosed().subscribe(confirmed => {
               if (confirmed) {
-                this.saveEditedEvent();
+                this.saveEditedEvent(start, end);
               }
             });
             return;
           }
 
-          this.saveEditedEvent();
+          this.saveEditedEvent(start, end);
         },
         error: err => this.showError(err)
       });
@@ -146,15 +157,52 @@ export class EventDialog implements OnInit {
   }
 
   /**
+   * The range that gets saved: all-day events are converted to their storage shape
+   * (midnight start, exclusive midnight end after the last day) while timed events pass
+   * through unchanged. The form fields stay untouched so a failed save cannot shift them.
+   */
+  private normalizedRange(): { start: string; end: string } {
+    if (!this.allDay || !this.start) {
+      return { start: this.start, end: this.end };
+    }
+    const startDay = this.start.substring(0, 10);
+    let endDay = (this.end || this.start).substring(0, 10);
+    if (endDay < startDay) {
+      endDay = startDay;
+    }
+    return { start: `${startDay}T00:00`, end: `${addDays(endDay, 1)}T00:00` };
+  }
+
+  /**
+   * Date-only view of the range for the all-day inputs. `start`/`end` stay canonical
+   * (datetime-local format), so toggling all-day off restores the original times.
+   */
+  get startDay(): string {
+    return this.start.substring(0, 10);
+  }
+
+  set startDay(value: string) {
+    this.start = value ? `${value}T00:00` : '';
+  }
+
+  get endDay(): string {
+    return this.end.substring(0, 10);
+  }
+
+  set endDay(value: string) {
+    this.end = value ? `${value}T00:00` : '';
+  }
+
+  /**
    * Creates a new manually entered event after conflict handling has finished.
    */
-  createEvent() {
+  createEvent(start = this.start, end = this.end) {
     this.eventService.createManualEvent({
       name: this.title,
       kosten: this.kosten ?? 0,
       tripId: this.tripId,
-      start: this.start,
-      end: this.end,
+      start,
+      end,
     }).subscribe({
       next: (response) => {
       if (this.invitations.length === 0) {
@@ -187,14 +235,14 @@ export class EventDialog implements OnInit {
   /**
    * Saves changes to an existing event after conflict handling has finished.
    */
-  saveEditedEvent() {
+  saveEditedEvent(start = this.start, end = this.end) {
     this.eventService.editEvent({
       id: this.data.id!,
       name: this.title,
       kosten: this.kosten ?? 0,
       tripId: this.tripId,
-      start: this.start,
-      end: this.end,
+      start,
+      end,
     }).subscribe({
       next: (response) => {
         if (this.invitations.length === 0) {
@@ -325,6 +373,14 @@ export class EventDialog implements OnInit {
 
   get acceptedParticipants(): UserEventDTO[] {
     return this.participants.filter(p => p.status === 'ACCEPTED');
+  }
+
+  /** Accepted participants without the viewer — the show dialog lists only the others. */
+  get attendingOthers(): UserEventDTO[] {
+    const currentUsername = localStorage.getItem('sepUser');
+    return this.participants.filter(
+      p => p.status === 'ACCEPTED' && p.username !== currentUsername
+    );
   }
 
   get attendingFriends(): UserEventDTO[] {

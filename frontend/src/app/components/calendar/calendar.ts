@@ -20,6 +20,7 @@ import {TripService} from '../../TripManagement/services/trip.service';
 import { Router } from '@angular/router';
 import {MessageDialog} from '../message-dialog/message-dialog';
 import {Friend, FriendsService} from '../../services/friends.service';
+import {isAllDayRange} from '../../services/all-day';
 import {forkJoin} from 'rxjs';
 
 
@@ -165,6 +166,7 @@ export class CalendarComponent implements OnInit {
           title: event.name,
           start: event.start,
           end: event.end,
+          allDay: isAllDayRange(event.start, event.end),
           classNames: ['calendar-event'],
           extendedProps: {
             kosten: event.kosten,
@@ -191,8 +193,9 @@ export class CalendarComponent implements OnInit {
     }
 
     calendarEvent.setProp('title', event.name);
-    calendarEvent.setStart(event.start);
-    calendarEvent.setEnd(event.end);
+    calendarEvent.setDates(event.start, event.end, {
+      allDay: isAllDayRange(event.start, event.end),
+    });
     calendarEvent.setExtendedProp('kosten', event.kosten);
     calendarEvent.setExtendedProp('tripId', event.tripId);
   }
@@ -311,6 +314,7 @@ export class CalendarComponent implements OnInit {
             title: event.title,
             start: event.start,
             end: event.end,
+            allDay: isAllDayRange(event.start, event.end),
 
             classNames: [eventClass],
 
