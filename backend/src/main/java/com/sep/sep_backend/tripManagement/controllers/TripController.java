@@ -8,8 +8,11 @@ DELETE /api/trips/{id} → frontend delete-trip button */
 
 import com.sep.sep_backend.accountmanagement.CurrentUserService;
 import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripDTO;
+import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
 import com.sep.sep_backend.tripManagement.services.TripService;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,19 +33,26 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/trips")
 public class TripController {
 
+  private final TripRepository tripRepository;
+
   /** Shape of the JSON body sent by the frontend when creating a trip. */
   public record CreateTripRequest(String name, LocalDate startDate, LocalDate endDate) {}
 
   private final TripService tripService;
+  private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
   private final CurrentUserService currentUserService;
 
   public TripController(
       TripService tripService,
+      UserRepository userRepository,
       UserTripRepository userTripRepository,
+      TripRepository tripRepository,
       CurrentUserService currentUserService) {
     this.tripService = tripService;
+    this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
+    this.tripRepository = tripRepository;
     this.currentUserService = currentUserService;
   }
 
@@ -97,5 +107,10 @@ public class TripController {
   private TripDTO toDtoWithMembership(Trip trip, Long userId) {
     return TripDTO.from(
         trip, userTripRepository.findByIdUserIdAndIdTripId(userId, trip.getId()).orElse(null));
+  }
+
+  @GetMapping("/{id}/participants")
+  public ResponseEntity<List<TripParticipantDTO>> getParticipants(@PathVariable Long id) {
+    return ResponseEntity.ok(tripService.getParticipants(id));
   }
 }

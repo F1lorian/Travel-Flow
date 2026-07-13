@@ -45,7 +45,9 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -346,9 +348,15 @@ class EventServiceTest {
 
   @Test
   void deleteEventFromDBLoeschtVorhandenesEvent() {
-    when(eventRepository.existsById(42L)).thenReturn(true);
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
 
-    eventService.DeleteEventFromDB(42L);
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+
+    eventService.DeleteEventFromDB(42L, 7L);
 
     InOrder inOrder = inOrder(userEventRepository, eventRepository);
     inOrder.verify(userEventRepository).deleteByEvent_Id(42L);
@@ -357,11 +365,30 @@ class EventServiceTest {
 
   @Test
   void deleteEventFromDBWirftExceptionWennEventNichtExistiert() {
-    when(eventRepository.existsById(42L)).thenReturn(false);
+    when(eventRepository.findById(42L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> eventService.DeleteEventFromDB(42L))
+    assertThatThrownBy(() -> eventService.DeleteEventFromDB(42L, 7L))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Event mit ID 42 wurde nicht gefunden");
+
+    verify(eventRepository, never()).deleteById(any());
+    verify(userEventRepository, never()).deleteByEvent_Id(any());
+  }
+
+  @Test
+  void deleteEventFromDBRejectsWhenRequesterIsNotOwner() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+
+    assertThatThrownBy(() -> eventService.DeleteEventFromDB(42L, 8L))
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
 
     verify(eventRepository, never()).deleteById(any());
     verify(userEventRepository, never()).deleteByEvent_Id(any());
@@ -380,6 +407,8 @@ class EventServiceTest {
             25,
             oldTrip);
     event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
     EventRequestDTO request =
         new EventRequestDTO(
             "Theater",
@@ -392,7 +421,7 @@ class EventServiceTest {
     when(tripRepository.findById(7L)).thenReturn(Optional.of(newTrip));
     when(eventRepository.save(event)).thenReturn(event);
 
-    EventResponseDTO result = eventService.EditEvent(42L, request);
+    EventResponseDTO result = eventService.EditEvent(42L, request, 7L);
 
     assertThat(event.getName()).isEqualTo("Theater");
     assertThat(event.getKosten()).isEqualTo(70);
@@ -412,12 +441,14 @@ class EventServiceTest {
             LocalDateTime.of(2026, 6, 1, 16, 0),
             25,
             null);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
     EventRequestDTO request = new EventRequestDTO(null, -1, null, null, null);
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
     when(eventRepository.save(event)).thenReturn(event);
 
-    EventResponseDTO result = eventService.EditEvent(42L, request);
+    EventResponseDTO result = eventService.EditEvent(42L, request, 7L);
 
     assertThat(event.getKosten()).isEqualTo(25);
     assertThat(result.getKosten()).isEqualTo(25);
@@ -429,9 +460,33 @@ class EventServiceTest {
   void editEventWirftExceptionWennEventNichtExistiert() {
     when(eventRepository.findById(42L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> eventService.EditEvent(42L, new EventRequestDTO()))
+    assertThatThrownBy(() -> eventService.EditEvent(42L, new EventRequestDTO(), 7L))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Event mit ID 42 wurde nicht gefunden");
+
+    verify(eventRepository, never()).save(any(Event.class));
+  }
+
+  @Test
+  void editEventRejectsWhenRequesterIsNotOwner() {
+    Event event =
+        new Event(
+            "Museum",
+            LocalDateTime.of(2026, 6, 1, 14, 0),
+            LocalDateTime.of(2026, 6, 1, 16, 0),
+            25,
+            null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+    EventRequestDTO request = new EventRequestDTO("Theater", 70, null, null, null);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+
+    assertThatThrownBy(() -> eventService.EditEvent(42L, request, 8L))
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
 
     verify(eventRepository, never()).save(any(Event.class));
   }
@@ -756,9 +811,9 @@ class EventServiceTest {
     event.setId(42L);
     User requester = userWithEvents(7L);
     User friend = userWithEvents(8L);
+    event.setOwner(requester);
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(false);
     when(userRepository.findById(8L)).thenReturn(Optional.of(friend));
     when(userRepository.findById(7L)).thenReturn(Optional.of(requester));
@@ -778,13 +833,14 @@ class EventServiceTest {
     Event event =
         new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
+    event.setOwner(userWithEvents(9L));
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Only participants can invite friends");
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
 
     verify(userEventRepository, never()).save(any(UserEvent.class));
   }
@@ -794,9 +850,9 @@ class EventServiceTest {
     Event event =
         new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
     event.setId(42L);
+    event.setOwner(userWithEvents(7L));
 
     when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
 
     assertThatThrownBy(() -> eventService.inviteFriendToEvent(42L, 8L, 7L))
@@ -807,9 +863,14 @@ class EventServiceTest {
   }
 
   @Test
-  void removeFriendFromEventDeletesUserEventWhenRequesterIsParticipant() {
-    when(eventRepository.existsById(42L)).thenReturn(true);
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(true);
+  void removeFriendFromEventDeletesParticipantWhenRequesterIsOwner() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
     when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
 
     eventService.removeFriendFromEvent(42L, 8L, 7L);
@@ -818,13 +879,53 @@ class EventServiceTest {
   }
 
   @Test
-  void removeFriendFromEventRejectsWhenRequesterIsNotParticipant() {
-    when(eventRepository.existsById(42L)).thenReturn(true);
-    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 7L)).thenReturn(false);
+  void removeFriendFromEventAllowsUserToRemoveThemselves() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(true);
+
+    eventService.removeFriendFromEvent(42L, 8L, 8L);
+
+    verify(userEventRepository).deleteByEvent_IdAndUser_Id(42L, 8L);
+  }
+
+  @Test
+  void removeFriendFromEventRejectsWhenRequesterIsNeitherOwnerNorSelf() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+
+    assertThatThrownBy(() -> eventService.removeFriendFromEvent(42L, 8L, 9L))
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
+
+    verify(userEventRepository, never()).deleteByEvent_IdAndUser_Id(any(), any());
+  }
+
+  @Test
+  void removeFriendFromEventThrowsWhenFriendNotPartOfEvent() {
+    Event event =
+        new Event("Museum", LocalDateTime.now(), LocalDateTime.now().plusHours(1), 25, null);
+    event.setId(42L);
+    User owner = userWithEvents(7L);
+    event.setOwner(owner);
+
+    when(eventRepository.findById(42L)).thenReturn(Optional.of(event));
+    when(userEventRepository.existsByEvent_IdAndUser_Id(42L, 8L)).thenReturn(false);
 
     assertThatThrownBy(() -> eventService.removeFriendFromEvent(42L, 8L, 7L))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Only participants can remove friends from events");
+        .hasMessage("User is not part of this event");
 
     verify(userEventRepository, never()).deleteByEvent_IdAndUser_Id(any(), any());
   }

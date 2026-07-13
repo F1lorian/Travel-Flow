@@ -14,6 +14,7 @@ import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
+import com.sep.sep_backend.tripManagement.dto.TripParticipantDTO;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -111,10 +112,12 @@ public class TripService {
             .findById(userId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-    Trip trip = new Trip(name.trim());
+    Trip trip = new Trip(name);
     trip.setStartDate(startDate);
     trip.setEndDate(endDate);
+    trip.setOwner(user);
     Trip savedTrip = tripRepository.save(trip);
+
     userTripRepository.save(new UserTrip(user, savedTrip, null, UserTrip.InviteStatus.ACCEPTED));
 
     // Mirror the in-app confirmation by email; a mail failure never fails the creation itself.
@@ -141,6 +144,10 @@ public class TripService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found: " + id));
     requireMember(id, userId);
 
+    if (trip.getOwner() == null || trip.getOwner().getId() != userId) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip creator can delete this trip");
+    }
     userEventRepository.deleteByEvent_Trip_Id(id);
     eventRepository.deleteByTrip_Id(id);
     ausgabeRepository.deleteByTrip_Id(id);
@@ -160,23 +167,33 @@ public class TripService {
                         + "\" and all of its events and expenses were deleted."));
   }
 
+  public List<TripParticipantDTO> getParticipants(Long tripId) {
+    return userTripRepository.findByTrip_Id(tripId).stream().map(TripParticipantDTO::from).toList();
+  }
+
   /**
    * Removes a friend from a trip and from all events belonging to that trip. The friendship itself
    * is not changed.
    */
   @Transactional
   public void removeFriendFromTrip(Long tripId, Long friendUserId, Long requestingUserId) {
-    if (!tripRepository.existsById(tripId)) {
-      throw new IllegalArgumentException("Trip not found: " + tripId);
+    Trip trip =
+        tripRepository
+            .findById(tripId)
+            .orElseThrow(() -> new IllegalArgumentException("Trip not found: " + tripId));
+
+    boolean isOwner = trip.getOwner() != null && trip.getOwner().getId() == requestingUserId;
+    boolean isSelf = friendUserId.equals(requestingUserId);
+
+    if (!isOwner && !isSelf) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip owner can remove other participants");
     }
 
-    UserTrip requesterTrip =
+    UserTrip friendTrip =
         userTripRepository
-            .findByIdUserIdAndIdTripId(requestingUserId, tripId)
+            .findByIdUserIdAndIdTripId(friendUserId, tripId)
             .orElseThrow(() -> new IllegalArgumentException("User is not part of this trip"));
-    if (requesterTrip.getStatus() != UserTrip.InviteStatus.ACCEPTED) {
-      throw new IllegalArgumentException("Only accepted trip members can remove friends");
-    }
 
     userTripRepository
         .findByIdUserIdAndIdTripId(friendUserId, tripId)

@@ -1,4 +1,4 @@
-package com.sep.sep_backend.filemanagement;
+package com.sep.sep_backend.FileManagement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

@@ -1,4 +1,4 @@
-package com.sep.sep_backend.filemanagement;
+package com.sep.sep_backend.FileManagement;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

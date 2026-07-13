@@ -121,6 +121,7 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
+        creatorUsername: selectedEvent.extendedProps['creatorUsername'],
         start: selectedEvent.startStr.substring(0,16),
         end: selectedEvent.endStr.substring(0,16)
       }
@@ -128,6 +129,12 @@ export class CalendarComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result?.action === 'edit') {
         this.editEvent(selectedEvent);
+      }
+      if (result?.action === 'deleted') {
+        this.removeDeletedEvent(selectedEvent.id);
+      }
+      if (result?.action === 'error') {
+        this.showMessage(result.message);
       }
     });
     return;
@@ -162,6 +169,7 @@ export class CalendarComponent implements OnInit {
           extendedProps: {
             kosten: event.kosten,
             tripId: event.tripId,
+            creatorUsername: localStorage.getItem('sepUser'),
           },
         },
       ],
@@ -236,6 +244,7 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
+        creatorUsername: selectedEvent.extendedProps['creatorUsername'],
         start: selectedEvent.startStr.substring(0, 16),
         end: selectedEvent.endStr.substring(0, 16)}
     });
@@ -294,7 +303,7 @@ export class CalendarComponent implements OnInit {
         this.Friends = friends;
 
         const mappedEvents = events.map(event => {
-          const isFriendEvent = this.Friends.some(friend => friend.id === event.creatorId);
+          const isFriendEvent = this.Friends.some(friend => friend.username === event.creatorUsername);
           const eventClass = isFriendEvent ? 'friend-calendar-event' : 'calendar-event';
 
           return {
@@ -308,7 +317,8 @@ export class CalendarComponent implements OnInit {
             extendedProps: {
               type: 'event',
               kosten: event.kosten,
-              tripId: event.tripId
+              tripId: event.tripId,
+              creatorUsername: event.creatorUsername,
             }
           };
         });

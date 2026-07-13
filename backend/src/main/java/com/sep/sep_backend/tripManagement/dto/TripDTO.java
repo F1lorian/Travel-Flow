@@ -24,6 +24,7 @@ public class TripDTO {
   private long invitedByUserId;
   private String invitedByUsername;
   private boolean invited;
+  private String ownerUsername;
 
   /**
    * Builds a TripDTO from a Trip entity, also converting its events to {@link EventDTO}s so the
@@ -42,6 +43,7 @@ public class TripDTO {
     dto.invitedByUserId = 0;
     dto.invitedByUsername = null;
     dto.invited = false;
+    dto.ownerUsername = trip.getOwner() != null ? trip.getOwner().getName() : null;
 
     if (membership != null && membership.getInvitedBy() != null) {
       User invitedBy = membership.getInvitedBy();
@@ -90,5 +92,9 @@ public class TripDTO {
 
   public boolean isInvited() {
     return invited;
+  }
+
+  public String getOwnerUsername() {
+    return ownerUsername;
   }
 }

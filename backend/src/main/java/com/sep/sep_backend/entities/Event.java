@@ -26,6 +26,10 @@ public class Event {
   @JoinColumn(name = "categorie_id")
   private Categories categorie;
 
+  @ManyToOne
+  @JoinColumn(name = "owner_id")
+  private User owner;
+
   public Event() {}
 
   public Event(
@@ -95,5 +99,13 @@ public class Event {
 
   public Long getTripId() {
     return this.trip == null ? null : this.trip.getId();
+  }
+
+  public User getOwner() {
+    return owner;
+  }
+
+  public void setOwner(User owner) {
+    this.owner = owner;
   }
 }

@@ -5,5 +5,5 @@ export interface CalendarEventImport {
   end: string;
   kosten: number;
   tripId: number;
-  creatorId?: number;
+  creatorUsername?: string;
 }

@@ -15,6 +15,7 @@ export interface Trip {
   invitedByUserId: number;
   invitedByUsername?: string;
   invited: boolean;
+  ownerUsername?: string;
 }
 
 export interface Event {
@@ -22,8 +23,9 @@ export interface Event {
   name: string;
   startTime?: string;
   endTime?: string;
-  kosten: number; // cost in EUR (German "Kosten"); 0 means free/no price
+  kosten: number;
   categoryName?: string;
+  ownerUsername?: string;
 }
 
 export interface Category {
@@ -38,6 +40,14 @@ export interface EventRecommendation {
   description: string;
   location: string;
   sourceUrl: string;
+}
+
+export interface TripParticipantDTO {
+  userId: number;
+  username: string;
+  firstname: string;
+  surname: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,5 +93,13 @@ export class TripService {
 
   searchEventRecommendations(location: string): Observable<EventRecommendation[]> {
     return this.http.post<EventRecommendation[]>(`${this.apiUrl}/event-search`, { location });
+  }
+
+  getParticipants(tripId: number): Observable<TripParticipantDTO[]> {
+    return this.http.get<TripParticipantDTO[]>(`${this.apiUrl}/${tripId}/participants`);
+  }
+
+  removeFriendsFromTrip(tripId: number, friendId: number): Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${tripId}/friends/${friendId}`)
   }
 }

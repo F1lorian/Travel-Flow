@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.sep.sep_backend.accountmanagement.CurrentUserService;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.services.TripService;
 import java.util.List;
@@ -37,6 +39,10 @@ class TripControllerTest {
   @MockitoBean private TripService tripService;
 
   @MockitoBean private UserTripRepository userTripRepository;
+
+  @MockitoBean private UserRepository userRepository;
+
+  @MockitoBean private TripRepository tripRepository;
 
   @MockitoBean private CurrentUserService currentUserService;
 

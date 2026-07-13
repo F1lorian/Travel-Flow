@@ -64,9 +64,7 @@ public class TripInviteService {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a friend");
     }
 
-    if (!hasAcceptedTrip(currentUser, trip)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not part of this trip");
-    }
+    requireOwner(trip, currentUser);
 
     var existingEntry = userTripRepository.findByUserAndTrip(friend, trip);
 
@@ -78,8 +76,6 @@ public class TripInviteService {
       if (entry.getStatus() == UserTrip.InviteStatus.PENDING) {
         throw new ResponseStatusException(HttpStatus.CONFLICT, "Invite already sent");
       }
-      // DECLINED -> erneute Einladung erlaubt: bestehende Zeile zurücksetzen,
-      // da die zusammengesetzte ID (user, trip) keinen zweiten Insert erlaubt.
       entry.setStatus(UserTrip.InviteStatus.PENDING);
       entry.setInvitedBy(currentUser);
       userTripRepository.save(entry);
@@ -220,16 +216,15 @@ public class TripInviteService {
   }
 
   /**
-   * checks if the user has already accepted his invite to the trip
+   * checks if the user is the owner of the trip, if not it forbids further access
    *
-   * @param user
    * @param trip
-   * @return
+   * @param user
    */
-  private boolean hasAcceptedTrip(User user, Trip trip) {
-    return userTripRepository
-        .findByUserAndTrip(user, trip)
-        .filter(entry -> entry.getStatus() == UserTrip.InviteStatus.ACCEPTED)
-        .isPresent();
+  private void requireOwner(Trip trip, User user) {
+    if (trip.getOwner() == null || trip.getOwner().getId() != user.getId()) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the trip creator can invite friends");
+    }
   }
 }

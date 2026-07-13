@@ -14,7 +14,7 @@ import {EventService} from '../../../event-adding-manual/service/event.service';
 import {ConflictDialog} from '../conflict-dialog/conflict-dialog';
 import {Friend, FriendsService} from '../../services/friends.service';
 import { UserEventDTO } from '../../../event-adding-manual/models/UserEventDTO';
-import {forkJoin} from 'rxjs';
+import {catchError, forkJoin, of} from 'rxjs';
 import {NotificationService} from '../notification-menu/notification.service';
 import {FeedbackService} from '../../services/feedback.service';
 
@@ -26,6 +26,7 @@ interface EventDialogData {
   tripId?: number;
   start?: string;
   end?: string;
+  creatorUsername?: string;
 }
 
 @Component({
@@ -65,6 +66,7 @@ export class EventDialog implements OnInit {
   inviteDropdownOpen = false;
   invitations: Friend[] = [];
   participants: UserEventDTO[] = [];
+  participantToRemove: UserEventDTO | null = null;
 
   mode: 'create' | 'edit' | 'show'= 'create';
 
@@ -77,15 +79,13 @@ export class EventDialog implements OnInit {
       this.start = this.data.start || "";
       this.end = this.data.end || "";
     }
-    console.log("data dialog");
-    console.log(this.data);
   }
 
   ngOnInit() {
     this.loadTrips();
     this.loadFriends();
 
-    if (this.mode === 'show' && this.data.id) {
+    if ((this.mode === 'show' || this.mode === 'edit') && this.data.id) {
       this.loadParticipants();
     }
   }
@@ -161,10 +161,11 @@ export class EventDialog implements OnInit {
       this.dialogRef.close({ action: 'created', event: response });
       return;
     }
-
-    const inviteCalls = this.invitations.map(friend =>
-      this.eventService.inviteFriendToEvent(response.id, friend.id)
-    );
+      const inviteCalls = this.invitations.map(friend =>
+          this.eventService.inviteFriendToEvent(response.id, friend.id).pipe(
+            catchError(() => of(null))
+          )
+        );
 
     forkJoin(inviteCalls).subscribe({
       next: () => {
@@ -309,6 +310,77 @@ export class EventDialog implements OnInit {
       const parsed = parseFloat((this.kosten as string).replace(',', '.'));
       this.kosten = isNaN(parsed) ? undefined : parsed;
     }
+  }
+
+  get isOwner(): boolean {
+    if (this.mode === 'create') {
+      return true;
+    }
+    return this.data.creatorUsername === localStorage.getItem('sepUser');
+  }
+
+  isParticipantOwner(username: string): boolean {
+    return this.data.creatorUsername === username;
+  }
+
+  get acceptedParticipants(): UserEventDTO[] {
+    return this.participants.filter(p => p.status === 'ACCEPTED');
+  }
+
+  get attendingFriends(): UserEventDTO[] {
+    return this.participants.filter(
+      p => p.status === 'ACCEPTED' && !this.isParticipantOwner(p.username)
+    );
+  }
+
+  getParticipantStatus(username: string): 'ACCEPTED' | 'PENDING' | 'DECLINED' | null {
+    const participant = this.participants.find(p => p.username === username);
+    return participant ? participant.status : null;
+  }
+
+  removeParticipant(username: string){
+    this.participants = this.participants.filter(
+      participant => participant.username !== username
+    );
+  }
+
+  removeFriendFromEvent(participant: UserEventDTO){
+    const friendId = participant.userId;
+    const eventId = this.data.id!;
+    this.eventService.removeFriendFromEvent(eventId, friendId).subscribe({
+      next: () => {
+        this.removeParticipant(participant.username);
+      },
+      error: (err)=> {
+        this.errorMessage = "Error: " + err.message;
+      }
+    })
+
+  }
+
+  leaveEvent(): void {
+    const currentUsername = localStorage.getItem('sepUser');
+    const self = this.participants.find(p => p.username === currentUsername);
+    if (!self) {
+      return;
+    }
+    this.openRemoveConfirm(self);
+  }
+
+  openRemoveConfirm(participant: UserEventDTO): void {
+    this.participantToRemove = participant;
+  }
+
+  cancelRemoveConfirm(): void {
+    this.participantToRemove = null;
+  }
+
+  confirmRemoveParticipant(): void {
+    if (!this.participantToRemove) {
+      return;
+    }
+    this.removeFriendFromEvent(this.participantToRemove);
+    this.participantToRemove = null;
   }
 
 }

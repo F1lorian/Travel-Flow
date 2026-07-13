@@ -118,7 +118,7 @@ test('Event von Freund bekommt eigene CSS-Klasse', async ({ page }) => {
       startTime: `${eventDate}T10:00:00`,
       endTime: `${eventDate}T11:00:00`,
       kosten: 20,
-      creatorId: 2,
+      creatorUsername: 'bob',
     },
   ]);
 

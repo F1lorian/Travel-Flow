@@ -6,8 +6,12 @@
       <h1>{{ trip()!.name }}</h1>
       <div class="trip-header-actions">
         <button class="add-event-btn" (click)="openCreateDialog()">Add Event</button>
-        <button class="invite-to-trip-btn" (click)="openInviteDialog()">Invite Friends</button>
-        <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+        @if (isOwner()) {
+          <button class="invite-to-trip-btn" (click)="openInviteDialog()">Invite Friends</button>
+          <button class="delete-trip-btn" (click)="openDeleteConfirm()">Delete Trip</button>
+        } @else {
+          <button class="delete-trip-btn" (click)="leaveTrip()">Leave Trip</button>
+        }
       </div>
     </div>
 
@@ -29,11 +33,11 @@
                   <strong>{{ event.name }}</strong>
                   @if (event.startTime) {
                     <span class="event-date">
-        {{ formatDateTime(event.startTime) }}
+    {{ formatDateTime(event.startTime) }}
                       @if (event.endTime) {
                         – {{ formatDateTime(event.endTime) }}
                       }
-      </span>
+  </span>
                   }
                   @if (event.categoryName) {
                     <span class="event-category">{{ event.categoryName }}</span>
@@ -41,14 +45,16 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <div class="event-cost">{{ event.kosten ? event.kosten + ' €' : 'No price' }}</div>
-                  <button
-                    class="delete-event-icon-btn"
-                    (click)="$event.stopPropagation(); openEventDelete(event)"
-                    title="Delete event">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
-                    </svg>
-                  </button>
+                  @if (isOwner()) {
+                    <button
+                      class="delete-event-icon-btn"
+                      (click)="$event.stopPropagation(); openEventDelete(event)"
+                      title="Delete event">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                      </svg>
+                    </button>
+                  }
                 </div>
               </li>
             }
@@ -56,6 +62,38 @@
         }
       </div>
 
+      <div class="right-content">
+        <h2>Participants · {{ acceptedParticipants().length }}</h2>
+        @if (acceptedParticipants().length === 0) {
+          <p class="empty">No participants yet.</p>
+        } @else {
+          <ul class="participant-list">
+            @for (participant of acceptedParticipants(); track participant.userId) {
+              <li class="participant-item">
+                <div class="participant-avatar">
+                  {{ participant.firstname | slice:0:1 }}{{ participant.surname | slice:0:1 }}
+                </div>
+                <div class="participant-info">
+                  <p class="participant-name">{{ participant.firstname }} {{ participant.surname }}</p>
+                  <p class="participant-username">&#64;{{ participant.username }}</p>
+                </div>
+                @if (isParticipantOwner(participant.username)) {
+                  <mat-icon class="owner-star" title="Trip creator">star</mat-icon>
+                } @else if (isOwner()) {
+                  <button
+                    class="delete-participant-icon-btn"
+                    (click)="openRemoveConfirm(participant)"
+                    title="Remove participant">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/>
+                    </svg>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
     </div>
 
     <!-- AI recommendation: floating glowing orb launcher (bottom-right) + slide-in drawer.
@@ -185,3 +223,53 @@
     </div>
   }
 </div>
+
+@if (participantToRemove; as p) {
+  @if (isOwner()){
+    <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+      <div class="w-[90%] max-w-sm rounded-xl bg-white p-6 shadow-xl">
+        <h3 class="mb-2 text-lg font-semibold text-slate-900">Remove friend?</h3>
+        <p class="mb-6 text-sm text-slate-600">
+          Do you really want to remove <strong>{{ p.firstname }} {{ p.surname }}</strong> from this trip?
+        </p>
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancelRemoveConfirm()"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmRemoveParticipant()"
+            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+      <div class="w-[90%] max-w-sm rounded-xl bg-white p-6 shadow-xl">
+        <h3 class="mb-2 text-lg font-semibold text-slate-900">Leave Trip?</h3>
+        <p class="mb-6 text-sm text-slate-600">
+          Do you really want to leave this trip? You will have to get invited again.
+        </p>
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="cancelRemoveConfirm()"
+            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmRemoveParticipant()"
+            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700">
+            Leave
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}

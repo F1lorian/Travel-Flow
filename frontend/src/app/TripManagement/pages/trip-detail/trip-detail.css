@@ -30,33 +30,78 @@
   font-weight: 600;
 }
 
-/* Recommendation panel moved into the slide-in drawer below,
-   so the main content is now full width. */
 .main-layout {
-  display: block;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
 }
 
-.left-content,
-.right-sidebar {
+.left-content {
+  flex: 3;
   min-width: 0;
 }
 
-.right-sidebar {
-  position: sticky;
-  top: 24px;
-  border: 1px solid #c7d0df;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+.right-content {
+  flex: 1;
+  min-width: 220px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
 }
 
-.add-event-section {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
-  margin-bottom: 16px;
+.right-content h2 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin: 0 0 12px;
+}
+
+.participant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.participant-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.participant-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.participant-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.participant-username {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0;
 }
 
 .add-event-btn {
@@ -73,73 +118,6 @@
 
 .add-event-btn:hover {
   background: #dbeafe;
-}
-
-.add-event-section h2 {
-  margin-top: 0;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  align-items: end;
-}
-
-@media (max-width: 600px) {
-  .form-grid {
-    /* minmax(0, 1fr) lets the track shrink below the date inputs'
-       fixed intrinsic width, so the form never overflows the screen. */
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.form-grid input {
-  min-height: 40px;
-  /* Native date/time inputs won't shrink below their built-in width
-     unless we allow it; min-width: 0 lets them fit the column. */
-  min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid #c7d0df;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font: inherit;
-  width: 100%;
-}
-
-.form-grid input:focus {
-  border-color: #2f6fed;
-  outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: #4b5563;
-}
-
-.req {
-  color: #dc2626;
-}
-
-.form-grid button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 18px;
-  background: #2f6fed;
-  color: #ffffff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.form-grid button:hover {
-  background: #1f5fd5;
 }
 
 .error {
@@ -164,7 +142,6 @@
   margin: 0;
   padding: 0;
   display: grid;
-  /* Cards reflow by width instead of one full-width row per event */
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
@@ -239,7 +216,7 @@
   transition: background 0.15s ease;
 }
 
-.invite-to-trip-btn{
+.invite-to-trip-btn {
   border: 0;
   border-radius: 6px;
   padding: 8px 14px;
@@ -337,24 +314,6 @@
   background: #1f5fd5;
 }
 
-.delete-event-btn {
-  border: 0;
-  border-radius: 6px;
-  padding: 6px 12px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  margin-left: 12px;
-  transition: background 0.15s ease;
-}
-
-.delete-event-btn:hover {
-  background: #fecaca;
-}
-
 .delete-event-icon-btn {
   border: 0;
   border-radius: 50%;
@@ -415,29 +374,22 @@
   border-color: #2f6fed;
 }
 
-/* ===== AI recommendation slide-in drawer =====
-   The drawer is position:fixed, so even while parked off-screen it never
-   creates a horizontal scrollbar. Only the handle peeks in at the right
-   edge; hovering it (mouse) or tapping it (touch -> checkbox) slides the
-   panel in over the page content. */
 .reco-drawer {
   position: fixed;
   top: 0;
   right: 0;
   z-index: 900;
   height: 100vh;
-  transform: translateX(100%); /* fully hidden; the orb below is the trigger */
+  transform: translateX(100%);
   transition: transform 0.28s ease;
 }
 
-/* Open when hovering the orb or the panel, or when the orb is tapped (checkbox) */
 .reco-orb:hover ~ .reco-drawer,
 .reco-drawer:hover,
 .reco-toggle:checked ~ .reco-drawer {
   transform: translateX(0);
 }
 
-/* Floating glassy orb launcher, bottom-right */
 .reco-orb {
   position: fixed;
   right: 24px;
@@ -451,22 +403,18 @@
   font-size: 1.6rem;
   cursor: pointer;
   user-select: none;
-  /* top-left highlight over a deep blue-teal sphere = glossy 3D look */
   background:
     radial-gradient(circle at 32% 26%, rgb(255 255 255 / 55%) 0%, rgb(255 255 255 / 0%) 38%),
     radial-gradient(circle at 50% 50%, #8be9d2 0%, #3aa0ee 40%, #2056c8 68%, #0b2a66 100%);
-  /* colored cast shadow + inner rim light + inner bottom shade for depth */
   box-shadow:
     0 8px 24px rgb(32 86 200 / 45%),
     0 2px 6px rgb(0 0 0 / 25%),
     inset 0 1px 2px rgb(255 255 255 / 60%),
     inset 0 -6px 12px rgb(8 24 64 / 55%);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease,
-    opacity 0.2s ease;
+  opacity 0.2s ease;
 }
 
-/* Shrink the launcher out of the way while the panel is open
-   (:has covers the hover case; :checked covers the tap case) */
 .container:has(.reco-drawer:hover) .reco-orb,
 .reco-toggle:checked ~ .reco-orb {
   transform: scale(0.3);
@@ -474,7 +422,6 @@
   pointer-events: none;
 }
 
-/* Soft halo ring that gently breathes behind the orb */
 .reco-orb::after {
   content: "";
   position: absolute;
@@ -498,8 +445,6 @@
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 55%));
 }
 
-/* Full-screen click-catcher behind the panel; only active once the orb
-   has been tapped (checkbox checked). Clicking it closes the panel. */
 .reco-backdrop {
   position: fixed;
   inset: 0;
@@ -542,43 +487,29 @@
   box-shadow: -6px 0 20px rgb(0 0 0 / 15%);
 }
 
-@media (max-width: 980px) {
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .right-sidebar {
-    position: static;
-  }
-}
-
 @media (max-width: 600px) {
   .container {
     padding: 16px;
   }
 
-  .right-sidebar {
-    padding: 14px;
+  .main-layout {
+    flex-direction: column;
   }
 
-  /* Event cards: name+cost+delete no longer fit in one row, so stack them */
+  .right-content {
+    min-width: 0;
+  }
+
   .event-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
 
-  /* Delete button starts a fresh line, so drop its left margin */
-  .delete-event-btn {
-    margin-left: 0;
-  }
-
-  /* Modal buttons wrap instead of overflowing on a narrow phone */
   .modal-actions {
     flex-wrap: wrap;
   }
 
-  /* Smaller orb, tucked closer to the corner on phones */
   .reco-orb {
     right: 16px;
     bottom: 16px;
@@ -587,3 +518,45 @@
     font-size: 1.4rem;
   }
 }
+
+  .participant-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .participant-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
+  }
+
+  .owner-star {
+    color: #f59e0b !important;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .delete-participant-icon-btn {
+    border: 0;
+    border-radius: 50% !important;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fee2e2 !important;
+    color: #b91c1c;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+  }
+
+  .delete-participant-icon-btn:hover {
+    background: #fecaca !important;
+  }
+
