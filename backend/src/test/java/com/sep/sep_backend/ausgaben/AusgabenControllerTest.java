@@ -27,6 +27,28 @@ import org.springframework.web.server.ResponseStatusException;
 public class AusgabenControllerTest {
 
   @Test
+  void forecastGibtServiceErgebnisZurueck() {
+    AusgabeRepository ausgabeRepository = mock(AusgabeRepository.class);
+    AusgabeService ausgabeService = mock(AusgabeService.class);
+    TripRepository tripRepository = mock(TripRepository.class);
+    AusgabeController ausgabeController =
+        new AusgabeController(ausgabeRepository, ausgabeService, tripRepository);
+    Authentication authentication = mock(Authentication.class);
+
+    LocalDate today = LocalDate.of(2026, 7, 12);
+    ForecastDTO expected = new ForecastDTO(34.0, 238.0);
+
+    when(authentication.isAuthenticated()).thenReturn(true);
+    when(authentication.getName()).thenReturn("maxmuster");
+    when(ausgabeService.forecast(today, "Berlin", "maxmuster")).thenReturn(expected);
+
+    ForecastDTO result = ausgabeController.forecast(today, "Berlin", authentication);
+
+    assertThat(result).isSameAs(expected);
+    verify(ausgabeService).forecast(today, "Berlin", "maxmuster");
+  }
+
+  @Test
   void controllerHasRestControllerAnnotation() {
     assertThat(AusgabeController.class.getAnnotation(RestController.class)).isNotNull();
   }

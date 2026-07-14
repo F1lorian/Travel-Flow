@@ -301,4 +301,18 @@ public class AusgabeController {
         .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
         .body(csv);
   }
+
+  /** Returns an expense forecast for one trip for the next seven days. */
+  @GetMapping(value = "/forecast")
+  public ForecastDTO forecast(
+      @RequestParam LocalDate today, @RequestParam String tripname, Authentication authentication) {
+    ForecastDTO result =
+        ausgabeService.forecast(today, tripname, getCurrentUsername(authentication));
+
+    if (result == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found");
+    }
+
+    return result;
+  }
 }

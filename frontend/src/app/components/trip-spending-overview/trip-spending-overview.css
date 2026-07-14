@@ -76,6 +76,77 @@ h2 {
   transform: translateY(-1px);
 }
 
+/* Expense forecast card */
+.forecast-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #d4dcff;
+  box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+}
+
+.forecast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.forecast-header h2 {
+  margin: 0 0 8px;
+}
+
+.forecast-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.forecast-box {
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 18px;
+  border: 1px solid #d4dcff;
+}
+
+.forecast-box span {
+  display: block;
+  color: #475569;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.forecast-box strong {
+  font-size: 1.45rem;
+  color: #2f6fed;
+  font-weight: 700;
+}
+
+.forecast-note {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.forecast-muted {
+  color: #64748b;
+}
+
+.forecast-error {
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
 .content-section {
   background: #ffffff;
   padding: 20px;
@@ -257,6 +328,16 @@ select:focus {
 
 @media (max-width: 760px) {
   .budget-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .forecast-header {
+    flex-direction: column;
+  }
+
+  .forecast-grid {
     grid-template-columns: 1fr;
   }
 }

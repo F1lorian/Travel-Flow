@@ -28,11 +28,24 @@ export interface CategorySummaryItem {
   cost: number;
 }
 
+/**
+ * Forecast returned by the backend for upcoming trip expenses.
+ *
+ * The backend currently calculates a 7-day forecast using linear regression.
+ * - daily: predicted average expense per day
+ * - week: predicted total expense for the next 7 days
+ */
+export interface ExpenseForecast {
+  daily: number;
+  week: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ExpenseService {
   private readonly http = inject(HttpClient);
+
   // Base path for all expense- and budget-related backend endpoints.
   // In development, this path is forwarded to the backend via the Angular proxy.
   private apiUrl = '/api';
@@ -84,9 +97,7 @@ export class ExpenseService {
       .get<CategorySummaryItem[] | Record<string, number>>(
         `${this.apiUrl}/proKategorie?start=${startDate}&end=${endDate}`
       )
-      .pipe(
-        map((response) => this.normalizeCategorySummary(response))
-      );
+      .pipe(map((response) => this.normalizeCategorySummary(response)));
   }
 
   /**
@@ -108,9 +119,7 @@ export class ExpenseService {
       .get<CategorySummaryItem[] | Record<string, number>>(
         `${this.apiUrl}/proKategorieTrip?tripname=${encodeURIComponent(tripname)}`
       )
-      .pipe(
-        map((response) => this.normalizeCategorySummary(response))
-      );
+      .pipe(map((response) => this.normalizeCategorySummary(response)));
   }
 
   /**
@@ -138,6 +147,21 @@ export class ExpenseService {
   getAvailable(tripname: string): Observable<number> {
     return this.http.get<number>(
       `${this.apiUrl}/verfuegbar?tripname=${encodeURIComponent(tripname)}`
+    );
+  }
+
+  /**
+   * Loads the expense forecast for a specific trip.
+   *
+   * The backend uses the given date as the reference day and predicts
+   * upcoming expenses for the next 7 days based on historical expenses.
+   *
+   * @param today current date in YYYY-MM-DD format
+   * @param tripname name of the selected trip
+   */
+  getExpenseForecast(today: string, tripname: string): Observable<ExpenseForecast> {
+    return this.http.get<ExpenseForecast>(
+      `${this.apiUrl}/forecast?today=${today}&tripname=${encodeURIComponent(tripname)}`
     );
   }
 
@@ -174,6 +198,26 @@ export class ExpenseService {
   }
 
   /**
+   * Exports expenses and event costs for a selected date interval as CSV.
+   */
+  exportExpensesByPeriod(startDate: string, endDate: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenliste/export?start=${startDate}&end=${endDate}`,
+      { responseType: 'blob' }
+    );
+  }
+
+  /**
+   * Exports expenses and event costs for a selected trip as CSV.
+   */
+  exportExpensesByTrip(tripname: string): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/ausgabenlisteTrip/export?tripname=${encodeURIComponent(tripname)}`,
+      { responseType: 'blob' }
+    );
+  }
+
+  /**
    * Normalizes category summary responses.
    *
    * The frontend expects an array of CategorySummaryItem.
@@ -195,7 +239,7 @@ export class ExpenseService {
     response: CategorySummaryItem[] | Record<string, number>
   ): CategorySummaryItem[] {
     if (Array.isArray(response)) {
-      return response.map(item => ({
+      return response.map((item) => ({
         category: item.category,
         cost: Number(item.cost)
       }));
@@ -206,19 +250,4 @@ export class ExpenseService {
       cost: Number(cost)
     }));
   }
-
-  exportExpensesByPeriod(startDate: string, endDate: string): Observable<Blob> {
-    return this.http.get(
-      `${this.apiUrl}/ausgabenliste/export?start=${startDate}&end=${endDate}`,
-      { responseType: 'blob' }
-    );
-  }
-  exportExpensesByTrip(tripname: string): Observable<Blob> {
-    return this.http.get(
-      `${this.apiUrl}/ausgabenlisteTrip/export?tripname=${encodeURIComponent(tripname)}`,
-      { responseType: 'blob' }
-    );
-  }
-
-
 }

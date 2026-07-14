@@ -469,4 +469,112 @@ public class AusgabeService {
 
     return text;
   }
+
+  /**
+   * Predicts the authenticated user's spending for one trip for the next seven days using linear
+   * regression.
+   *
+   * <p>The prediction is based on the user's daily expenses and event costs from the beginning of
+   * the selected trip through yesterday. Days without expenses are included with a value of zero.
+   * Negative predicted values are treated as zero.
+   *
+   * @param today reference date used to determine the historical and forecast periods
+   * @param tripname name of the trip to forecast
+   * @param username authenticated user's name or email
+   * @return forecast containing the average predicted daily spending and the predicted total for
+   *     the next seven days, or {@code null} if the trip does not exist
+   */
+  public ForecastDTO forecast(LocalDate today, String tripname, String username) {
+    Trip trip = tripRepository.findByName(tripname);
+    if (trip == null) {
+      return null;
+    }
+    if (trip.getStartDate() == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Trip start date is required for a forecast");
+    }
+
+    // Der heutige Tag wird nicht verwendet, weil noch Ausgaben hinzukommen koennen.
+    LocalDate start = trip.getStartDate();
+    LocalDate end = today.minusDays(1);
+
+    // Es werden nur Ausgaben und Eventkosten der ausgewaehlten Reise beruecksichtigt.
+    List<AusgabeResponseDTO> expenses = ausgabenlisteTrip(tripname, username);
+    if (expenses == null) {
+      return null;
+    }
+
+    int completedDays = (int) java.time.temporal.ChronoUnit.DAYS.between(start, today);
+    if (completedDays <= 0) {
+      return new ForecastDTO(0, 0);
+    }
+
+    // Jeder Eintrag steht fuer einen abgeschlossenen Reisetag.
+    // Tage ohne Ausgaben bleiben bei 0 und werden ebenfalls in der linearen Regression
+    // beruecksichtigt
+    double[] dailyExpenses = new double[completedDays];
+
+    // Jede Ausgabe wird dem passenden abgeschlossenen Reisetag zugeordnet.
+    for (AusgabeResponseDTO expense : expenses) {
+      if (expense.getDate().isBefore(start) || expense.getDate().isAfter(end)) {
+        continue;
+      }
+
+      int dayIndex = (int) java.time.temporal.ChronoUnit.DAYS.between(start, expense.getDate());
+
+      // Diese Pruefung verhindert einen Zugriff ausserhalb des Arrays.
+      if (dayIndex >= 0 && dayIndex < dailyExpenses.length) {
+        dailyExpenses[dayIndex] += expense.getKosten();
+      }
+    }
+
+    // Bei der Regression ist x der Tagesindex seit Reisebeginn und y sind die
+    // Ausgaben des jeweiligen Tages. Zuerst werden beide Mittelwerte berechnet.
+    double meanX = 0;
+    double meanY = 0;
+
+    for (int i = 0; i < dailyExpenses.length; i++) {
+      meanX += i;
+      meanY += dailyExpenses[i];
+    }
+
+    meanX /= dailyExpenses.length;
+    meanY /= dailyExpenses.length;
+
+    // Zaehler und Nenner werden zur Berechnung der Steigung benoetigt:
+    // Steigung = Summe((x - meanX) * (y - meanY)) / Summe((x - meanX)^2)
+    double numerator = 0;
+    double denominator = 0;
+
+    for (int i = 0; i < dailyExpenses.length; i++) {
+      double xDifference = i - meanX;
+      double yDifference = dailyExpenses[i] - meanY;
+
+      numerator += xDifference * yDifference;
+      denominator += xDifference * xDifference;
+    }
+
+    // Bei nur einem abgeschlossenen Reisetag wird dessen Wert als konstante Prognose verwendet.
+    double slope = denominator == 0 ? 0 : numerator / denominator;
+    double intercept = meanY - slope * meanX;
+
+    double weeklyForecast = 0;
+
+    // Die sieben Indizes nach den abgeschlossenen Reisetagen bilden den Prognosezeitraum.
+    for (int dayIndex = completedDays; dayIndex < completedDays + 7; dayIndex++) {
+      double prediction = slope * dayIndex + intercept;
+
+      // Vorhergesagte Ausgaben koennen nicht negativ sein.
+      weeklyForecast += Math.max(0, prediction);
+    }
+
+    // Der Tageswert ist der Durchschnitt der sieben vorhergesagten Tage
+    double dailyForecast = weeklyForecast / 7;
+
+    // Die Geldbetraege werden auf zwei Nachkommastellen gerundet.
+    dailyForecast = Math.round(dailyForecast * 100.0) / 100.0;
+    weeklyForecast = Math.round(weeklyForecast * 100.0) / 100.0;
+
+    return new ForecastDTO(dailyForecast, weeklyForecast);
+  }
 }
