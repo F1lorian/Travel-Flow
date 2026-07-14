@@ -305,9 +305,7 @@ public class AusgabeController {
   /** Returns an expense forecast for one trip for the next seven days. */
   @GetMapping(value = "/forecast")
   public ForecastDTO forecast(
-      @RequestParam LocalDate today,
-      @RequestParam String tripname,
-      Authentication authentication) {
+      @RequestParam LocalDate today, @RequestParam String tripname, Authentication authentication) {
     ForecastDTO result =
         ausgabeService.forecast(today, tripname, getCurrentUsername(authentication));
 

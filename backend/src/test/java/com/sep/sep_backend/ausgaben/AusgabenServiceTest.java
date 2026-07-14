@@ -60,8 +60,7 @@ public class AusgabenServiceTest {
     // Dadurch muessen fuer die naechsten Tage die Werte 11 bis 17 entstehen.
     List<Ausgabe> expenses = new java.util.ArrayList<>();
     for (int dayIndex = 0; dayIndex < 10; dayIndex++) {
-      Ausgabe expense =
-          new Ausgabe(dayIndex + 1, trip, start.plusDays(dayIndex), category);
+      Ausgabe expense = new Ausgabe(dayIndex + 1, trip, start.plusDays(dayIndex), category);
       expense.setUser(user);
       expenses.add(expense);
     }

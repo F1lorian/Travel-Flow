@@ -510,7 +510,8 @@ public class AusgabeService {
     }
 
     // Jeder Eintrag steht fuer einen abgeschlossenen Reisetag.
-    // Tage ohne Ausgaben bleiben bei 0 und werden ebenfalls in der linearen Regression beruecksichtigt
+    // Tage ohne Ausgaben bleiben bei 0 und werden ebenfalls in der linearen Regression
+    // beruecksichtigt
     double[] dailyExpenses = new double[completedDays];
 
     // Jede Ausgabe wird dem passenden abgeschlossenen Reisetag zugeordnet.
@@ -519,8 +520,7 @@ public class AusgabeService {
         continue;
       }
 
-      int dayIndex = (int) java.time.temporal.ChronoUnit.DAYS.between(
-              start, expense.getDate());
+      int dayIndex = (int) java.time.temporal.ChronoUnit.DAYS.between(start, expense.getDate());
 
       // Diese Pruefung verhindert einen Zugriff ausserhalb des Arrays.
       if (dayIndex >= 0 && dayIndex < dailyExpenses.length) {
@@ -577,5 +577,4 @@ public class AusgabeService {
 
     return new ForecastDTO(dailyForecast, weeklyForecast);
   }
-
 }
