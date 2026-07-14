@@ -55,6 +55,48 @@
     {{ budgetSuccessMessage }}
   </p>
 
+  <!-- Expense forecast for the selected trip -->
+  <section class="forecast-card">
+    <div class="forecast-header">
+      <div>
+        <h2>Expense Forecast</h2>
+        <p>
+          Forecast for the next 7 days based on historical expenses.
+        </p>
+      </div>
+
+      <button class="secondary-button" type="button" (click)="loadForecast()">
+        Refresh forecast
+      </button>
+    </div>
+
+    @if (forecastLoading) {
+      <p class="forecast-muted">Loading forecast...</p>
+    }
+
+    @if (forecastErrorMessage) {
+      <p class="forecast-error">{{ forecastErrorMessage }}</p>
+    }
+
+    @if (forecast) {
+      <div class="forecast-grid">
+        <div class="forecast-box">
+          <span>Average per day</span>
+          <strong>{{ forecast.daily | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </div>
+
+        <div class="forecast-box">
+          <span>Forecast total for the next 7 days</span>
+          <strong>{{ forecast.week | currency:'EUR':'symbol':'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <p class="forecast-note">
+        The forecast is calculated using linear regression based on previous expenses.
+      </p>
+    }
+  </section>
+
   <!-- Category chart and summary table -->
   <section class="content-section">
     <div class="section-header">
@@ -84,7 +126,9 @@
         <tbody>
         <tr *ngFor="let item of categorySummary">
           <td data-label="Category">{{ getCategoryLabel(item.category) }}</td>
-          <td class="amount-cell" data-label="Expenses">{{ item.cost | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td class="amount-cell" data-label="Expenses">
+            {{ item.cost | currency:'EUR':'symbol':'1.2-2' }}
+          </td>
         </tr>
         </tbody>
       </table>
@@ -127,7 +171,9 @@
         </thead>
         <tbody>
         <tr *ngFor="let expense of displayedExpenses">
-          <td class="amount-cell" data-label="Cost">{{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}</td>
+          <td class="amount-cell" data-label="Cost">
+            {{ expense.kosten | currency:'EUR':'symbol':'1.2-2' }}
+          </td>
           <td data-label="Trip">{{ expense.trip }}</td>
           <td data-label="Date">{{ expense.date }}</td>
           <td data-label="Category">{{ getCategoryLabel(expense.kategorie) }}</td>
