@@ -29,13 +29,18 @@ public class TripInviteController {
    *
    * @param tripId id of the trip to invite into
    * @param friendId id of the friend to invite
+   * @param includeEvents when true, accepting the trip invite also makes the friend a participant
+   *     of every event of the trip
    * @return the created invite in pending state
    */
   @PostMapping("/{tripId}/{friendId}")
   public TripInviteResponseDTO inviteFriendToTrip(
-      @PathVariable long tripId, @PathVariable long friendId, Authentication authentication) {
+      @PathVariable long tripId,
+      @PathVariable long friendId,
+      @RequestParam(defaultValue = "false") boolean includeEvents,
+      Authentication authentication) {
     return tripInviteService.inviteFriendToTrip(
-        getCurrentUsername(authentication), tripId, friendId);
+        getCurrentUsername(authentication), tripId, friendId, includeEvents);
   }
 
   /**

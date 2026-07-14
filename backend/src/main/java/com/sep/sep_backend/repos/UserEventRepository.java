@@ -47,17 +47,15 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
   boolean existsByEvent_IdAndUser_Id(Long eventId, Long userId);
 
   /**
-   * Returns every event the user actually takes part in: events they accepted directly, plus all
-   * events of trips where their trip membership is accepted.
+   * Returns every event the user actually takes part in, i.e. events with an accepted
+   * participation. Trip membership alone is deliberately not enough: trip events the user was never
+   * added to must not appear in their calendar.
    */
   @Query(
 """
     SELECT DISTINCT e FROM Event e
-        LEFT JOIN UserEvent ue ON ue.event.id = e.id
-        LEFT JOIN e.trip t
-        LEFT JOIN t.userTrips ut
-        WHERE (ue.user.id = :userId AND ue.status = 'ACCEPTED')
-           OR (ut.user.id = :userId AND ut.status = 'ACCEPTED')
+        JOIN UserEvent ue ON ue.event.id = e.id
+        WHERE ue.user.id = :userId AND ue.status = 'ACCEPTED'
 """)
   List<Event> findAllByUserId(@Param("userId") Long userId);
 }

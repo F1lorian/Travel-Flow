@@ -6,6 +6,8 @@ Called by TripEventController, which exposes the results to the Angular frontend
 import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
+import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
@@ -81,7 +83,19 @@ public class TripEventService {
       newEvent.setCategorie(category);
     }
 
+    // The calendar only shows events the user participates in, so the creator becomes the owner
+    // and an accepted participant — otherwise a trip event would be visible to nobody.
+    User creator =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    newEvent.setOwner(creator);
+
     Event saved = eventRepository.save(newEvent);
+
+    UserEvent creatorEntry = new UserEvent(saved, creator, creator);
+    creatorEntry.setStatus(UserEvent.InviteStatus.ACCEPTED);
+    userEventRepository.save(creatorEntry);
     notifyByEmail(
         userId,
         "Event \"" + saved.getName() + "\" added",

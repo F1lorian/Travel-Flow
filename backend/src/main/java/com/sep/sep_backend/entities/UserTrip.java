@@ -32,6 +32,13 @@ public class UserTrip {
   @Column(nullable = false)
   private InviteStatus status = InviteStatus.PENDING;
 
+  /**
+   * Chosen by the inviter: when true, accepting this trip invite also adds the invitee as an
+   * accepted participant to every event of the trip (no per-event invites needed).
+   */
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private boolean includeEvents = false;
+
   @Column(nullable = false, columnDefinition = "double precision default 0")
   private double budget = 0;
 
@@ -106,5 +113,13 @@ public class UserTrip {
 
   public void setStatus(InviteStatus status) {
     this.status = status;
+  }
+
+  public boolean isIncludeEvents() {
+    return includeEvents;
+  }
+
+  public void setIncludeEvents(boolean includeEvents) {
+    this.includeEvents = includeEvents;
   }
 }
