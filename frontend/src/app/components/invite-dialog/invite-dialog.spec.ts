@@ -42,4 +42,15 @@ describe('InviteDialog', () => {
     expect(friendsServiceSpy.getFriends).toHaveBeenCalled();
     expect(component.friends).toEqual([]);
   });
+
+  it('should pass the include-events choice along with each invite', () => {
+    const friend = { id: 5, username: 'anna', firstName: 'Anna', surname: 'Muster' };
+    component.selection = [friend];
+    component.includeEvents = true;
+    friendsServiceSpy.sendInviteMessage.and.returnValue(of({}));
+
+    component.inviteSelectedFriend();
+
+    expect(friendsServiceSpy.sendInviteMessage).toHaveBeenCalledWith(1, 5, true);
+  });
 });

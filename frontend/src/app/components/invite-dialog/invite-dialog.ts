@@ -42,6 +42,8 @@ export class InviteDialog implements OnInit {
   inviteDropdownOpen = false;
   selection: Friend[] = [];
   selectedFriendId: number | null = null;
+  /** When true, accepting the trip invite also adds the friend to all events of the trip. */
+  includeEvents = false;
 
   ngOnInit(): void {
     this.friendsService.getFriends().subscribe({
@@ -68,7 +70,7 @@ export class InviteDialog implements OnInit {
     }
 
     const inviteCalls = selectedFriends.map((friend) =>
-      this.friendsService.sendInviteMessage(this.data.tripId, friend.id)
+      this.friendsService.sendInviteMessage(this.data.tripId, friend.id, this.includeEvents)
     );
 
     forkJoin(inviteCalls).subscribe({

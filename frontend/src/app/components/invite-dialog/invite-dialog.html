@@ -34,6 +34,20 @@
         </div>
       }
     </div>
+
+    <label class="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+      <input
+        type="checkbox"
+        [(ngModel)]="includeEvents"
+        class="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
+      <span class="text-sm text-slate-800">
+        <span class="font-semibold">Add to all trip events</span>
+        <span class="block text-xs text-slate-500">
+          Invited friends join every event of this trip as soon as they accept the trip invitation —
+          no separate event invites needed.
+        </span>
+      </span>
+    </label>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end" class="border-t border-slate-200 px-6 py-4 !m-0">

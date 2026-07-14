@@ -81,8 +81,15 @@ removeFriend(userId: number): Observable<unknown> {
 
   //trip invites
 
-  sendInviteMessage(tripID: number, friendID: number): Observable<unknown> {
-    return this.http.post(`${this.tripInviteUrl}/${tripID}/${friendID}`, {});
+  sendInviteMessage(
+    tripID: number,
+    friendID: number,
+    includeEvents = false
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.tripInviteUrl}/${tripID}/${friendID}?includeEvents=${includeEvents}`,
+      {}
+    );
   }
 
   acceptTripInvite(tripId: number): Observable<unknown> {

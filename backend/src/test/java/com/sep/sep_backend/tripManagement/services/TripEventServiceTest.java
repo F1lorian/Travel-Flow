@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -50,6 +52,9 @@ class TripEventServiceTest {
     Event event = new Event("Dinner", sampleStartTime, sampleEndTime, 50, trip);
     when(tripService.getTripForMember(1L, USER_ID)).thenReturn(trip);
     when(eventRepository.save(any(Event.class))).thenReturn(event);
+    User user = new User();
+    user.setId(USER_ID);
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 
     Event result =
         eventService.addEventToTrip(
@@ -58,6 +63,29 @@ class TripEventServiceTest {
     assertEquals("Dinner", result.getName());
     assertEquals(50, result.getKosten());
     verify(eventRepository).save(any(Event.class));
+  }
+
+  @Test
+  void addEventToTrip_makesTheCreatorOwnerAndAcceptedParticipant() {
+    Trip trip = new Trip("Paris");
+    when(tripService.getTripForMember(1L, USER_ID)).thenReturn(trip);
+    when(eventRepository.save(any(Event.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    User user = new User();
+    user.setId(USER_ID);
+    when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+    Event result =
+        eventService.addEventToTrip(
+            1L, USER_ID, "Dinner", sampleStartTime, sampleEndTime, 50, null);
+
+    // The calendar only lists events with an accepted participation, so the creator must get one.
+    assertSame(user, result.getOwner());
+    ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
+    verify(userEventRepository).save(captor.capture());
+    assertSame(result, captor.getValue().getEvent());
+    assertSame(user, captor.getValue().getUser());
+    assertEquals(UserEvent.InviteStatus.ACCEPTED, captor.getValue().getStatus());
   }
 
   @Test

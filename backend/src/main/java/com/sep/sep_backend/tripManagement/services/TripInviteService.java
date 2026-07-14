@@ -1,10 +1,14 @@
 package com.sep.sep_backend.tripManagement.services;
 
+import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
+import com.sep.sep_backend.entities.UserEvent;
 import com.sep.sep_backend.entities.UserTrip;
 import com.sep.sep_backend.notification.EmailNotificationService;
+import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
 import com.sep.sep_backend.repos.UserTripRepository;
 import com.sep.sep_backend.tripManagement.dto.TripInviteResponseDTO;
@@ -25,6 +29,8 @@ public class TripInviteService {
   private final TripRepository tripRepository;
   private final UserRepository userRepository;
   private final UserTripRepository userTripRepository;
+  private final EventRepository eventRepository;
+  private final UserEventRepository userEventRepository;
   private final TripInviteNotificationService notificationService;
   private final EmailNotificationService emailNotificationService;
 
@@ -32,11 +38,15 @@ public class TripInviteService {
       TripRepository tripRepository,
       UserRepository userRepository,
       UserTripRepository userTripRepository,
+      EventRepository eventRepository,
+      UserEventRepository userEventRepository,
       TripInviteNotificationService notificationService,
       EmailNotificationService emailNotificationService) {
     this.tripRepository = tripRepository;
     this.userRepository = userRepository;
     this.userTripRepository = userTripRepository;
+    this.eventRepository = eventRepository;
+    this.userEventRepository = userEventRepository;
     this.notificationService = notificationService;
     this.emailNotificationService = emailNotificationService;
   }
@@ -47,11 +57,13 @@ public class TripInviteService {
    * @param currentUsername
    * @param tripId
    * @param friendId
+   * @param includeEvents when true, accepting the trip invite also adds the friend to all events of
+   *     the trip (chosen by the inviter)
    * @return responseDTO with the tripId, friendId and a "trip invite sent" message
    */
   @Transactional
   public TripInviteResponseDTO inviteFriendToTrip(
-      String currentUsername, long tripId, long friendId) {
+      String currentUsername, long tripId, long friendId, boolean includeEvents) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     User friend = getUserOrThrow(friendId);
     Trip trip = getTripOrThrow(tripId);
@@ -78,10 +90,12 @@ public class TripInviteService {
       }
       entry.setStatus(UserTrip.InviteStatus.PENDING);
       entry.setInvitedBy(currentUser);
+      entry.setIncludeEvents(includeEvents);
       userTripRepository.save(entry);
       notificationService.notifyNewInvite(friend, trip, currentUser);
     } else {
       UserTrip invite = new UserTrip(friend, trip, currentUser, UserTrip.InviteStatus.PENDING);
+      invite.setIncludeEvents(includeEvents);
       userTripRepository.save(invite);
       notificationService.notifyNewInvite(friend, trip, currentUser);
     }
@@ -131,6 +145,12 @@ public class TripInviteService {
     entry.setStatus(accept ? UserTrip.InviteStatus.ACCEPTED : UserTrip.InviteStatus.DECLINED);
     userTripRepository.save(entry);
 
+    // The inviter opted to add the friend to all trip events, so accepting the trip invite is
+    // enough — no per-event invites need to be answered.
+    if (accept && entry.isIncludeEvents()) {
+      addUserToAllTripEvents(entry);
+    }
+
     notificationService.notifyInviteAnswered(entry);
 
     // Tell the inviter how their invite was answered (skip invites with no recorded inviter).
@@ -164,6 +184,27 @@ public class TripInviteService {
     User currentUser = getCurrentUserOrThrow(currentUsername);
     return userTripRepository.findByUser_IdAndStatus(
         currentUser.getId(), UserTrip.InviteStatus.PENDING);
+  }
+
+  /**
+   * Adds the invitee as an accepted participant to every event of the trip. Existing participation
+   * rows (e.g. a pending per-event invite sent earlier) are upgraded to accepted instead of
+   * duplicated. The trip inviter is recorded as the creator of each participation.
+   *
+   * @param entry the accepted trip membership of the invitee
+   */
+  private void addUserToAllTripEvents(UserTrip entry) {
+    User invitee = entry.getUser();
+    User inviter = entry.getInvitedBy() != null ? entry.getInvitedBy() : invitee;
+
+    for (Event event : eventRepository.findByTrip_Id(entry.getTrip().getId())) {
+      UserEvent participation =
+          userEventRepository
+              .findByEvent_IdAndUser_Id(event.getId(), invitee.getId())
+              .orElseGet(() -> new UserEvent(event, invitee, inviter));
+      participation.setStatus(UserEvent.InviteStatus.ACCEPTED);
+      userEventRepository.save(participation);
+    }
   }
 
   /**
