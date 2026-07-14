@@ -90,17 +90,44 @@ loaded by spring-dotenv).
 2. **`GeminiEventSearchService`** — calls the Gemini REST API directly with `RestClient`
    (`POST /v1beta/models/{model}:generateContent`) for event recommendations by location.
 
-Two invariants worth preserving when touching this code:
+Three invariants worth preserving when touching this code:
 
 - **A failed Gemini call must never fabricate a date.** It previously fell back to
   `LocalDateTime.now()`, which dumped every imported mail onto today. Failures now throw
   `EventDetectionException` and are reported as `failed`.
-- **"No event" and "could not check" are different outcomes.** `ParseOutcome` keeps them apart so the
-  UI can say "3 imported, 2 could not be checked" instead of silently losing mail.
+- **"No event" and "could not check" are different outcomes.** `DetectionResult` keeps them apart so
+  the UI can say "3 imported, 2 could not be checked" instead of silently losing mail.
+- **An import must cost one Gemini request, not one per mail.** See below — this is the whole
+  reason the import used to work only sometimes.
 
-Gmail auto-import runs at `AUTO_IMPORT_PARALLELISM = 3` with 2 retries and linear backoff —
-deliberately tuned to stay under the free-tier per-minute quota. Raising it has been tried and
-reverted; don't "optimize" it without a reason.
+### The Gemini free tier is capped per DAY, not per minute
+
+The binding limit is **20 requests per day** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`,
+per project, per model) for `gemini-2.5-flash`. It is *not* a per-minute quota. This was mis-diagnosed
+for a long time, and several things were built around the wrong theory:
+
+- A per-mail Gemini call meant a 10-mail import spent **half the daily budget**. Two imports
+  exhausted it, and every import afterwards failed until midnight — surfaced to the user as the
+  unhelpful "N could not be checked". That is the "sometimes it works, sometimes it doesn't".
+- **A 429 is therefore never retried.** No backoff you can sit through inside an HTTP request will
+  clear a quota that resets at midnight; the old 5s-doubling loop just burned ~35s per mail to fail
+  anyway. It now throws `GeminiQuotaExhaustedException` immediately → HTTP 429 with a readable
+  German message. Retries (exponential backoff) remain for genuinely transient failures only.
+
+So `EventService.detectEventsInBatch` classifies **all** the mails of one import in a *single*
+request (chunked at `MAX_MAILS_PER_GEMINI_CALL = 10`). Two filters run before anything is sent — a
+schema.org JSON-LD event is authoritative and costs no call at all, and `DATE_HINT` drops mail with
+no date-like text, since the prompt forbids inventing a date. Keep both: they are what make 20/day
+usable.
+
+The batch reply is matched to mails by an **echoed `index`**, never by position. A reordered or
+dropped entry would otherwise attach one mail's event to a different mail — the one way batching can
+corrupt data silently. There are tests for exactly this; don't "simplify" them away.
+
+`AUTO_IMPORT_PARALLELISM = 3` now bounds only the **Gmail** downloads and has nothing to do with the
+AI quota. Thinking is disabled (`thinkingBudget(0)`) for both Gemini calls: it's a classify-and-extract
+task where thinking dominates latency and buys nothing. Note a budget of 0 is valid for 2.5 Flash but
+**rejected by 2.5 Pro**, so it constrains what `GEMINI_MODEL` can be set to.
 
 ## Conventions
 

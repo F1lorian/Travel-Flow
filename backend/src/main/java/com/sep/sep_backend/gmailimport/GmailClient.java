@@ -10,6 +10,9 @@ import com.google.api.services.gmail.model.MessagePartHeader;
 import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,6 +24,14 @@ public class GmailClient {
 
   private static final String USER = "me";
   private static final String APPLICATION_NAME = "sep-backend";
+
+  /**
+   * How many message previews are fetched at once. Gmail returns only ids, so every preview costs
+   * its own round trip; fetched one after another they add up to a visible wait before the picker
+   * shows anything. Bounded rather than unlimited to keep a large mailbox from opening a connection
+   * per message — this is the Gmail read quota, which is generous, not the Gemini one.
+   */
+  private static final int PREVIEW_PARALLELISM = 5;
 
   private final NetHttpTransport transport = new NetHttpTransport();
   private final GsonFactory jsonFactory = GsonFactory.getDefaultInstance();
@@ -52,9 +63,33 @@ public class GmailClient {
         return List.of();
       }
 
-      return messages.stream().map(message -> toPreview(gmail, message.getId())).toList();
+      return fetchPreviews(gmail, messages);
     } catch (Exception exception) {
       throw new IllegalStateException("Could not list Gmail messages", exception);
+    }
+  }
+
+  /**
+   * Fetches the previews for the listed messages a few at a time; see {@link #PREVIEW_PARALLELISM}.
+   *
+   * <p>The result keeps the order Gmail gave us (most recent first), which the picker relies on:
+   * the futures are created in that order and joined in the same order, so completion order does
+   * not leak into the list.
+   */
+  private List<GmailMessagePreviewDTO> fetchPreviews(Gmail gmail, List<Message> messages) {
+    ExecutorService executor =
+        Executors.newFixedThreadPool(Math.min(messages.size(), PREVIEW_PARALLELISM));
+    try {
+      return messages.stream()
+          .map(
+              message ->
+                  CompletableFuture.supplyAsync(() -> toPreview(gmail, message.getId()), executor))
+          .toList()
+          .stream()
+          .map(CompletableFuture::join)
+          .toList();
+    } finally {
+      executor.shutdown();
     }
   }
 

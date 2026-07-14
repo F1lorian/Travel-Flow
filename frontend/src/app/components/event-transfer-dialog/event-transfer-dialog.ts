@@ -322,7 +322,11 @@ export class EventTransferDialog implements OnInit {
       },
       error: err => {
         this.isImportingGmail = false;
-        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht importiert werden.');
+        // Der Fehlerbody ist {"message": "..."}; err.error direkt anzuzeigen ergaebe
+        // "[object Object]". Traegt u. a. die 429-Meldung, dass das Gemini-Tageskontingent leer ist.
+        this.showMessage(
+          err.error?.message ?? 'Gmail-Nachrichten konnten nicht importiert werden.',
+        );
       },
     });
   }

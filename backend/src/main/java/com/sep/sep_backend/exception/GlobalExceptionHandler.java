@@ -38,4 +38,16 @@ public class GlobalExceptionHandler {
   public ResponseEntity<MessageResponseDTO> handleResponseStatus(ResponseStatusException ex) {
     return ResponseEntity.status(ex.getStatusCode()).body(new MessageResponseDTO(ex.getReason()));
   }
+
+  /**
+   * The Gemini quota is used up, so the import could not run at all. Passed through as 429 with the
+   * reason spelled out — previously this surfaced as "N mails could not be checked", which told the
+   * user nothing about why, or that waiting a few minutes would not help.
+   */
+  @ExceptionHandler(GeminiQuotaExhaustedException.class)
+  public ResponseEntity<MessageResponseDTO> handleGeminiQuotaExhausted(
+      GeminiQuotaExhaustedException ex) {
+    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+        .body(new MessageResponseDTO(ex.getMessage()));
+  }
 }
