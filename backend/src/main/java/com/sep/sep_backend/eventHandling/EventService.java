@@ -7,6 +7,7 @@ import com.google.genai.errors.ApiException;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.HttpOptions;
+import com.google.genai.types.ThinkingConfig;
 import com.sep.sep_backend.ausgabe.AusgabeService;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
@@ -17,6 +18,7 @@ import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
 import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
+import com.sep.sep_backend.exception.GeminiQuotaExhaustedException;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -45,12 +47,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -68,6 +72,41 @@ public class EventService {
   /** Placeholder name for an event whose real name could not be determined. */
   private static final String UNKNOWN_EVENT_NAME = "Unbekanntes Event";
 
+  /**
+   * How much of the mail body is sent to Gemini. Appointment details sit at the top of a mail,
+   * while the plain-text part of a marketing mail runs to tens of thousands of characters — and
+   * Gemini's latency grows with the input, so that tail costs seconds per message and adds nothing.
+   */
+  private static final int MAX_PROMPT_MAIL_CHARS = 4000;
+
+  /**
+   * Something that could be a date: a numeric date, a month or weekday name, or a relative day.
+   *
+   * <p>A mail without any of these cannot yield an importable event — the prompt forbids inventing
+   * a date and {@link #mapDetectionResponse} drops an event whose {@code startDate} does not parse
+   * — so asking Gemini about it is tokens spent to learn nothing. Newsletters, receipts and
+   * notifications are dropped here instead of being packed into the batch prompt; an import where
+   * <em>every</em> mail is dateless costs no Gemini request at all.
+   *
+   * <p>Deliberately broad: a false positive only costs the call that would have happened anyway,
+   * while a false negative would silently drop a real event. Month abbreviations carry a word
+   * boundary on both ends on purpose — a bare {@code mai} prefix would match "Mail" in every German
+   * mail and make the filter useless.
+   */
+  private static final Pattern DATE_HINT =
+      Pattern.compile(
+          "\\d{1,2}\\s*[./-]\\s*\\d{1,2}" // 12.06. · 12/06/2026 · 2026-06-01
+              + "|\\b(?:januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober"
+              + "|november|dezember)\\b"
+              + "|\\b(?:january|february|march|april|may|june|july|august|september|october"
+              + "|november|december)\\b"
+              + "|\\b(?:jan|feb|mrz|apr|jun|jul|aug|sep|sept|okt|oct|nov|dez|dec)\\b"
+              + "|\\b(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonnabend|sonntag)\\b"
+              + "|\\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\b"
+              + "|\\b(?:heute|morgen|übermorgen|uebermorgen|nächste[nrms]?|naechste[nrms]?"
+              + "|today|tomorrow)\\b",
+          Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
   private final EventRepository eventRepository;
   private final TripRepository tripRepository;
   private final AusgabeService ausgabeService;
@@ -83,9 +122,16 @@ public class EventService {
   @Value("${gemini.model}")
   private String geminiModel;
 
-  /** Request timeout for a Gemini call. Without one, a hung call has no backstop. */
-  @Value("${gemini.timeout-seconds:60}")
-  private int geminiTimeoutSeconds = 60;
+  /**
+   * Request timeout for a Gemini call. Without one, a hung call has no backstop — and an auto
+   * import now rides on a single batched request, so one stuck call stalls the whole import.
+   *
+   * <p>Not tighter than this on purpose: with thinking disabled a healthy call answers in seconds,
+   * so 30s only trips on a genuinely stuck request instead of turning a merely slow one into a
+   * spurious failure. (It was briefly 15s, which did exactly that.)
+   */
+  @Value("${gemini.timeout-seconds:30}")
+  private int geminiTimeoutSeconds = 30;
 
   /** How many times a failed Gemini detection call is retried before giving up. */
   @Value("${gemini.detection.max-retries:3}")
@@ -96,11 +142,33 @@ public class EventService {
   private long detectionBackoffMillis = 500;
 
   /**
-   * Base backoff for an HTTP 429. Gemini's quota resets per minute, not per second, so a sub-second
-   * retry just burns an attempt against the same exhausted quota and fails the whole batch.
+   * Shared Gemini client, built on first use and reused afterwards.
+   *
+   * <p>Built lazily rather than in the constructor because {@link #geminiApiKey} and {@link
+   * #geminiTimeoutSeconds} are injected after construction. Volatile with double-checked locking
+   * because auto import calls this from several threads at once.
+   *
+   * <p>It used to be rebuilt for every call <em>and every retry</em>, which paid for a fresh
+   * connection pool and TLS handshake per mail.
    */
-  @Value("${gemini.detection.rate-limit-backoff-millis:5000}")
-  private long detectionRateLimitBackoffMillis = 5000;
+  private volatile Client geminiClient;
+
+  /**
+   * Config shared by both Gemini calls. Thinking is switched off: this is a
+   * classify-and-extract-JSON task at temperature 0.1, where the thinking pass adds little but
+   * dominates the response time.
+   *
+   * <p>Careful when changing {@code gemini.model} (env {@code GEMINI_MODEL}): a budget of 0 is
+   * valid for the 2.5 Flash models but <em>rejected</em> by 2.5 Pro, which requires a minimum
+   * thinking budget.
+   */
+  private static final GenerateContentConfig GEMINI_CONFIG =
+      GenerateContentConfig.builder()
+          .responseMimeType("application/json")
+          // Niedrige temperature == weniger Halluzination.
+          .temperature(0.1f)
+          .thinkingConfig(ThinkingConfig.builder().thinkingBudget(0).build())
+          .build();
 
   /**
    * Creates an event service with repository access and helper services.
@@ -454,20 +522,12 @@ public class EventService {
   public EventResponseDTO ParseMailFile(InputStream inputStream) throws Exception {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
-    var jsonLdBlocks = extractJsonLd(message);
+
     // 1. Stufe: Strukturierte JSON-LD-Daten sind zuverlässiger als KI-Extraktion und werden
     // bevorzugt.
-    if (!jsonLdBlocks.isEmpty()) {
-      var jsonEvent =
-          jsonLdBlocks.stream()
-              .filter(node -> isSchemaOrg(node))
-              .filter(node -> isSchemaEvent(node))
-              .findFirst()
-              .orElse(null);
-
-      if (jsonEvent != null) {
-        return mapJsonLdToDTO(jsonEvent);
-      }
+    Optional<EventResponseDTO> jsonLdEvent = findSchemaOrgEvent(message);
+    if (jsonLdEvent.isPresent()) {
+      return jsonLdEvent.get();
     }
     // 2. Stufe: Fehlt JSON-LD, wird der Mailtext als Fallback mit Gemini interpretiert.
     var body = extractText(message);
@@ -487,20 +547,7 @@ public class EventService {
     Session session = Session.getDefaultInstance(new Properties());
     MimeMessage message = new MimeMessage(session, inputStream);
 
-    var jsonLdBlocks = extractJsonLd(message);
-    Optional<EventResponseDTO> event = Optional.empty();
-    if (!jsonLdBlocks.isEmpty()) {
-      var jsonEvent =
-          jsonLdBlocks.stream()
-              .filter(this::isSchemaOrg)
-              .filter(this::isSchemaEvent)
-              .findFirst()
-              .orElse(null);
-      if (jsonEvent != null) {
-        event = Optional.of(mapJsonLdToDTO(jsonEvent));
-      }
-    }
-
+    Optional<EventResponseDTO> event = findSchemaOrgEvent(message);
     if (event.isEmpty()) {
       var body = extractText(message);
       event = detectEventWithGemini(message.getSubject(), body, resolveSentDate(message));
@@ -509,6 +556,153 @@ public class EventService {
     // Ein Event ohne echten Namen ("Unbekanntes Event") wird beim automatischen Import nicht
     // übernommen — der Nutzer soll keine namenlosen Platzhalter im Kalender bekommen.
     return event.filter(this::hasRealName);
+  }
+
+  /** A mail reduced to the three things event detection needs. */
+  public record MailContent(String subject, String body, LocalDateTime sentDate) {}
+
+  /**
+   * A mail read once and ready for detection: the schema.org event it already carries (if any),
+   * plus the text to fall back on. Reading the MIME message is the expensive-ish local step, and
+   * the stream can only be consumed once, so both come out of a single pass.
+   */
+  public record PreparedMail(Optional<EventResponseDTO> jsonLdEvent, MailContent content) {}
+
+  /**
+   * What detection concluded about one mail. Three outcomes, and they must stay distinct: an event,
+   * a confident "no event", and "could not be checked" — collapsing the last two silently loses
+   * mail.
+   */
+  public record DetectionResult(Optional<EventResponseDTO> event, boolean failed) {
+
+    static DetectionResult of(EventResponseDTO event) {
+      return new DetectionResult(Optional.of(event), false);
+    }
+
+    static DetectionResult noEvent() {
+      return new DetectionResult(Optional.empty(), false);
+    }
+
+    /** Named to stay clear of the {@code failed()} accessor this record already generates. */
+    static DetectionResult unchecked() {
+      return new DetectionResult(Optional.empty(), true);
+    }
+  }
+
+  /**
+   * How many mails go into one Gemini request. The free tier's cap is counted in <em>requests</em>,
+   * not tokens (20/day for {@code gemini-2.5-flash}), so folding a whole import into one request is
+   * what makes the quota usable at all: a 10-mail import costs 1 request instead of 10.
+   *
+   * <p>Not unbounded, though — one oversized prompt is slower, likelier to be truncated, and takes
+   * every mail in it down with it if the call fails.
+   */
+  private static final int MAX_MAILS_PER_GEMINI_CALL = 10;
+
+  /**
+   * Reads a raw mail once: its schema.org event if it has one, and its text either way.
+   *
+   * @param inputStream raw RFC822 mail
+   * @return the mail's structured event (if present) and its content
+   */
+  public PreparedMail prepareMail(InputStream inputStream) throws Exception {
+    MimeMessage message =
+        new MimeMessage(Session.getDefaultInstance(new Properties()), inputStream);
+    return new PreparedMail(
+        // Filtered here, so whatever comes out is already importable and the caller carries no
+        // rule.
+        findSchemaOrgEvent(message).filter(this::hasRealName),
+        new MailContent(message.getSubject(), extractText(message), resolveSentDate(message)));
+  }
+
+  /**
+   * Classifies several mails using as few Gemini requests as possible, returning one result per
+   * input <em>in input order</em>.
+   *
+   * <p>Two filters run before anything is sent: a mail with no date-like text cannot yield an
+   * importable event (see {@link #DATE_HINT}), and an empty body has nothing to classify. Those are
+   * answered locally as "no event" and never cost a request. Whatever survives is chunked into
+   * {@link #MAX_MAILS_PER_GEMINI_CALL}-sized requests.
+   *
+   * <p>If a chunk's call fails, every mail in that chunk is reported {@code failed} — honest, since
+   * we genuinely do not know what was in them. A 429 aborts the whole thing via {@link
+   * GeminiQuotaExhaustedException}: no other chunk would fare any better.
+   *
+   * @param mails the mails to classify
+   * @return one result per input mail, in the same order
+   */
+  public List<DetectionResult> detectEventsInBatch(List<MailContent> mails) {
+    List<DetectionResult> results = new ArrayList<>(Collections.nCopies(mails.size(), null));
+
+    // Indices of the mails that actually warrant a call; the rest are settled locally.
+    List<Integer> pending = new ArrayList<>();
+    for (int i = 0; i < mails.size(); i++) {
+      MailContent mail = mails.get(i);
+      String promptText = limitForPrompt(mail.body());
+      if (promptText.isBlank() || !mentionsDate(mail.subject(), promptText)) {
+        results.set(i, DetectionResult.noEvent());
+      } else {
+        pending.add(i);
+      }
+    }
+
+    if (pending.isEmpty()) {
+      return List.copyOf(results);
+    }
+    if (geminiApiKey == null || geminiApiKey.isBlank()) {
+      throw new EventDetectionException("Gemini API key is not configured");
+    }
+
+    for (int from = 0; from < pending.size(); from += MAX_MAILS_PER_GEMINI_CALL) {
+      List<Integer> chunk =
+          pending.subList(from, Math.min(from + MAX_MAILS_PER_GEMINI_CALL, pending.size()));
+      detectChunk(mails, chunk, results);
+    }
+    return List.copyOf(results);
+  }
+
+  /** Runs one Gemini request for {@code chunk} and writes its outcomes into {@code results}. */
+  private void detectChunk(
+      List<MailContent> mails, List<Integer> chunk, List<DetectionResult> results) {
+    List<MailContent> batch = chunk.stream().map(mails::get).toList();
+    try {
+      JsonNode reply = callGeminiForJson(buildBatchPrompt(batch), batch.size() + " mails");
+      // Map by the echoed "index", never by position: a reply that drops or reorders an entry would
+      // otherwise attach one mail's event to another mail.
+      for (int slot = 0; slot < chunk.size(); slot++) {
+        results.set(chunk.get(slot), mapBatchEntry(reply, slot, batch.get(slot)));
+      }
+    } catch (GeminiQuotaExhaustedException quota) {
+      throw quota;
+    } catch (Exception exception) {
+      log.warn("Batch event detection failed for {} mails", batch.size(), exception);
+      chunk.forEach(index -> results.set(index, DetectionResult.unchecked()));
+    }
+  }
+
+  /** Picks the entry for one mail out of the batch reply and maps it onto an event. */
+  private DetectionResult mapBatchEntry(JsonNode reply, int slot, MailContent mail) {
+    JsonNode entries = reply.isArray() ? reply : reply.path("events");
+    for (JsonNode entry : entries) {
+      if (entry.path("index").asInt(-1) == slot) {
+        return mapDetectionResponse(entry, mail.subject())
+            .filter(this::hasRealName)
+            .map(DetectionResult::of)
+            .orElseGet(DetectionResult::noEvent);
+      }
+    }
+    // Gemini simply did not answer for this mail. That is "could not be checked", not "no event".
+    log.warn("Batch reply had no entry for mail {} [{}]", slot, mail.subject());
+    return DetectionResult.unchecked();
+  }
+
+  /** The schema.org event carried by the mail, if it has one. */
+  private Optional<EventResponseDTO> findSchemaOrgEvent(MimeMessage message) throws Exception {
+    return extractJsonLd(message).stream()
+        .filter(this::isSchemaOrg)
+        .filter(this::isSchemaEvent)
+        .findFirst()
+        .map(this::mapJsonLdToDTO);
   }
 
   /** True when the event has a real name; a blank or "Unbekanntes Event" placeholder is dropped. */
@@ -520,10 +714,10 @@ public class EventService {
   /**
    * Asks Gemini whether the mail text describes a real appointment and, if so, extracts it.
    *
-   * <p>Returns empty for a mail that genuinely has no event (empty body or a {@code hasEvent:
-   * false} verdict). Throws {@link EventDetectionException} when detection could not run (no Gemini
-   * key, or the call keeps failing after retries) so the caller can report the message as "could
-   * not be checked" rather than silently treating a failure as "no event".
+   * <p>Returns empty for a mail that genuinely has no event (empty body, no date anywhere in it, or
+   * a {@code hasEvent: false} verdict). Throws {@link EventDetectionException} when detection could
+   * not run (no Gemini key, or the call keeps failing after retries) so the caller can report the
+   * message as "could not be checked" rather than silently treating a failure as "no event".
    */
   private Optional<EventResponseDTO> detectEventWithGemini(
       String subject, String mailText, LocalDateTime sentDate) {
@@ -534,20 +728,39 @@ public class EventService {
       throw new EventDetectionException("Gemini API key is not configured");
     }
 
-    String prompt = buildGeminiEventDetectionPrompt(subject, mailText, sentDate);
+    String promptText = limitForPrompt(mailText);
+    if (!mentionsDate(subject, promptText)) {
+      return Optional.empty();
+    }
 
+    String prompt = buildGeminiEventDetectionPrompt(subject, mailText, sentDate);
+    return mapDetectionResponse(callGeminiForJson(prompt, subject), subject);
+  }
+
+  /**
+   * Calls Gemini and parses its JSON reply, retrying transient failures (timeout, 5xx) with
+   * exponential backoff.
+   *
+   * <p>A 429 is the exception: it aborts at once with {@link GeminiQuotaExhaustedException} rather
+   * than being retried. See {@link #rateLimitFailure} for why waiting it out cannot work.
+   */
+  private JsonNode callGeminiForJson(String prompt, String label) {
     int attempt = 0;
     while (true) {
       try {
         String raw = callGemini(prompt);
-        log.info("Gmail event detection for [{}] -> {}", subject, raw);
-        return mapDetectionResponse(objectMapper.readTree(raw), subject);
+        log.info("Gemini event detection for [{}] -> {}", label, raw);
+        return objectMapper.readTree(raw);
       } catch (Exception exception) {
+        Optional<ApiException> rateLimit = rateLimitFailure(exception);
+        if (rateLimit.isPresent()) {
+          throw quotaExhausted(rateLimit.get());
+        }
         if (attempt++ >= detectionMaxRetries) {
-          log.warn("Gmail event detection failed for [{}] after {} attempts", subject, attempt);
+          log.warn("Gemini event detection failed for [{}] after {} attempts", label, attempt);
           throw new EventDetectionException("Gemini event detection failed", exception);
         }
-        sleepBeforeRetry(exception, attempt, subject);
+        sleepBeforeRetry(attempt);
       }
     }
   }
@@ -585,36 +798,38 @@ public class EventService {
    * so the client is built once per message rather than once per retry.
    */
   String callGemini(String prompt) {
-    Client client =
-        Client.builder()
-            .apiKey(geminiApiKey)
-            .httpOptions(HttpOptions.builder().timeout(geminiTimeoutSeconds * 1000).build())
-            .build();
-
-    GenerateContentConfig config =
-        GenerateContentConfig.builder()
-            .responseMimeType("application/json")
-            .temperature(0.1f)
-            .build();
-
-    GenerateContentResponse response = client.models.generateContent(geminiModel, prompt, config);
+    GenerateContentResponse response =
+        geminiClient().models.generateContent(geminiModel, prompt, GEMINI_CONFIG);
     return response.text();
   }
 
-  /**
-   * Waits before the next detection attempt: exponential backoff with jitter, and a far longer base
-   * for a rate limit, because Gemini's quota resets per minute and a sub-second retry would just
-   * hit the same exhausted quota again.
-   */
-  private void sleepBeforeRetry(Exception failure, int attempt, String subject) {
-    boolean rateLimited = isRateLimited(failure);
-    long base = rateLimited ? detectionRateLimitBackoffMillis : detectionBackoffMillis;
-    long backoff = base * (1L << (attempt - 1));
-    long jittered = backoff + ThreadLocalRandom.current().nextLong(backoff / 4 + 1);
-
-    if (rateLimited) {
-      log.warn("Gemini rate-limited detection for [{}]; retrying in {} ms", subject, jittered);
+  /** The shared Gemini client, built on first use; see {@link #geminiClient}. */
+  private Client geminiClient() {
+    Client existing = geminiClient;
+    if (existing != null) {
+      return existing;
     }
+    synchronized (this) {
+      if (geminiClient == null) {
+        geminiClient =
+            Client.builder()
+                .apiKey(geminiApiKey)
+                .httpOptions(HttpOptions.builder().timeout(geminiTimeoutSeconds * 1000).build())
+                .build();
+      }
+      return geminiClient;
+    }
+  }
+
+  /**
+   * Waits before the next detection attempt: exponential backoff with jitter.
+   *
+   * <p>Only for genuinely transient failures (timeout, 5xx). A rate limit never gets here — see
+   * {@link #rateLimitFailure}.
+   */
+  private void sleepBeforeRetry(int attempt) {
+    long backoff = detectionBackoffMillis * (1L << (attempt - 1));
+    long jittered = backoff + ThreadLocalRandom.current().nextLong(backoff / 4 + 1);
 
     try {
       Thread.sleep(jittered);
@@ -624,17 +839,111 @@ public class EventService {
     }
   }
 
-  /** True when Gemini refused the call because the quota is exhausted (HTTP 429). */
-  private boolean isRateLimited(Throwable failure) {
+  /**
+   * The HTTP 429 buried in a failed Gemini call, if that is what went wrong.
+   *
+   * <p>A 429 is <em>not</em> retried. The free tier's binding limit is per <em>day</em> (20
+   * requests for {@code gemini-2.5-flash}), not per minute, so no backoff we could sit through
+   * inside a request will clear it — the old 5s-and-double loop just spent ~35s per mail to fail
+   * anyway, and every rejected attempt is one more request against the same cap. Fail immediately
+   * instead, and let the caller tell the user the truth.
+   */
+  private Optional<ApiException> rateLimitFailure(Throwable failure) {
     for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
       if (cause instanceof ApiException api && api.code() == 429) {
-        return true;
+        return Optional.of(api);
       }
       if (cause.getCause() == cause) {
         break;
       }
     }
-    return false;
+    return Optional.empty();
+  }
+
+  /**
+   * Turns a 429 into the exception that aborts the import.
+   *
+   * <p>The SDK keeps only {@code error.message} from the response and drops the structured {@code
+   * details} (quota id, retry delay), so the raw message is logged as-is — it is the only place the
+   * actual limit ("limit: 20") is visible for diagnosis.
+   */
+  private GeminiQuotaExhaustedException quotaExhausted(ApiException api) {
+    log.warn("Gemini quota exhausted (HTTP 429): {}", api.getMessage());
+    return new GeminiQuotaExhaustedException(
+        "Das Gemini-Kontingent ist aufgebraucht. Der Free-Tier erlaubt nur wenige Anfragen pro Tag;"
+            + " bitte später erneut versuchen.",
+        api);
+  }
+
+  /**
+   * Cuts the mail body down to the part that can plausibly carry the appointment; see {@link
+   * #MAX_PROMPT_MAIL_CHARS}.
+   */
+  private static String limitForPrompt(String mailText) {
+    if (mailText == null) {
+      return "";
+    }
+    return mailText.length() <= MAX_PROMPT_MAIL_CHARS
+        ? mailText
+        : mailText.substring(0, MAX_PROMPT_MAIL_CHARS);
+  }
+
+  /**
+   * True when subject or body names something that could be a date; see {@link #DATE_HINT}. The
+   * body must already be trimmed to what the prompt will carry — scanning the full text would let a
+   * date past the cut-off wave through a prompt that no longer contains it.
+   */
+  private static boolean mentionsDate(String subject, String promptText) {
+    return DATE_HINT.matcher(subject == null ? "" : subject).find()
+        || DATE_HINT.matcher(promptText).find();
+  }
+
+  /**
+   * The batch counterpart of {@link #buildGeminiEventDetectionPrompt}: several mails, one request,
+   * one array back.
+   *
+   * <p>Each mail is numbered and carries its own reference date (mails in one import were not
+   * necessarily sent on the same day). The reply must echo that number back as {@code index} —
+   * {@link #mapBatchEntry} matches on it rather than on position, so a dropped or reordered entry
+   * cannot silently shift every event onto the wrong mail.
+   */
+  private String buildBatchPrompt(List<MailContent> mails) {
+    StringBuilder mailBlocks = new StringBuilder();
+    for (int i = 0; i < mails.size(); i++) {
+      MailContent mail = mails.get(i);
+      mailBlocks
+          .append("--- Mail %d ---%n".formatted(i))
+          .append("index: %d%n".formatted(i))
+          .append(
+              "Referenzdatum (Sendedatum): %s%n".formatted(formatReferenceDate(mail.sentDate())))
+          .append("Betreff: %s%n".formatted(mail.subject() == null ? "" : mail.subject()))
+          .append("Mailtext:%n%s%n%n".formatted(limitForPrompt(mail.body())));
+    }
+
+    return """
+            Du bekommst mehrere E-Mails. Pruefe JEDE Mail einzeln und unabhaengig von den anderen.
+
+            Entscheide pro Mail, ob sie einen konkreten, echten Termin beschreibt (z. B. Buchung,
+            Reservierung, Einladung, Ticket). Werbung, Newsletter, Rechnungen und Benachrichtigungen
+            sind KEIN Termin.
+
+            Regeln:
+            - Erfinde niemals ein Datum. Wenn kein Datum in der Mail steht, ist hasEvent false.
+            - Relative Angaben ("morgen", "naechsten Freitag") beziehen sich auf das Referenzdatum
+              der jeweiligen Mail.
+            - Datumsformat: yyyy-MM-dd'T'HH:mm:ss
+            - kosten ist eine ganze Zahl in Euro, 0 wenn nichts genannt wird.
+
+            Antworte AUSSCHLIESSLICH mit einem JSON-Array — genau ein Objekt pro Mail, und gib fuer
+            JEDE Mail den passenden index zurueck:
+            [
+              {"index": 0, "hasEvent": true, "name": "...", "kosten": 0,
+               "startDate": "...", "endDate": "..."},
+              {"index": 1, "hasEvent": false}
+            ]
+
+            %s"""
+        .formatted(mailBlocks);
   }
 
   private String buildGeminiEventDetectionPrompt(
@@ -672,7 +981,7 @@ public class EventService {
                 Mailtext:
                 %s
                 """
-        .formatted(formatReferenceDate(sentDate), subject, mailText);
+        .formatted(formatReferenceDate(sentDate), subject, limitForPrompt(mailText));
   }
 
   /**
@@ -852,18 +1161,13 @@ public class EventService {
     }
 
     try {
-      Client client = Client.builder().apiKey(geminiApiKey).build();
-
-      GenerateContentConfig config =
-          GenerateContentConfig.builder()
-              .responseMimeType("application/json")
-              // Niedrige temperature == weniger hallozination.
-              .temperature(0.1f)
-              .build();
-
+      // Über geminiClient(), damit auch dieser Aufruf den Timeout bekommt — vorher hatte er gar
+      // keinen und konnte unbegrenzt hängen.
       GenerateContentResponse response =
-          client.models.generateContent(
-              geminiModel, buildGeminiPrompt(subject, mailText, sentDate), config);
+          geminiClient()
+              .models
+              .generateContent(
+                  geminiModel, buildGeminiPrompt(subject, mailText, sentDate), GEMINI_CONFIG);
 
       JsonNode node = objectMapper.readTree(response.text());
 
@@ -917,7 +1221,7 @@ public class EventService {
                 Mailtext:
                 %s
                 """
-        .formatted(formatReferenceDate(sentDate), subject, mailText);
+        .formatted(formatReferenceDate(sentDate), subject, limitForPrompt(mailText));
   }
 
   private boolean isSchemaOrg(JsonNode node) {

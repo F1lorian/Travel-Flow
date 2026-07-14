@@ -25,6 +25,7 @@ import com.sep.sep_backend.eventHandling.dto.EventRequestDTO;
 import com.sep.sep_backend.eventHandling.dto.EventResponseDTO;
 import com.sep.sep_backend.exception.EventDetectionException;
 import com.sep.sep_backend.exception.EventOutsideTripException;
+import com.sep.sep_backend.exception.GeminiQuotaExhaustedException;
 import com.sep.sep_backend.notification.EmailNotificationService;
 import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
@@ -706,7 +707,8 @@ class EventServiceTest {
             }
             """);
 
-    Optional<EventResponseDTO> result = service.parseMailFileIfEvent(textMail("Einladung"));
+    Optional<EventResponseDTO> result =
+        service.parseMailFileIfEvent(textMail("Einladung zum Konzert am 01.06.2026 um 20:00 Uhr"));
 
     assertThat(result).isPresent();
     assertThat(result.get().getName()).isEqualTo("Konzert");
@@ -728,24 +730,198 @@ class EventServiceTest {
             }
             """);
 
-    Optional<EventResponseDTO> result = service.parseMailFileIfEvent(textMail("Einladung"));
+    Optional<EventResponseDTO> result =
+        service.parseMailFileIfEvent(textMail("Einladung zum Konzert am 01.06.2026 um 20:00 Uhr"));
 
     assertThat(result).isEmpty();
   }
 
   @Test
-  void parseMailFileIfEventWiederholtBeiRateLimitUndMeldetDannFehler() throws Exception {
+  void parseMailFileIfEventBrichtBeiRateLimitSofortAb() throws Exception {
     EventService service = detectionService(null);
     doThrow(new ClientException(429, "RESOURCE_EXHAUSTED", "quota exceeded"))
         .when(service)
         .callGemini(anyString());
 
-    assertThatThrownBy(() -> service.parseMailFileIfEvent(textMail("Einladung")))
+    assertThatThrownBy(
+            () ->
+                service.parseMailFileIfEvent(
+                    textMail("Einladung zum Konzert am 01.06.2026 um 20:00 Uhr")))
+        .isInstanceOf(GeminiQuotaExhaustedException.class);
+
+    // Ein 429 wird NICHT wiederholt: das bindende Free-Tier-Limit gilt pro Tag (20 Anfragen für
+    // gemini-2.5-flash), kein Backoff kann es aussitzen. Früher wurden hier 4 Versuche über ~35s
+    // verbraten, die alle scheitern mussten. Genau ein Aufruf.
+    verify(service, times(1)).callGemini(anyString());
+  }
+
+  @Test
+  void parseMailFileIfEventWiederholtVoruebergehendeFehler() throws Exception {
+    EventService service = detectionService(null);
+    doThrow(new IllegalStateException("timeout")).when(service).callGemini(anyString());
+
+    assertThatThrownBy(
+            () ->
+                service.parseMailFileIfEvent(
+                    textMail("Einladung zum Konzert am 01.06.2026 um 20:00 Uhr")))
         .isInstanceOf(EventDetectionException.class);
 
-    // A rate limit must be reported as "could not be checked", never as "no event found".
-    // detectionMaxRetries defaults to 3, so the initial attempt plus 3 retries.
+    // Ein echter transienter Fehler (Timeout, 5xx) wird weiterhin wiederholt: 1 Versuch + 3
+    // Retries.
     verify(service, times(4)).callGemini(anyString());
+  }
+
+  @Test
+  void detectEventsInBatchBrauchtNurEinenGeminiAufrufFuerMehrereMails() {
+    EventService service =
+        detectionService(
+            """
+            [
+              {"index": 0, "hasEvent": true, "name": "Konzert", "kosten": 49,
+               "startDate": "2026-06-01T20:00:00", "endDate": "2026-06-01T22:00:00"},
+              {"index": 1, "hasEvent": false},
+              {"index": 2, "hasEvent": true, "name": "Zahnarzt", "kosten": 0,
+               "startDate": "2026-06-05T09:00:00", "endDate": "2026-06-05T10:00:00"}
+            ]
+            """);
+
+    List<EventService.DetectionResult> results =
+        service.detectEventsInBatch(
+            List.of(
+                mailContent("Konzert", "Einladung zum Konzert am 01.06.2026 um 20:00 Uhr"),
+                mailContent("Angebot", "Nur am 02.06.2026: 20% Rabatt auf alles!"),
+                mailContent("Zahnarzt", "Ihr Termin am 05.06.2026 um 09:00 Uhr")));
+
+    // Der ganze Sinn der Umstellung: eine Anfrage für den kompletten Import, nicht eine pro Mail.
+    verify(service, times(1)).callGemini(anyString());
+
+    assertThat(results).hasSize(3);
+    assertThat(results.get(0).event()).map(EventResponseDTO::getName).contains("Konzert");
+    assertThat(results.get(1).event()).isEmpty();
+    assertThat(results.get(1).failed()).isFalse();
+    assertThat(results.get(2).event()).map(EventResponseDTO::getName).contains("Zahnarzt");
+  }
+
+  @Test
+  void detectEventsInBatchOrdnetEventsUeberIndexZuNichtUeberPosition() {
+    // Gemini antwortet in vertauschter Reihenfolge. Würde per Position zugeordnet, landete das
+    // Konzert auf der Zahnarzt-Mail und umgekehrt — genau der Fehler, den Batching einführen kann.
+    EventService service =
+        detectionService(
+            """
+            [
+              {"index": 2, "hasEvent": true, "name": "Zahnarzt", "kosten": 0,
+               "startDate": "2026-06-05T09:00:00", "endDate": "2026-06-05T10:00:00"},
+              {"index": 0, "hasEvent": true, "name": "Konzert", "kosten": 49,
+               "startDate": "2026-06-01T20:00:00", "endDate": "2026-06-01T22:00:00"},
+              {"index": 1, "hasEvent": false}
+            ]
+            """);
+
+    List<EventService.DetectionResult> results =
+        service.detectEventsInBatch(
+            List.of(
+                mailContent("Konzert", "Einladung zum Konzert am 01.06.2026 um 20:00 Uhr"),
+                mailContent("Angebot", "Nur am 02.06.2026: 20% Rabatt auf alles!"),
+                mailContent("Zahnarzt", "Ihr Termin am 05.06.2026 um 09:00 Uhr")));
+
+    assertThat(results.get(0).event()).map(EventResponseDTO::getName).contains("Konzert");
+    assertThat(results.get(1).event()).isEmpty();
+    assertThat(results.get(2).event()).map(EventResponseDTO::getName).contains("Zahnarzt");
+  }
+
+  @Test
+  void detectEventsInBatchMeldetFehlendenEintragAlsUngeprueft() {
+    // Für Mail 1 fehlt jede Antwort. Das ist "konnte nicht geprüft werden", NICHT "kein Event" —
+    // sonst verschwindet die Mail stillschweigend aus dem Import.
+    EventService service =
+        detectionService(
+            """
+            [
+              {"index": 0, "hasEvent": true, "name": "Konzert", "kosten": 0,
+               "startDate": "2026-06-01T20:00:00", "endDate": "2026-06-01T22:00:00"}
+            ]
+            """);
+
+    List<EventService.DetectionResult> results =
+        service.detectEventsInBatch(
+            List.of(
+                mailContent("Konzert", "Einladung zum Konzert am 01.06.2026 um 20:00 Uhr"),
+                mailContent("Zahnarzt", "Ihr Termin am 05.06.2026 um 09:00 Uhr")));
+
+    assertThat(results.get(0).event()).map(EventResponseDTO::getName).contains("Konzert");
+    assertThat(results.get(1).failed()).isTrue();
+    assertThat(results.get(1).event()).isEmpty();
+  }
+
+  @Test
+  void detectEventsInBatchFragtGeminiGarNichtWennKeineMailEinDatumHat() {
+    EventService service = detectionService(null);
+
+    List<EventService.DetectionResult> results =
+        service.detectEventsInBatch(
+            List.of(
+                mailContent("Rechnung", "Ihre Rechnung liegt zum Download bereit."),
+                mailContent("Newsletter", "Unsere besten Angebote, nur fuer Sie.")));
+
+    // Ohne Datum kann keine der Mails ein Event ergeben — der Import kostet dann null Anfragen.
+    verify(service, never()).callGemini(anyString());
+    assertThat(results).hasSize(2);
+    assertThat(results).allSatisfy(result -> assertThat(result.failed()).isFalse());
+    assertThat(results).allSatisfy(result -> assertThat(result.event()).isEmpty());
+  }
+
+  @Test
+  void detectEventsInBatchReichtRateLimitDurch() {
+    EventService service = detectionService(null);
+    doThrow(new ClientException(429, "RESOURCE_EXHAUSTED", "quota exceeded"))
+        .when(service)
+        .callGemini(anyString());
+
+    // Ein aufgebrauchtes Kontingent ist kein Problem einzelner Mails: der ganze Import ist tot.
+    // Es darf nicht als "N Mails konnten nicht geprüft werden" verschluckt werden.
+    assertThatThrownBy(
+            () ->
+                service.detectEventsInBatch(
+                    List.of(mailContent("Konzert", "Konzert am 01.06.2026 um 20:00 Uhr"))))
+        .isInstanceOf(GeminiQuotaExhaustedException.class);
+  }
+
+  private EventService.MailContent mailContent(String subject, String body) {
+    return new EventService.MailContent(subject, body, LocalDateTime.of(2026, 5, 20, 12, 0));
+  }
+
+  @Test
+  void parseMailFileIfEventFragtGeminiNichtBeiMailOhneDatum() throws Exception {
+    EventService service = detectionService(null);
+
+    Optional<EventResponseDTO> result =
+        service.parseMailFileIfEvent(textMail("Ihre Rechnung liegt zum Download bereit."));
+
+    // Ohne Datum kann die Mail kein importierbares Event ergeben — der Gemini-Aufruf würde nur Zeit
+    // und Kontingent kosten. Kein Event, aber auch kein Fehler.
+    assertThat(result).isEmpty();
+    verify(service, never()).callGemini(anyString());
+  }
+
+  @Test
+  void parseMailFileIfEventKuerztLangenMailtextVorDemGeminiAufruf() throws Exception {
+    EventService service =
+        detectionService(
+            """
+            {
+              "hasEvent": false
+            }
+            """);
+
+    // Das Datum steht vorne, der Werbe-Rumpf dahinter reicht weit über die Prompt-Grenze hinaus.
+    String body = "Termin am 01.06.2026. " + "Werbung ".repeat(1000) + "ENDE-MARKER";
+
+    service.parseMailFileIfEvent(textMail(body));
+
+    ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+    verify(service).callGemini(prompt.capture());
+    assertThat(prompt.getValue()).contains("01.06.2026").doesNotContain("ENDE-MARKER");
   }
 
   /**
@@ -757,7 +933,6 @@ class EventServiceTest {
     ReflectionTestUtils.setField(service, "geminiApiKey", "test-key");
     ReflectionTestUtils.setField(service, "geminiModel", "gemini-2.5-flash");
     ReflectionTestUtils.setField(service, "detectionBackoffMillis", 1L);
-    ReflectionTestUtils.setField(service, "detectionRateLimitBackoffMillis", 1L);
 
     if (geminiJson != null) {
       doReturn(geminiJson).when(service).callGemini(anyString());

@@ -9,6 +9,7 @@ import com.sep.sep_backend.gmailimport.dto.GmailMessagePreviewDTO;
 import com.sep.sep_backend.repos.GmailAccountRepository;
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -104,21 +105,26 @@ public class GmailImportService {
   }
 
   /**
-   * How many messages are fetched and classified with Gemini in parallel during auto import. Kept
-   * low so a full selection does not fire a burst of simultaneous Gemini calls that trips the
-   * per-minute quota (HTTP 429); the detector's retry/backoff then spaces out the remaining calls.
+   * How many messages are downloaded from Gmail at once. This bounds Gmail traffic only — the
+   * classification that follows is a single batched Gemini request, not one per message, so this no
+   * longer has anything to do with the AI rate limit.
    */
   private static final int AUTO_IMPORT_PARALLELISM = 3;
 
-  /** Outcome of processing one message: its event (if any) and whether detection failed. */
-  private record ParseOutcome(Optional<EventResponseDTO> event, boolean failed) {}
+  /** A downloaded message: its id, and either its parsed content or the failure to report. */
+  private record FetchedMail(String messageId, EventService.PreparedMail prepared) {}
 
   /**
    * Parses several messages for the "import automatically" mode and keeps only those that actually
-   * contain an event (Gemini-based detection). Non-event mails are skipped; messages whose
-   * detection could not run are counted as failed so the client can report them. The messages are
-   * fetched and classified with limited parallelism so the batch stays within the request timeout
-   * without overwhelming the AI rate limit.
+   * contain an event. Non-event mails are skipped; messages that could not be checked are counted
+   * as failed so the client can report them.
+   *
+   * <p>The work is deliberately split in two. Downloading and reading the mails is local and cheap,
+   * and any mail carrying a schema.org event is finished right there without touching the AI. Only
+   * what is left goes to Gemini — and it goes in <em>one batched request</em> rather than one
+   * request per mail. That matters because the free tier's cap counts requests per day (20 for
+   * {@code gemini-2.5-flash}), so per-mail calls burned the entire daily budget in two imports and
+   * left later ones failing for no visible reason.
    *
    * @param userId the current user
    * @param messageIds the selected message ids
@@ -136,40 +142,66 @@ public class GmailImportService {
       return new GmailAutoImportResultDTO(List.of(), 0);
     }
 
+    // A message we could not even download is already a failure; it never reaches detection.
+    List<FetchedMail> fetched = fetchAll(accessToken, ids);
+    int failed = ids.size() - fetched.size();
+
+    List<EventResponseDTO> events = new ArrayList<>();
+    List<FetchedMail> needAi = new ArrayList<>();
+    for (FetchedMail mail : fetched) {
+      Optional<EventResponseDTO> jsonLd = mail.prepared().jsonLdEvent();
+      if (jsonLd.isPresent()) {
+        jsonLd.ifPresent(events::add);
+      } else {
+        needAi.add(mail);
+      }
+    }
+
+    if (!needAi.isEmpty()) {
+      List<EventService.DetectionResult> results =
+          eventService.detectEventsInBatch(
+              needAi.stream().map(mail -> mail.prepared().content()).toList());
+
+      for (EventService.DetectionResult result : results) {
+        if (result.failed()) {
+          failed++;
+        } else {
+          result.event().ifPresent(events::add);
+        }
+      }
+    }
+
+    return new GmailAutoImportResultDTO(List.copyOf(events), failed);
+  }
+
+  /**
+   * Downloads and reads the selected messages in parallel. A message that cannot be fetched or read
+   * is logged and dropped from the result — the caller counts the shortfall as failed.
+   */
+  private List<FetchedMail> fetchAll(String accessToken, List<String> ids) {
     ExecutorService executor =
         Executors.newFixedThreadPool(Math.min(ids.size(), AUTO_IMPORT_PARALLELISM));
     try {
-      List<ParseOutcome> outcomes =
-          ids.stream()
-              .map(
-                  id ->
-                      CompletableFuture.supplyAsync(() -> parseIfEvent(accessToken, id), executor))
-              .toList()
-              .stream()
-              .map(CompletableFuture::join)
-              .toList();
-
-      List<EventResponseDTO> events =
-          outcomes.stream().flatMap(outcome -> outcome.event().stream()).toList();
-      int failed = (int) outcomes.stream().filter(ParseOutcome::failed).count();
-      return new GmailAutoImportResultDTO(events, failed);
+      return ids.stream()
+          .map(id -> CompletableFuture.supplyAsync(() -> fetch(accessToken, id), executor))
+          .toList()
+          .stream()
+          .map(CompletableFuture::join)
+          .flatMap(Optional::stream)
+          .toList();
     } finally {
       executor.shutdown();
     }
   }
 
-  /**
-   * Fetches one message and detects its event. A genuine "no event" yields an empty, non-failed
-   * outcome; any error (fetch or AI detection) yields a failed outcome so it can be reported.
-   */
-  private ParseOutcome parseIfEvent(String accessToken, String messageId) {
+  private Optional<FetchedMail> fetch(String accessToken, String messageId) {
     try {
       byte[] raw = gmailClient.getRaw(accessToken, messageId);
-      return new ParseOutcome(
-          eventService.parseMailFileIfEvent(new ByteArrayInputStream(raw)), false);
+      return Optional.of(
+          new FetchedMail(messageId, eventService.prepareMail(new ByteArrayInputStream(raw))));
     } catch (Exception exception) {
-      log.warn("Auto-import: could not process message {}", messageId, exception);
-      return new ParseOutcome(Optional.empty(), true);
+      log.warn("Auto-import: could not read message {}", messageId, exception);
+      return Optional.empty();
     }
   }
 
