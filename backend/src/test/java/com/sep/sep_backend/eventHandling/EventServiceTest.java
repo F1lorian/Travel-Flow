@@ -557,6 +557,41 @@ class EventServiceTest {
   }
 
   @Test
+  void parseMailFileExtrahiertTextMailUeberGeminiOhneFormatFehler() throws Exception {
+    // Regression: Der Extraktions-Prompt enthielt zeitweise mehr %s-Platzhalter als
+    // .formatted()-Argumente. Damit warf JEDE Mail ohne JSON-LD eine
+    // MissingFormatArgumentException, die als HTTP 400 beim Nutzer landete — der komplette
+    // .eml-/IMAP-Import war tot. Dieser Test fährt den echten Prompt-Aufbau ab.
+    EventService service =
+        detectionService(
+            """
+            {
+              "name": "Konzert in der Halle",
+              "kosten": 30,
+              "startDate": "2026-07-24T20:00:00",
+              "endDate": "2026-07-24T22:00:00"
+            }
+            """);
+
+    EventResponseDTO result =
+        service.ParseMailFile(textMail("Konzert am 24.07.2026 um 20:00 Uhr, Tickets 30 Euro"));
+
+    assertThat(result.getName()).isEqualTo("Konzert in der Halle");
+    assertThat(result.getKosten()).isEqualTo(30);
+    assertThat(result.getStart()).isEqualTo(LocalDateTime.of(2026, 7, 24, 20, 0));
+    assertThat(result.getEnd()).isEqualTo(LocalDateTime.of(2026, 7, 24, 22, 0));
+
+    // Der Prompt muss Betreff, Mailtext und das Referenzdatum wirklich tragen — nicht nur ohne
+    // Fehler entstehen.
+    ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+    verify(service).callGemini(prompt.capture());
+    assertThat(prompt.getValue())
+        .contains("Referenzdatum")
+        .contains("Test Mail")
+        .contains("Konzert am 24.07.2026");
+  }
+
+  @Test
   void parseMailFileHaeltDateOnlyStartDatumStattHeuteZuNutzen() throws Exception {
     EventService serviceWithObjectMapper = serviceWithRealObjectMapper();
     String json =
