@@ -1,13 +1,16 @@
 @use '@angular/material' as mat;
+@use './theme-colors' as brand;
 
 @include mat.core();
 
-/* Material 3 Theme Definition */
+/* Material 3 Theme Definition — palettes generated from the brand primary
+   #0866ff (see _theme-colors.scss, created via
+   `ng generate @angular/material:theme-color`). */
 $theme: mat.define-theme((
   color: (
     theme-type: light,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
+    primary: brand.$primary-palette,
+    tertiary: brand.$tertiary-palette,
   ),
 ));
 

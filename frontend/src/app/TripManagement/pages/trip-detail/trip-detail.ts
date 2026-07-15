@@ -411,7 +411,7 @@ export class TripDetail implements OnInit {
     const friendId = participant.userId;
     const tripId = this.trip()?.id;
     if (!tripId){
-      this.errorMessage = "Trip nicht verfügbar";
+      this.errorMessage = "Trip not available";
       return;
     }
     this.tripService.removeFriendsFromTrip(tripId, friendId).subscribe({

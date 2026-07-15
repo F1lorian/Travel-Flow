@@ -38,12 +38,12 @@ h2 {
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #d4dcff;
-  box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
   margin-bottom: 20px;
 }
 
 .filter-panel {
-  background: #f8faff;
+  background: var(--color-bg-subtle);
 }
 
 .filter-panel {
@@ -78,7 +78,7 @@ input:focus,
 select:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .primary-button,
@@ -99,17 +99,17 @@ select:focus {
 
 .primary-button:hover,
 .secondary-button:hover {
-  background: var(--color-text);
+  background: var(--color-primary-hover);
 }
 
 .delete-button {
   width: 36px;
   height: 36px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   padding: 0;
   background: #ffffff;
-  color: #b91c1c;
+  color: var(--color-danger-text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -117,7 +117,7 @@ select:focus {
 }
 
 .delete-button:hover {
-  background: #fef2f2;
+  background: var(--color-danger-bg);
 }
 
 .delete-button mat-icon {
@@ -125,13 +125,6 @@ select:focus {
   height: 20px;
   font-size: 20px;
   line-height: 20px;
-}
-
-.empty {
-  color: var(--color-text-muted);
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
 }
 
 @media (max-width: 600px) {

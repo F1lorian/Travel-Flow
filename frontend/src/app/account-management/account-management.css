@@ -206,7 +206,7 @@ select {
   border-radius: 12px;
   padding: 14px 16px;
   color: var(--color-text);
-  background: #f8fafc;
+  background: var(--color-bg-subtle);
   font: inherit;
   font-size: 16px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
@@ -260,7 +260,7 @@ input::placeholder {
 }
 
 .password-toggle:hover {
-  background: #f0f2f5;
+  background: var(--color-bg-subtle);
 }
 
 .password-toggle:focus-visible {
@@ -330,7 +330,7 @@ input::placeholder {
 }
 
 .outline-action:hover {
-  background: #eef4ff;
+  background: var(--color-primary-tint);
 }
 
 .text-action {
@@ -352,13 +352,13 @@ input::placeholder {
 }
 
 .success {
-  background: #e7f8ee;
-  color: #176438;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .error {
-  background: #fdeaea;
-  color: #9b1c1c;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
 }
 
 .oauth-divider {

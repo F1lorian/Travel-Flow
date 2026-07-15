@@ -35,14 +35,14 @@
   cursor: default;
 }
 
-/* Sidebar drawer — same brand gradient as the login page's brand panel */
+/* Sidebar drawer */
 .side-bar {
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   width: 240px;
-  background: var(--gradient-brand);
+  background: var(--color-primary);
   color: white;
   display: flex;
   flex-direction: column;

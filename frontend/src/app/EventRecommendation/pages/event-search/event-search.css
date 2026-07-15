@@ -31,7 +31,7 @@
 .search-controls input:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .search-controls button,
@@ -40,7 +40,7 @@
   border: 0;
   border-radius: 8px;
   padding: 0 14px;
-  background: var(--color-text);
+  background: var(--color-primary);
   color: #ffffff;
   font: inherit;
   font-weight: 700;
@@ -49,7 +49,7 @@
 
 .search-controls button:hover,
 .event-card-actions button:hover {
-  background: #0b101b;
+  background: var(--color-primary-hover);
 }
 
 .search-controls button:disabled {
@@ -58,10 +58,10 @@
 }
 
 .search-message {
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
   padding: 10px 12px;
   font-size: 0.9rem;
   overflow-wrap: anywhere;
@@ -105,8 +105,8 @@
 .price-pill {
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
   padding: 5px 9px;
   font-size: 0.8rem;
   font-weight: 700;

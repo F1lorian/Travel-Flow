@@ -1,14 +1,16 @@
-<div class="w-[560px] bg-white p-8 shadow-xl ring-1 ring-slate-200 rounded-xl">
-  <h2 class="mb-1 text-3xl font-bold tracking-tight text-slate-900">Error</h2>
-  <p class="text-base font-semibold text-slate-800">
-    {{ message }}
-  </p>
+<div class="dialog-card">
+  <div class="dialog-body">
+    <span class="icon-badge" [class]="type" aria-hidden="true">
+      <span class="material-icons">{{ icon }}</span>
+    </span>
 
-  <button
-    (click)="close()"
-    class="rounded-lg border border-slate-300 bg-white px-5 py-3
-         font-semibold text-slate-700
-         transition hover:bg-slate-100">
-    OK
-  </button>
+    <div class="dialog-text">
+      <h2>{{ title }}</h2>
+      <p>{{ message }}</p>
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" class="ok-button" (click)="close()">OK</button>
+  </div>
 </div>

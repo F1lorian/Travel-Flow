@@ -45,7 +45,7 @@ h2 {
   border-radius: 8px;
   background: #ffffff;
   padding: 18px 20px;
-  box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
   color: var(--color-text);
   text-align: left;
 }
@@ -71,8 +71,8 @@ h2 {
 }
 
 .budget-action:hover {
-  border-color: #b49a67;
-  box-shadow: 0 4px 12px rgb(22 16 50 / 12%);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
   transform: translateY(-1px);
 }
 
@@ -83,7 +83,7 @@ h2 {
   padding: 20px;
   margin-bottom: 20px;
   border: 1px solid #d4dcff;
-  box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
 }
 
 .forecast-header {
@@ -110,7 +110,7 @@ h2 {
 }
 
 .forecast-box {
-  background: #eff6ff;
+  background: var(--color-primary-tint);
   border-radius: 8px;
   padding: 18px;
   border: 1px solid #d4dcff;
@@ -141,8 +141,8 @@ h2 {
 }
 
 .forecast-error {
-  color: #991b1b;
-  background: #fee2e2;
+  color: var(--color-danger-text);
+  background: var(--color-danger-bg);
   padding: 12px 14px;
   border-radius: 8px;
 }
@@ -152,7 +152,7 @@ h2 {
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #d4dcff;
-  box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
   margin-bottom: 20px;
 }
 
@@ -181,7 +181,7 @@ input:focus,
 select:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .primary-button,
@@ -208,7 +208,7 @@ select:focus {
 
 .primary-button:hover,
 .secondary-button:hover {
-  background: var(--color-text);
+  background: var(--color-primary-hover);
 }
 
 .secondary-muted-button {
@@ -217,18 +217,18 @@ select:focus {
 }
 
 .secondary-muted-button:hover {
-  background: #b49a67;
+  background: var(--color-primary);
   color: #ffffff;
 }
 
 .delete-button {
   width: 36px;
   height: 36px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   padding: 0;
   background: #ffffff;
-  color: #b91c1c;
+  color: var(--color-danger-text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -236,7 +236,7 @@ select:focus {
 }
 
 .delete-button:hover {
-  background: #fef2f2;
+  background: var(--color-danger-bg);
 }
 
 .delete-button mat-icon {
@@ -246,28 +246,21 @@ select:focus {
   line-height: 20px;
 }
 
-.empty {
-  color: var(--color-text-muted);
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
-}
-
 .error {
-  border: 1px solid #fecaca;
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
   padding: 10px 12px;
   margin-bottom: 16px;
   font-size: 0.9rem;
 }
 
 .success {
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--color-success-border);
   border-radius: 8px;
-  background: #f0fdf4;
-  color: #166534;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
   padding: 10px 12px;
   margin: 0 0 16px;
   font-size: 0.9rem;
@@ -294,7 +287,7 @@ select:focus {
   max-height: 80vh;
   overflow-y: auto;
   border: 1px solid #d4dcff;
-  box-shadow: 0 10px 30px rgb(22 16 50 / 20%);
+  box-shadow: 0 10px 30px rgb(15 23 42 / 20%);
 }
 
 .budget-details {

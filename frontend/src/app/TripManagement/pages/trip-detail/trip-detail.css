@@ -44,7 +44,7 @@
 .right-content {
   flex: 1;
   min-width: 220px;
-  background: #f8fafc;
+  background: var(--color-bg-subtle);
   border-radius: 12px;
   padding: 16px;
 }
@@ -76,7 +76,7 @@
   width: 32px;
   height: 32px;
   border-radius: 9999px;
-  background: #dbeafe;
+  background: var(--color-primary-tint);
   color: var(--color-primary-hover);
   display: flex;
   align-items: center;
@@ -108,8 +108,8 @@
   border: 0;
   border-radius: 8px;
   padding: 8px 14px;
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -117,24 +117,17 @@
 }
 
 .add-event-btn:hover {
-  background: #dbeafe;
+  background: #dce8ff;
 }
 
 .error {
   margin-top: 12px;
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 0.9rem;
-}
-
-.empty {
-  color: var(--color-text-muted);
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
 }
 
 .event-list {
@@ -173,8 +166,8 @@
 }
 
 .event-cost {
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
   padding: 6px 14px;
   border-radius: 12px;
   font-weight: 600;
@@ -185,7 +178,7 @@
 .event-category {
   font-size: 0.8rem;
   color: var(--color-text-muted);
-  background: #f3f4f6;
+  background: var(--color-bg-subtle);
   padding: 2px 8px;
   border-radius: 999px;
   width: fit-content;
@@ -215,8 +208,8 @@
   border: 0;
   border-radius: 8px;
   padding: 8px 14px;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -227,8 +220,8 @@
   border: 0;
   border-radius: 8px;
   padding: 8px 14px;
-  background: #d9fcda;
-  color: #16a34a;
+  background: var(--color-success-bg);
+  color: var(--color-success);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -236,11 +229,11 @@
 }
 
 .invite-to-trip-btn:hover {
-  background: #c6f7c8;
+  background: var(--color-success-border);
 }
 
 .delete-trip-btn:hover {
-  background: #fecaca;
+  background: var(--color-danger-border);
 }
 
 .modal-overlay {
@@ -296,7 +289,7 @@
 
 .cancel-btn {
   background: #e5e7eb;
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .cancel-btn:hover {
@@ -304,12 +297,12 @@
 }
 
 .delete-btn {
-  background: #dc2626;
+  background: var(--color-danger);
   color: #ffffff;
 }
 
 .delete-btn:hover {
-  background: #b91c1c;
+  background: var(--color-danger-text);
 }
 
 .move-btn {
@@ -329,15 +322,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
   cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s ease;
 }
 
 .delete-event-icon-btn:hover {
-  background: #fecaca;
+  background: var(--color-danger-border);
 }
 
 .trip-search {
@@ -354,7 +347,7 @@
 .trip-search:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .trip-picker-list {
@@ -368,7 +361,7 @@
 }
 
 .trip-picker-item {
-  background: #f9fafb;
+  background: var(--color-bg-subtle);
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -377,7 +370,7 @@
 }
 
 .trip-picker-item:hover {
-  background: #eff6ff;
+  background: var(--color-primary-tint);
   border-color: var(--color-primary);
 }
 
@@ -412,7 +405,7 @@
   user-select: none;
   background:
     radial-gradient(circle at 32% 26%, rgb(255 255 255 / 55%) 0%, rgb(255 255 255 / 0%) 38%),
-    radial-gradient(circle at 50% 50%, #8be9d2 0%, #3aa0ee 40%, #2056c8 68%, #0b2a66 100%);
+    radial-gradient(circle at 50% 50%, #9cc7ff 0%, var(--color-primary) 40%, var(--color-primary-deep) 68%, #07275e 100%);
   box-shadow:
     0 8px 24px rgb(32 86 200 / 45%),
     0 2px 6px rgb(0 0 0 / 25%),
@@ -541,7 +534,7 @@
   }
 
   .owner-star {
-    color: #f59e0b !important;
+    color: var(--color-warning) !important;
     font-size: 20px;
     width: 20px;
     height: 20px;
@@ -556,14 +549,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #fee2e2 !important;
-    color: #b91c1c;
+    background: var(--color-danger-bg) !important;
+    color: var(--color-danger-text);
     cursor: pointer;
     flex-shrink: 0;
     transition: background 0.15s ease;
   }
 
   .delete-participant-icon-btn:hover {
-    background: #fecaca !important;
+    background: var(--color-danger-border) !important;
   }
 

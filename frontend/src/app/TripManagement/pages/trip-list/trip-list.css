@@ -39,7 +39,7 @@
 .create-form input:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .create-form button {
@@ -60,20 +60,13 @@
 }
 
 .error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger-border);
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 16px;
   font-size: 0.9rem;
-}
-
-.empty {
-  color: var(--color-text-muted);
-  font-style: italic;
-  text-align: center;
-  padding: 24px;
 }
 
 .trip-list {
@@ -120,8 +113,8 @@
 
 .event-count {
   font-size: 0.875rem;
-  color: #1e40af;
-  background: #eff6ff;
+  color: var(--color-primary-deep);
+  background: var(--color-primary-tint);
   padding: 4px 10px;
   border-radius: 12px;
   font-weight: 500;

@@ -188,7 +188,7 @@ export class CalendarComponent implements OnInit {
     const calendarEvent = calendarApi.getEventById(id);
 
     if (!calendarEvent) {
-      this.showMessage('Event im Kalender nicht gefunden');
+      this.showMessage('Event not found in the calendar');
       return;
     }
 
@@ -388,7 +388,7 @@ export class CalendarComponent implements OnInit {
    * @param message is the message that gets shown
    */
   showMessage(message: string){
-    this.dialog.open(MessageDialog, {data: {message: message}})
+    this.dialog.open(MessageDialog, {data: {message: message}, panelClass: 'rounded-2xl-dialog'})
   }
 
 }

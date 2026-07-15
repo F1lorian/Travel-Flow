@@ -227,7 +227,7 @@ export class EventDialog implements OnInit {
     });
     },
     error: (err) => {
-      this.dialogRef.close({ action: 'error', message: err?.error || 'Event konnte nicht erstellt werden.' });
+      this.dialogRef.close({ action: 'error', message: err?.error || 'Event could not be created.' });
     }
     });
   }

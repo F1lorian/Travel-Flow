@@ -16,8 +16,34 @@
   --color-text-subtle: #94a3b8;
 
   --color-bg: #f5f7fb;
+  --color-bg-subtle: #f8fafc;
   --color-surface: #ffffff;
   --color-border: #d4dae6;
+
+  /* Status colors: strong tone for buttons/icons, -text on -bg for banners/chips */
+  --color-danger: #dc2626;
+  --color-danger-text: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-danger-border: #fecaca;
+  --color-success: #16a34a;
+  --color-success-text: #166534;
+  --color-success-bg: #e7f8ee;
+  --color-success-border: #bbf7d0;
+  --color-warning: #f59e0b;
+  --color-warning-text: #92400e;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-primary-tint: #eef4ff;
+
+  /* Calendar event categories — one clearly distinct hue per type
+     (CVD- and contrast-validated as a set). Used by the .fc-event
+     classes below and the legend in calendar.html. My trips is a
+     deliberate dark slate: it reads gray, but stays separable from
+     the blue/green/violet of the other three. */
+  --cal-event-mine: var(--color-primary);
+  --cal-event-friend: #15803d;
+  --cal-trip-mine: #475569;
+  --cal-trip-invited: var(--color-accent);
 }
 
 /* Count padding & border inside an element's width so 100%-wide fields
@@ -33,6 +59,50 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; color: var(
    so custom buttons look consistent without each component redeclaring it. */
 button { font: inherit; }
 button:not(:disabled) { cursor: pointer; }
+
+/* Soft fade/slide when navigating between pages */
+main.content > * {
+  display: block;
+  animation: page-enter 0.25s ease;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main.content > * {
+    animation: none;
+  }
+}
+
+/* Empty states: shared style plus the brand paper plane above the text
+   (same path as the Travel Flow logo, in the subtle text gray). */
+.empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+}
+
+/* Card-like empty states keep their own typography, only centered + plane */
+.empty-state {
+  text-align: center;
+}
+
+.empty::before,
+.empty-state::before {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2394a3b8' d='M21 4.5 3.8 10.9c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.6 4.9c.3.8 1.4.9 1.8.1l2.1-4 4.7 2c.7.3 1.5-.2 1.6-1L21.9 5.6c.1-.8-.6-1.4-.9-1.1Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
 
 .table-scroll {
   width: 100%;
@@ -67,7 +137,7 @@ button:not(:disabled) { cursor: pointer; }
 }
 
 .data-table tbody tr:hover {
-  background: #f8faff;
+  background: var(--color-bg-subtle);
 }
 
 .data-table th {
@@ -98,6 +168,16 @@ button:not(:disabled) { cursor: pointer; }
 
 .fc {
   @apply rounded-xl bg-white p-6 shadow-lg ring-1 ring-slate-200;
+  /* List view: event rows are painted in the category colors below, so the
+     default near-white hover made their white text unreadable. A translucent
+     white overlay brightens the colored row instead. */
+  --fc-list-event-hover-bg-color: rgb(255 255 255 / 18%);
+}
+
+/* The list-view dot inherits the row's white text color instead of
+   FullCalendar's default blue, which no longer matches any category. */
+.fc .fc-list-event-dot {
+  border-color: currentColor;
 }
 
 .fc .fc-toolbar-title {
@@ -111,7 +191,7 @@ button:not(:disabled) { cursor: pointer; }
 .fc .fc-button {
   background-color: #ffffff;
   border: 1px solid var(--color-border);
-  color: #334155;
+  color: var(--color-text);
   font-weight: 600;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
@@ -159,7 +239,7 @@ button:not(:disabled) { cursor: pointer; }
 }
 
 .fc-event.trip-event {
-  background: var(--color-primary-deep) !important;
+  background: var(--cal-trip-mine) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -171,7 +251,7 @@ button:not(:disabled) { cursor: pointer; }
 }
 
 .fc-event.invited-trip-event {
-  background: var(--color-accent) !important;
+  background: var(--cal-trip-invited) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -183,7 +263,7 @@ button:not(:disabled) { cursor: pointer; }
 }
 
 .fc-event.calendar-event {
-  background: var(--color-primary) !important;
+  background: var(--cal-event-mine) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -195,7 +275,7 @@ button:not(:disabled) { cursor: pointer; }
 }
 
 .fc-event.friend-calendar-event {
-  background: #16a34a !important;
+  background: var(--cal-event-friend) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -209,14 +289,14 @@ button:not(:disabled) { cursor: pointer; }
 /* Toast (snackbar) colors used by FeedbackService: green confirms, red explains a failure.
    Both MDC and Material token names are set to stay compatible across Material versions. */
 .feedback-success {
-  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-container-color: var(--color-success);
   --mdc-snackbar-supporting-text-color: #ffffff;
   --mat-snack-bar-button-color: #ffffff;
   --mat-snackbar-button-color: #ffffff;
 }
 
 .feedback-error {
-  --mdc-snackbar-container-color: #c62828;
+  --mdc-snackbar-container-color: var(--color-danger);
   --mdc-snackbar-supporting-text-color: #ffffff;
   --mat-snack-bar-button-color: #ffffff;
   --mat-snackbar-button-color: #ffffff;
@@ -257,7 +337,7 @@ button:not(:disabled) { cursor: pointer; }
   .data-table tr {
     border: 1px solid #d4dcff;
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgb(22 16 50 / 8%);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
     margin-bottom: 12px;
     overflow: hidden;
   }
