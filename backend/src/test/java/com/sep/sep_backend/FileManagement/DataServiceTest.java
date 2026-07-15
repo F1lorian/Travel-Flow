@@ -6,8 +6,8 @@ import static org.mockito.Mockito.when;
 
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
-import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,8 +17,8 @@ class DataServiceTest {
 
   @Test
   void exportAllEventsAsIcalExportsEventsWithTheirTrip() {
-    EventRepository eventRepository = mock(EventRepository.class);
     TripRepository tripRepository = mock(TripRepository.class);
+    UserEventRepository userEventRepository = mock(UserEventRepository.class);
     Trip trip = new Trip("Berlin");
     trip.setId(7L);
     trip.setStartDate(LocalDate.of(2026, 6, 1));
@@ -39,10 +39,11 @@ class DataServiceTest {
             49,
             trip);
     concert.setId(43L);
-    when(eventRepository.findAll()).thenReturn(List.of(museum, concert));
-    when(tripRepository.findAll()).thenReturn(List.of(trip));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(museum, concert));
+    when(tripRepository.findAcceptedByUserId(7L)).thenReturn(List.of(trip));
 
-    String calendar = new DataService(eventRepository, tripRepository).exportAllEventsAsIcal();
+    String calendar =
+        new DataService(tripRepository, userEventRepository).exportAllEventsAsIcal(7L);
 
     assertThat(calendar)
         .startsWith("BEGIN:VCALENDAR\r\n")
@@ -64,17 +65,18 @@ class DataServiceTest {
 
   @Test
   void exportAllEventsAsIcalSkipsUndatedEventsAndExportsSingleDayTrips() {
-    EventRepository eventRepository = mock(EventRepository.class);
     TripRepository tripRepository = mock(TripRepository.class);
+    UserEventRepository userEventRepository = mock(UserEventRepository.class);
     Trip trip = new Trip("Essen");
     trip.setId(8L);
     trip.setStartDate(LocalDate.of(2026, 7, 4));
     Event undatedEvent = new Event("Ohne Datum", null, null, 0, trip);
     undatedEvent.setId(44L);
-    when(eventRepository.findAll()).thenReturn(List.of(undatedEvent));
-    when(tripRepository.findAll()).thenReturn(List.of(trip));
+    when(userEventRepository.findAllByUserId(7L)).thenReturn(List.of(undatedEvent));
+    when(tripRepository.findAcceptedByUserId(7L)).thenReturn(List.of(trip));
 
-    String calendar = new DataService(eventRepository, tripRepository).exportAllEventsAsIcal();
+    String calendar =
+        new DataService(tripRepository, userEventRepository).exportAllEventsAsIcal(7L);
 
     assertThat(calendar)
         .doesNotContain("UID:event-44@sep-backend")
