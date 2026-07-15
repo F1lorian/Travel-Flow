@@ -99,6 +99,9 @@ export class TripDetail implements OnInit {
           kosten: result.event.kosten,
           startTime: result.event.start,
           endTime: result.event.end,
+          // The creator owns the event; without this the show dialog treats them
+          // as a mere participant until the page is reloaded.
+          ownerUsername: localStorage.getItem('sepUser') ?? undefined,
         }]);
         this.feedback.success(`Event "${result.event.name}" added`);
         this.notificationService.add(`Event "${result.event.name}" added`);
