@@ -2,8 +2,8 @@ package com.sep.sep_backend.FileManagement;
 
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
-import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
+import com.sep.sep_backend.repos.UserEventRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,34 +22,34 @@ class DataService {
   private static final DateTimeFormatter UTC_FORMATTER =
       DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
 
-  private final EventRepository eventRepository;
   private final TripRepository tripRepository;
+  private final UserEventRepository userEventRepository;
 
   /**
    * Creates a data service with access to event and trip data.
    *
-   * @param eventRepository repository used to load events for export
    * @param tripRepository repository used to load trips for export
+   * @param userEventRepository repository used to load user-specific event participation
    */
   @Autowired
-  public DataService(EventRepository eventRepository, TripRepository tripRepository) {
-    this.eventRepository = eventRepository;
+  public DataService(TripRepository tripRepository, UserEventRepository userEventRepository) {
     this.tripRepository = tripRepository;
+    this.userEventRepository = userEventRepository;
   }
 
   /**
-   * Exports all stored events and trips as an iCalendar string.
+   * Exports the given user's events and trips as an iCalendar string.
    *
    * @return complete iCalendar content containing event and trip entries
    */
-  public String exportAllEventsAsIcal() {
+  public String exportAllEventsAsIcal(Long userId) {
     List<IcalRecord> events =
-        eventRepository.findAll().stream()
+        userEventRepository.findAllByUserId(userId).stream()
             .filter(event -> event.getStartTime() != null)
             .map(this::toIcalRecord)
             .toList();
     List<IcalRecord> trips =
-        tripRepository.findAll().stream()
+        tripRepository.findAcceptedByUserId(userId).stream()
             .filter(trip -> trip.getStartDate() != null)
             .map(this::toIcalRecord)
             .toList();
