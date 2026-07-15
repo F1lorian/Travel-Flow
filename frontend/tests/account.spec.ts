@@ -9,7 +9,7 @@ test('Startscreen wird fuer nicht eingeloggte Nutzer angezeigt', async ({ page }
   await page.goto('/');
 
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole('heading', { name: 'Log in to SEP' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
   await expect(page.getByPlaceholder('User name or email')).toBeVisible();
   await expect(page.getByPlaceholder('Password')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
@@ -21,7 +21,7 @@ test('Geschuetzte Seiten leiten ohne Login zum Startscreen', async ({ page }) =>
   await page.goto('/calendar');
 
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByRole('heading', { name: 'Log in to SEP' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible();
 });
 
 test('Login fuehrt vom Startscreen zum Kalender', async ({ page }) => {
