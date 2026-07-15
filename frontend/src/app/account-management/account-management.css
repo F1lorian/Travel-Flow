@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  background: #f5f7fb;
+  background: var(--color-bg);
 }
 
 /* ---------- Brand panel (left) ---------- */
@@ -14,7 +14,7 @@
   justify-content: center;
   padding: 56px 48px;
   color: #ffffff;
-  background: linear-gradient(150deg, #0b3ea8 0%, #0866ff 45%, #6d28d9 100%);
+  background: var(--gradient-brand);
   overflow: hidden;
 }
 
@@ -60,7 +60,7 @@
   height: 34px;
   padding: 7px;
   border-radius: 12px;
-  color: #0b3ea8;
+  color: var(--color-primary-deep);
   background: #ffffff;
   box-sizing: border-box;
 }
@@ -151,7 +151,7 @@
   display: grid;
   box-sizing: border-box;
   padding: 40px 44px;
-  border: 1px solid #e5e9f2;
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 12px 40px rgba(15, 42, 90, 0.08);
@@ -168,7 +168,7 @@
 
 h1 {
   margin: 0;
-  color: #0f172a;
+  color: var(--color-text);
   font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.3px;
@@ -176,7 +176,7 @@ h1 {
 
 .form-subtitle {
   margin: -6px 0 6px;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 15px;
 }
 
@@ -186,14 +186,14 @@ h1 {
 
 .create-panel > p {
   margin: -4px 0 8px;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 15px;
   line-height: 1.4;
 }
 
 h2 {
   margin: 8px 0 0;
-  color: #0f172a;
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 700;
 }
@@ -202,10 +202,10 @@ input,
 select {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid #d4dae6;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 14px 16px;
-  color: #0f172a;
+  color: var(--color-text);
   background: #f8fafc;
   font: inherit;
   font-size: 16px;
@@ -215,7 +215,7 @@ select {
 input:focus,
 select:focus {
   outline: none;
-  border-color: #0866ff;
+  border-color: var(--color-primary);
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(8, 102, 255, 0.15);
 }
@@ -226,7 +226,7 @@ select {
 }
 
 input::placeholder {
-  color: #94a3b8;
+  color: var(--color-text-subtle);
 }
 
 /* Password field with an inline show/hide (eye) toggle. */
@@ -264,7 +264,7 @@ input::placeholder {
 }
 
 .password-toggle:focus-visible {
-  outline: 2px solid #0866ff;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -285,14 +285,14 @@ input::placeholder {
 .security-question {
   display: grid;
   gap: 8px;
-  color: #0f172a;
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 700;
 }
 
 .field-help {
   margin: 0;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 13.5px;
   line-height: 1.4;
 }
@@ -314,7 +314,7 @@ input::placeholder {
   margin-top: 4px;
   border: 0;
   color: #ffffff;
-  background: linear-gradient(135deg, #0866ff 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4f46e5 100%);
   box-shadow: 0 6px 18px rgba(8, 102, 255, 0.3);
 }
 
@@ -324,8 +324,8 @@ input::placeholder {
 
 .outline-action {
   margin-top: 8px;
-  border: 1.5px solid #0866ff;
-  color: #0866ff;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
   background: #ffffff;
 }
 
@@ -335,13 +335,13 @@ input::placeholder {
 
 .text-action {
   border: 0;
-  color: #475569;
+  color: var(--color-text-muted);
   background: transparent;
   font-weight: 600;
 }
 
 .text-action:hover {
-  color: #0866ff;
+  color: var(--color-primary);
 }
 
 .message {
@@ -365,7 +365,7 @@ input::placeholder {
   display: flex;
   align-items: center;
   text-align: center;
-  color: #94a3b8;
+  color: var(--color-text-subtle);
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -376,7 +376,7 @@ input::placeholder {
 .oauth-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .oauth-divider span {

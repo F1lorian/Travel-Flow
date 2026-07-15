@@ -2,7 +2,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px;
-  color: #161032;
+  color: var(--color-text);
 }
 
 .page-header,
@@ -17,7 +17,7 @@
 h1 {
   margin: 0;
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 h2 {
@@ -59,7 +59,7 @@ h2 {
   flex-direction: column;
   gap: 4px;
   font-size: 0.8rem;
-  color: #161032;
+  color: var(--color-text);
 }
 
 input,
@@ -67,16 +67,16 @@ select {
   min-height: 40px;
   box-sizing: border-box;
   border: 1px solid #d4dcff;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 12px;
   font: inherit;
   background: #ffffff;
-  color: #161032;
+  color: var(--color-text);
 }
 
 input:focus,
 select:focus {
-  border-color: #2f6fed;
+  border-color: var(--color-primary);
   outline: none;
   box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
 }
@@ -85,9 +85,9 @@ select:focus {
 .secondary-button {
   min-height: 40px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0 18px;
-  background: #2f6fed;
+  background: var(--color-primary);
   color: #ffffff;
   font: inherit;
   font-weight: 600;
@@ -99,14 +99,14 @@ select:focus {
 
 .primary-button:hover,
 .secondary-button:hover {
-  background: #161032;
+  background: var(--color-text);
 }
 
 .delete-button {
   width: 36px;
   height: 36px;
   border: 1px solid #fecaca;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0;
   background: #ffffff;
   color: #b91c1c;
@@ -128,7 +128,7 @@ select:focus {
 }
 
 .empty {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-style: italic;
   text-align: center;
   padding: 24px;

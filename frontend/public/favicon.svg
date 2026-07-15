@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Same brand mark as the Travel Flow logo on the login page:
+       white rounded tile (border-radius 12/34) with the paper-plane path inset by 7/34 -->
+  <rect width="24" height="24" rx="8.47" fill="#ffffff" />
+  <g transform="translate(4.94 4.94) scale(0.588)">
+    <path
+      d="M21 4.5 3.8 10.9c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.6 4.9c.3.8 1.4.9 1.8.1l2.1-4 4.7 2c.7.3 1.5-.2 1.6-1L21.9 5.6c.1-.8-.6-1.4-.9-1.1Z"
+      fill="#0b3ea8"
+    />
+  </g>
+</svg>

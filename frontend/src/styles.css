@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* Design tokens — single source of truth for the brand colors.
+   Component styles reference these instead of raw hex values so the
+   palette stays consistent across login, chrome and content pages. */
+:root {
+  --color-primary: #0866ff;
+  --color-primary-hover: #0655d6;
+  --color-primary-deep: #0b3ea8;
+  --color-accent: #6d28d9;
+  /* Same gradient as the login page's brand panel. */
+  --gradient-brand: linear-gradient(150deg, #0b3ea8 0%, #0866ff 45%, #6d28d9 100%);
+
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+
+  --color-bg: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-border: #d4dae6;
+}
+
 /* Count padding & border inside an element's width so 100%-wide fields
    never overflow their container (key for the responsive layouts). */
 * {
@@ -7,7 +27,12 @@
 }
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; color: var(--color-text); }
+
+/* Buttons inherit the page font instead of the browser default (13.3px Arial),
+   so custom buttons look consistent without each component redeclaring it. */
+button { font: inherit; }
+button:not(:disabled) { cursor: pointer; }
 
 .table-scroll {
   width: 100%;
@@ -47,18 +72,18 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 .data-table th {
   background: #d4dcff;
-  color: #161032;
+  color: var(--color-text);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .data-table td:first-child {
-  color: #161032;
+  color: var(--color-text);
   font-weight: 600;
 }
 
 .data-table .amount-cell {
-  color: #2f6fed;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -76,12 +101,16 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc .fc-toolbar-title {
-  @apply text-3xl font-bold tracking-tight text-slate-900;
+  /* Same size/weight as the other page titles (1.75rem / 700) */
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--color-text);
 }
 
 .fc .fc-button {
   background-color: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border);
   color: #334155;
   font-weight: 600;
   border-radius: 0.5rem;
@@ -96,20 +125,20 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
-  background-color: #0f172a;
-  border-color: #0f172a;
+  background-color: var(--color-primary-deep);
+  border-color: var(--color-primary-deep);
   color: #ffffff;
 }
 
 .fc .fc-today-button.fc-button-primary {
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   color: #ffffff !important;
 }
 
 .fc .fc-today-button.fc-button-primary:hover {
-  background-color: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
 .fc .fc-today-button:disabled {
@@ -121,7 +150,8 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc .fc-day-today {
-  @apply bg-blue-50;
+  /* Light tint of the brand primary */
+  background: rgba(8, 102, 255, 0.07) !important;
 }
 
 .fc-event {
@@ -129,7 +159,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc-event.trip-event {
-  background: #334155 !important;
+  background: var(--color-primary-deep) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -141,7 +171,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc-event.invited-trip-event {
-  background: #9333ea !important;
+  background: var(--color-accent) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -153,7 +183,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 .fc-event.calendar-event {
-  background: #2563eb !important;
+  background: var(--color-primary) !important;
   border: none !important;
   color: white !important;
   cursor: pointer;
@@ -174,13 +204,6 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .fc-event.friend-calendar-event:hover {
   opacity: 0.9;
   transform: translateY(-1px);
-}
-
-.fc-event.trip-event-inited {
-  background: #12f1d7 !important;
-  border: none !important;
-  color: white !important;
-  cursor: pointer;
 }
 
 /* Toast (snackbar) colors used by FeedbackService: green confirms, red explains a failure.
@@ -249,7 +272,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   }
 
   .data-table td::before {
-    color: #161032;
+    color: var(--color-text);
     content: attr(data-label);
     font-weight: 600;
     text-align: left;

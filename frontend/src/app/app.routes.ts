@@ -12,16 +12,17 @@ import { PrivacySettings } from './components/privacy-settings/privacy-settings'
 import { GmailImport } from './components/gmail-import/gmail-import';
 
 export const routes: Routes = [
+  // No title on 'account': the login page keeps the plain "Travel Flow" tab title.
   { path: 'account', component: AccountManagement },
-  { path: 'calendar', component: CalendarComponent, canActivate: [authGuard] },
-  { path: 'trips', component: TripList, canActivate: [authGuard] },
-  { path: 'trips/:id', component: TripDetail, canActivate: [authGuard] },
-  { path: 'trip-spending-overview/:id', component: TripSpendingOverviewComponent, canActivate: [authGuard] },
-  { path: 'cashbook', component: CashbookComponent, canActivate: [authGuard] },
-  { path: 'overview', component: SpendingOverviewComponent, canActivate: [authGuard] },
-  { path: 'friends', component: Friends, canActivate: [authGuard] },
-  { path: 'privacy', component: PrivacySettings, canActivate: [authGuard] },
-  { path: 'gmail-import', component: GmailImport, canActivate: [authGuard] },
+  { path: 'calendar', component: CalendarComponent, canActivate: [authGuard], title: 'Calendar' },
+  { path: 'trips', component: TripList, canActivate: [authGuard], title: 'Trips' },
+  { path: 'trips/:id', component: TripDetail, canActivate: [authGuard], title: 'Trip' },
+  { path: 'trip-spending-overview/:id', component: TripSpendingOverviewComponent, canActivate: [authGuard], title: 'Trip Spending' },
+  { path: 'cashbook', component: CashbookComponent, canActivate: [authGuard], title: 'Cashbook' },
+  { path: 'overview', component: SpendingOverviewComponent, canActivate: [authGuard], title: 'Overview' },
+  { path: 'friends', component: Friends, canActivate: [authGuard], title: 'Friends' },
+  { path: 'privacy', component: PrivacySettings, canActivate: [authGuard], title: 'Privacy' },
+  { path: 'gmail-import', component: GmailImport, canActivate: [authGuard], title: 'Gmail Import' },
   { path: '', redirectTo: 'account', pathMatch: 'full' },
   { path: '**', redirectTo: 'account' },
 

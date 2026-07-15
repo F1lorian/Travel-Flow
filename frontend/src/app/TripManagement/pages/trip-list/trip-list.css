@@ -2,7 +2,7 @@
   width: min(100%, 1200px);
   margin: 0 auto;
   padding: 24px;
-  color: #172033;
+  color: var(--color-text);
 }
 
 .container h1 {
@@ -30,14 +30,14 @@
      the create form never overflows on narrow screens. */
   min-width: 0;
   box-sizing: border-box;
-  border: 1px solid #c7d0df;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   padding: 8px 12px;
   font: inherit;
 }
 
 .create-form input:focus {
-  border-color: #2f6fed;
+  border-color: var(--color-primary);
   outline: none;
   box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
 }
@@ -45,9 +45,9 @@
 .create-form button {
   min-height: 40px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0 18px;
-  background: #2f6fed;
+  background: var(--color-primary);
   color: #ffffff;
   font: inherit;
   font-weight: 600;
@@ -56,21 +56,21 @@
 }
 
 .create-form button:hover {
-  background: #1f5fd5;
+  background: var(--color-primary-hover);
 }
 
 .error {
   background: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fecaca;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 16px;
   font-size: 0.9rem;
 }
 
 .empty {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-style: italic;
   text-align: center;
   padding: 24px;
@@ -110,7 +110,7 @@
   align-items: flex-start;
   padding: 18px 20px;
   text-decoration: none;
-  color: #172033;
+  color: var(--color-text);
 }
 
 .trip-list li a strong {
@@ -145,7 +145,7 @@
     flex-direction: column;
     gap: 4px;
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--color-text-muted);
   }
 
   .create-form label input {
