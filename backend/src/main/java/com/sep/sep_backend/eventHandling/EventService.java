@@ -1161,15 +1161,11 @@ public class EventService {
     }
 
     try {
-      // Über geminiClient(), damit auch dieser Aufruf den Timeout bekommt — vorher hatte er gar
-      // keinen und konnte unbegrenzt hängen.
-      GenerateContentResponse response =
-          geminiClient()
-              .models
-              .generateContent(
-                  geminiModel, buildGeminiPrompt(subject, mailText, sentDate), GEMINI_CONFIG);
+      // Über callGemini(), damit der Aufruf den Timeout des geteilten Clients bekommt und Tests
+      // die Netzwerkschicht stubben können — der Prompt-Aufbau bleibt so mitgetestet.
+      String raw = callGemini(buildGeminiPrompt(subject, mailText, sentDate));
 
-      JsonNode node = objectMapper.readTree(response.text());
+      JsonNode node = objectMapper.readTree(raw);
 
       String name = node.path("name").asText(subject);
       int kosten = node.path("kosten").asInt(0);
@@ -1186,14 +1182,18 @@ public class EventService {
     }
   }
 
+  // Genau EINE Referenzdatum-Erwähnung und damit genau drei %s-Platzhalter: Eine frühere
+  // Version nannte das Datum zusätzlich in den Regeln (viertes %s ohne viertes Argument) —
+  // .formatted() warf dann bei jeder Mail eine MissingFormatArgumentException und der ganze
+  // .eml-/IMAP-Import fiel als HTTP 400 aus.
   private String buildGeminiPrompt(String subject, String mailText, LocalDateTime sentDate) {
     return """
                 Lies diese E-Mail und extrahiere ein Event.
 
-                Referenzdatum: %s
+                Referenzdatum (Sende-Datum der E-Mail): %s
                 Zeitzone: Europe/Berlin
-                Relative Datumsangaben wie "heute", "morgen" oder "nächste Woche"
-                beziehen sich auf das Referenzdatum.
+                Relative Datumsangaben wie "heute", "morgen", "übermorgen", "nächsten Montag"
+                oder Wochentage beziehen sich auf das Referenzdatum, NICHT auf das heutige Datum.
 
                 Antworte nur mit JSON:
                 {
@@ -1207,9 +1207,6 @@ public class EventService {
                 - kosten ist eine ganze Zahl.
                 - startDate ist yyyy-MM-ddTHH:mm:ss (ISO 8601), aus dem Mailtext entnommen.
                 - endDate ist yyyy-MM-ddTHH:mm:ss.
-                - Das Bezugsdatum (Sende-Datum der E-Mail) ist %s. Relative Angaben wie "morgen",
-                  "übermorgen", "nächsten Montag" oder Wochentage beziehen sich auf dieses
-                  Bezugsdatum, NICHT auf das heutige Datum.
                 - Nutze immer das im Text genannte konkrete Datum, wenn vorhanden.
                 - Falls kein Preis gefunden wird: kosten 0.
                 - Falls kein Eventname gefunden wird: Betreff nutzen.
