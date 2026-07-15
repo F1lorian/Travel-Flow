@@ -1,8 +1,13 @@
 /* Pin the dialog to a declared width so content swaps (e.g. the all-day toggle switching
    datetime inputs to date inputs) cannot resize it. min() keeps it responsive within
-   Material's default 80vw dialog cap. */
+   Material's default 80vw dialog cap.
+   The host must be a flex column that is allowed to shrink (min-height: 0): the surface's
+   90vh cap applies to the host, and only a shrinking host lets the dialog content below
+   reach a bounded height — otherwise it grows past the surface and nothing scrolls. */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   width: min(34rem, 80vw);
 }
 
