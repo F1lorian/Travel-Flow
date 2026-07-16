@@ -8,6 +8,7 @@ public class EventResponseDTO {
   private String name;
   private double kosten;
   private Long tripId;
+  private String categoryName;
   private LocalDateTime start;
   private LocalDateTime end;
 
@@ -38,10 +39,22 @@ public class EventResponseDTO {
    */
   public EventResponseDTO(
       String id, String name, double kosten, LocalDateTime start, LocalDateTime end, Long tripId) {
+    this(id, name, kosten, start, end, tripId, null);
+  }
+
+  public EventResponseDTO(
+      String id,
+      String name,
+      double kosten,
+      LocalDateTime start,
+      LocalDateTime end,
+      Long tripId,
+      String categoryName) {
     this.id = id;
     this.name = name;
     this.kosten = kosten;
     this.tripId = tripId;
+    this.categoryName = categoryName;
     this.start = start;
     this.end = end;
   }
@@ -116,6 +129,14 @@ public class EventResponseDTO {
    */
   public void setTripId(Long tripId) {
     this.tripId = tripId;
+  }
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
   }
 
   /**

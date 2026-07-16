@@ -107,6 +107,19 @@
 
         }
       </select>
+
+      <label class="mb-2 block text-sm font-semibold text-slate-700" for="categoryName">Category</label>
+      <select
+        id="categoryName"
+        [(ngModel)]="categoryName"
+        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3
+         text-slate-900 outline-none transition
+         focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10">
+        <option [ngValue]="''">No category</option>
+        @for (category of categories; track category.id) {
+          <option [ngValue]="category.name">{{ category.name }}</option>
+        }
+      </select>
     </div>
     <div class="border-t border-gray-200 px-6 py-4">
       <div class="grid grid-cols-2 gap-4">

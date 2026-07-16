@@ -230,6 +230,7 @@ export class SpendingOverviewComponent implements OnInit {
           title: expense.eventName,
           kosten: expense.kosten,
           tripId: expense.tripId,
+          categoryName: expense.kategorie === 'OTHER' ? undefined : expense.kategorie,
           start: expense.start?.substring(0, 16),
           end: expense.end?.substring(0, 16),
         }

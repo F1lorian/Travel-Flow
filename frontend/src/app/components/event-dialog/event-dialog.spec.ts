@@ -24,12 +24,16 @@ describe('EventDialog', () => {
       'deleteEvent',
       'inviteFriendToEvent',
     ]);
-    tripServiceSpy = jasmine.createSpyObj<TripService>('TripService', ['getAllTrips']);
+    tripServiceSpy = jasmine.createSpyObj<TripService>('TripService', [
+      'getAllTrips',
+      'getRecentCategories',
+    ]);
     friendsServiceSpy = jasmine.createSpyObj<FriendsService>('FriendsService', ['getFriends']);
     dialogRefSpy = jasmine.createSpyObj<MatDialogRef<EventDialog>>('MatDialogRef', ['close']);
     dialogSpy = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
 
     tripServiceSpy.getAllTrips.and.returnValue(of([]));
+    tripServiceSpy.getRecentCategories.and.returnValue(of([]));
     friendsServiceSpy.getFriends.and.returnValue(of([]));
     dialogSpy.open.and.returnValue({ afterClosed: () => of(true) } as never);
 
@@ -56,6 +60,8 @@ describe('EventDialog', () => {
 
   it('should load trips and friends on init', () => {
     expect(tripServiceSpy.getAllTrips).toHaveBeenCalled();
+    expect(tripServiceSpy.getRecentCategories).toHaveBeenCalled();
     expect(friendsServiceSpy.getFriends).toHaveBeenCalled();
   });
+
 });

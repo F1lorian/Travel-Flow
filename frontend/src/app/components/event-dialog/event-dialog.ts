@@ -7,7 +7,7 @@ import {
   MatDialogActions
 } from '@angular/material/dialog';
 import {FormsModule} from '@angular/forms';
-import {Trip, TripService} from '../../TripManagement/services/trip.service';
+import {Category, Trip, TripService} from '../../TripManagement/services/trip.service';
 import {DatePipe, SlicePipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
 import {EventService} from '../../../event-adding-manual/service/event.service';
@@ -25,6 +25,7 @@ interface EventDialogData {
   title?: string;
   kosten?: number;
   tripId?: number;
+  categoryName?: string;
   start?: string;
   end?: string;
   creatorUsername?: string;
@@ -52,6 +53,7 @@ export class EventDialog implements OnInit {
   kosten: number | undefined;
   tripId: number | undefined;
   tripName = '';
+  categoryName = '';
   start = "";
   end = "";
   tripService = inject(TripService);
@@ -61,6 +63,7 @@ export class EventDialog implements OnInit {
   private readonly feedback = inject(FeedbackService);
   dialog = inject(MatDialog);
   trips: Trip[] = [];
+  categories: Category[] = [];
   friends: Friend[] = [];
   allDay = false;
   errorMessage = "";
@@ -77,6 +80,7 @@ export class EventDialog implements OnInit {
       this.title = this.data.title || '';
       this.kosten = this.data.kosten || undefined;
       this.tripId = this.data.tripId || undefined;
+      this.categoryName = this.data.categoryName || '';
       this.start = this.data.start || "";
       this.end = this.data.end || "";
 
@@ -92,6 +96,7 @@ export class EventDialog implements OnInit {
 
   ngOnInit() {
     this.loadTrips();
+    this.loadCategories();
     this.loadFriends();
 
     if ((this.mode === 'show' || this.mode === 'edit') && this.data.id) {
@@ -201,6 +206,7 @@ export class EventDialog implements OnInit {
       name: this.title,
       kosten: this.kosten ?? 0,
       tripId: this.tripId,
+      categoryName: this.categoryName || null,
       start,
       end,
     }).subscribe({
@@ -241,6 +247,7 @@ export class EventDialog implements OnInit {
       name: this.title,
       kosten: this.kosten ?? 0,
       tripId: this.tripId,
+      categoryName: this.categoryName || null,
       start,
       end,
     }).subscribe({
@@ -313,6 +320,28 @@ export class EventDialog implements OnInit {
 
       }
     });
+  }
+
+  /** Loads recent category choices and keeps an event's older category selectable. */
+  loadCategories() {
+    this.tripService.getRecentCategories().subscribe({
+      next: categories => {
+        this.categories = categories;
+        this.includeCurrentCategory();
+      },
+      error: () => this.includeCurrentCategory()
+    });
+  }
+
+  private includeCurrentCategory() {
+    if (!this.categoryName) {
+      return;
+    }
+
+    const currentName = this.categoryName.toLocaleLowerCase();
+    if (!this.categories.some(category => category.name.toLocaleLowerCase() === currentName)) {
+      this.categories = [{ id: -1, name: this.categoryName }, ...this.categories];
+    }
   }
 
   loadFriends(){
