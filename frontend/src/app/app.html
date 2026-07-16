@@ -19,15 +19,34 @@
 
   <aside class="side-bar" [class.open]="sidebarOpen()">
     <div class="side-bar-header">
-      <h2>Travel Flow</h2>
+      <div class="brand-logo">
+        <svg class="brand-logo-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M21 4.5 3.8 10.9c-.8.3-.8 1.4 0 1.7l4.6 1.6 1.6 4.9c.3.8 1.4.9 1.8.1l2.1-4 4.7 2c.7.3 1.5-.2 1.6-1L21.9 5.6c.1-.8-.6-1.4-.9-1.1Z"
+            fill="currentColor"
+          />
+        </svg>
+        <h2 class="brand-logo-text">Travel Flow</h2>
+      </div>
     </div>
 
     <nav class="side-bar-nav">
-      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Home</a>
-      <a class="nav-toggle" routerLink="/calendar" (click)="closeSidebar()">Calendar</a>
-      <a class="nav-toggle" routerLink="/trips" (click)="closeSidebar()">Trips</a>
-      <a class="nav-toggle" routerLink="/overview" (click)="closeSidebar()">Overview</a>
-      <a class="nav-toggle" routerLink="/friends" (click)="closeSidebar()">Friends</a>
+      <a class="nav-toggle" routerLink="/calendar" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="material-icons" aria-hidden="true">calendar_month</span>
+        Calendar
+      </a>
+      <a class="nav-toggle" routerLink="/trips" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="material-icons" aria-hidden="true">flight_takeoff</span>
+        Trips
+      </a>
+      <a class="nav-toggle" routerLink="/overview" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="material-icons" aria-hidden="true">insights</span>
+        Overview
+      </a>
+      <a class="nav-toggle" routerLink="/friends" routerLinkActive="active" (click)="closeSidebar()">
+        <span class="material-icons" aria-hidden="true">group</span>
+        Friends
+      </a>
     </nav>
   </aside>
 

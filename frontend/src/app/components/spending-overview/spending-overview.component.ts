@@ -157,7 +157,7 @@ export class SpendingOverviewComponent implements OnInit {
   }
 
   // Configuration for the ApexCharts pie chart.
-  chartColors = ['#2f6fed', '#d4dcff', '#b49a67', '#161032', '#51a3a3'];
+  chartColors = ['#0866ff', '#d4dcff', '#b49a67', '#161032', '#51a3a3'];
 
   chartDetails = {
     type: 'pie' as const,

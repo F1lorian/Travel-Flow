@@ -15,19 +15,19 @@
 
 .page-header h1 {
   margin: 0 0 8px;
-  font-size: 32px;
+  font-size: 1.75rem;
 }
 
 .page-header p {
   margin: 0;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 /* Card containers */
 .settings-card,
 .empty-state {
   background: white;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 24px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
@@ -45,12 +45,12 @@
 .privacy-table th,
 .privacy-table td {
   padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
 }
 
 .privacy-table th {
-  color: #475569;
+  color: var(--color-text-muted);
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -64,7 +64,7 @@
 }
 
 .friend-info span {
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -91,13 +91,13 @@
 }
 
 .status.saving {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
 }
 
 .status.saved {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 /* Feedback messages */
@@ -108,18 +108,18 @@
 }
 
 .message.muted {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--color-border);
+  color: var(--color-text);
 }
 
 .message.success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
 }
 
 .message.error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
 }
 
 /* Secondary action button */
@@ -128,13 +128,13 @@
   cursor: pointer;
   padding: 10px 14px;
   border-radius: 8px;
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--color-border);
+  color: var(--color-text);
   font-weight: 600;
 }
 
 .secondary-button:hover {
-  background: #cbd5e1;
+  background: var(--color-border);
 }
 
 /* Responsive table behavior */

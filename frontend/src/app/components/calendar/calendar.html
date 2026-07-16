@@ -9,23 +9,23 @@
 
     <full-calendar #calendar [options]="calendarOptions"></full-calendar>
 
-    <!-- Colors mirror the .fc-event classes in styles.css (calendar-event,
-         friend-calendar-event, trip-event, invited-trip-event). -->
+    <!-- Same --cal-* tokens as the .fc-event classes in styles.css, so the
+         legend can never drift from the actual event colors again. -->
     <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600">
       <span class="flex items-center gap-2">
-        <span class="h-3 w-3 rounded-full bg-[#2563eb]"></span>
+        <span class="h-3 w-3 rounded-full bg-[var(--cal-event-mine)]"></span>
         My events
       </span>
       <span class="flex items-center gap-2">
-        <span class="h-3 w-3 rounded-full bg-[#16a34a]"></span>
+        <span class="h-3 w-3 rounded-full bg-[var(--cal-event-friend)]"></span>
         Friends' events
       </span>
       <span class="flex items-center gap-2">
-        <span class="h-3 w-3 rounded-full bg-[#334155]"></span>
+        <span class="h-3 w-3 rounded-full bg-[var(--cal-trip-mine)]"></span>
         My trips
       </span>
       <span class="flex items-center gap-2">
-        <span class="h-3 w-3 rounded-full bg-[#9333ea]"></span>
+        <span class="h-3 w-3 rounded-full bg-[var(--cal-trip-invited)]"></span>
         Friends' trips
       </span>
     </div>

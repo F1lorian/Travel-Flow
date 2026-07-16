@@ -86,7 +86,7 @@ export class EventTransferDialog implements OnInit {
     const file = input.files[0];
 
     if (!this.isEmlFile(file)) {
-      this.showMessage('Nur .eml-Dateien erlaubt');
+      this.showMessage('Only .eml files are allowed');
       this.file = undefined;
       this.fileName = '';
       return;
@@ -112,7 +112,7 @@ export class EventTransferDialog implements OnInit {
     const file = files[0];
 
     if (!this.isEmlFile(file)) {
-      this.showMessage('Nur .eml-Dateien erlaubt');
+      this.showMessage('Only .eml files are allowed');
       this.file = undefined;
       this.fileName = '';
       return;
@@ -136,7 +136,7 @@ export class EventTransferDialog implements OnInit {
    */
   uploadFile() {
     if (!this.file) {
-      this.showMessage('Keine .eml-Datei ausgewählt');
+      this.showMessage('No .eml file selected');
       return;
     }
 
@@ -149,7 +149,7 @@ export class EventTransferDialog implements OnInit {
         this.handleParsedEvent(parsedEvent);
       },
       error: (err) => {
-        this.showMessage(err.error || 'Event konnte nicht gelesen werden!');
+        this.showMessage(err.error || 'Event could not be read.');
       }
     });
   }
@@ -176,7 +176,7 @@ export class EventTransferDialog implements OnInit {
       },
       error: err => {
         this.isCheckingGmailStatus = false;
-        this.showMessage(err.error || 'Gmail-Status konnte nicht geladen werden.');
+        this.showMessage(err.error || 'Gmail status could not be loaded.');
       }
     });
   }
@@ -213,7 +213,7 @@ export class EventTransferDialog implements OnInit {
       },
       error: err => {
         this.isDisconnectingGmail = false;
-        this.showMessage(err.error || 'Gmail-Verbindung konnte nicht getrennt werden.');
+        this.showMessage(err.error || 'Gmail account could not be disconnected.');
       },
     });
   }
@@ -246,7 +246,7 @@ export class EventTransferDialog implements OnInit {
       },
       error: err => {
         this.isLoadingGmailMessages = false;
-        this.showMessage(err.error || 'Gmail-Nachrichten konnten nicht geladen werden.');
+        this.showMessage(err.error || 'Gmail messages could not be loaded.');
       }
     });
   }
@@ -293,7 +293,7 @@ export class EventTransferDialog implements OnInit {
     const ids = [...this.selectedGmailIds];
 
     if (ids.length === 0) {
-      this.showMessage('Bitte zuerst mindestens eine Gmail-Nachricht auswählen.');
+      this.showMessage('Please select at least one Gmail message first.');
       return;
     }
 
@@ -313,8 +313,8 @@ export class EventTransferDialog implements OnInit {
           this.isImportingGmail = false;
           this.showMessage(
             failed > 0
-              ? `${failed} Nachricht(en) konnten nicht geprüft werden. Bitte erneut versuchen.`
-              : 'In den ausgewählten Nachrichten wurden keine Termine gefunden.',
+              ? `${failed} message(s) could not be checked. Please try again.`
+              : 'No events were found in the selected messages.',
           );
           return;
         }
@@ -325,7 +325,7 @@ export class EventTransferDialog implements OnInit {
         // Der Fehlerbody ist {"message": "..."}; err.error direkt anzuzeigen ergaebe
         // "[object Object]". Traegt u. a. die 429-Meldung, dass das Gemini-Tageskontingent leer ist.
         this.showMessage(
-          err.error?.message ?? 'Gmail-Nachrichten konnten nicht importiert werden.',
+          err.error?.message ?? 'Gmail messages could not be imported.',
         );
       },
     });
@@ -349,19 +349,19 @@ export class EventTransferDialog implements OnInit {
         const failed = failedToParse + (results.length - saved.length);
 
         if (saved.length === 0) {
-          this.showMessage('Kein Event konnte importiert werden.');
+          this.showMessage('No events could be imported.');
           return;
         }
 
         if (failed > 0) {
-          this.showMessage(`${saved.length} Event(s) importiert, ${failed} fehlgeschlagen.`);
+          this.showMessage(`${saved.length} event(s) imported, ${failed} failed.`);
         }
 
         this.dialogRef.close(saved);
       },
       error: err => {
         this.isImportingGmail = false;
-        this.showMessage(err.error || 'Events konnten nicht importiert werden.');
+        this.showMessage(err.error || 'Events could not be imported.');
       },
     });
   }
@@ -389,7 +389,7 @@ export class EventTransferDialog implements OnInit {
       },
       error: err => {
         this.isLoadingImapMessages = false;
-        this.showMessage(err.error || 'IMAP-Nachrichten konnten nicht geladen werden.');
+        this.showMessage(err.error || 'IMAP messages could not be loaded.');
       }
     });
   }
@@ -398,7 +398,7 @@ export class EventTransferDialog implements OnInit {
     const mailboxRequest = this.buildImapMailboxRequest();
 
     if (!mailboxRequest || this.selectedImapUid === undefined) {
-      this.showMessage('Bitte zuerst eine IMAP-Nachricht auswÃ¤hlen.');
+      this.showMessage('Please select an IMAP message first.');
       return;
     }
 
@@ -409,7 +409,7 @@ export class EventTransferDialog implements OnInit {
 
     this.eventService.parseImapMessage(request).subscribe({
       next: parsedEvent => this.handleParsedEvent(parsedEvent),
-      error: err => this.showMessage(err.error || 'IMAP-Nachricht konnte nicht gelesen werden.')
+      error: err => this.showMessage(err.error || 'IMAP message could not be read.')
     });
   }
 
@@ -434,14 +434,14 @@ export class EventTransferDialog implements OnInit {
         this.saveParsedEvent(parsedEvent);
       },
       error: (err) => {
-        this.showMessage(err.error || 'Konfliktpruefung fehlgeschlagen.');
+        this.showMessage(err.error || 'Conflict check failed.');
       }
     });
   }
 
   private buildImapMailboxRequest(): ImapMailboxRequest | null {
     if (!this.imapHost.trim() || !this.imapUsername.trim() || !this.imapPassword) {
-      this.showMessage('Bitte IMAP-Host, Benutzername und Passwort ausfÃ¼llen.');
+      this.showMessage('Please fill in IMAP host, username and password.');
       return null;
     }
 
@@ -465,7 +465,7 @@ export class EventTransferDialog implements OnInit {
         this.dialogRef.close(event);
       },
       error: (err) => {
-        this.showMessage(err.error || 'Event konnte nicht erstellt werden!');
+        this.showMessage(err.error || 'Event could not be created.');
       }
     });
   }
@@ -514,7 +514,7 @@ export class EventTransferDialog implements OnInit {
    * @param message is the message
    */
   showMessage(message: string){
-    this.dialog.open(MessageDialog, {data: {message: message}})
+    this.dialog.open(MessageDialog, {data: {message: message}, panelClass: 'rounded-2xl-dialog'})
   }
 
   /**

@@ -9,7 +9,7 @@
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #172033;
+  color: var(--color-text);
 }
 
 .search-controls {
@@ -22,25 +22,25 @@
   min-width: 0;
   min-height: 40px;
   box-sizing: border-box;
-  border: 1px solid #c7d0df;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   padding: 8px 12px;
   font: inherit;
 }
 
 .search-controls input:focus {
-  border-color: #2f6fed;
+  border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(47 111 237 / 15%);
+  box-shadow: 0 0 0 3px rgb(8 102 255 / 15%);
 }
 
 .search-controls button,
 .event-card-actions button {
   min-height: 40px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0 14px;
-  background: #172033;
+  background: var(--color-primary);
   color: #ffffff;
   font: inherit;
   font-weight: 700;
@@ -49,19 +49,19 @@
 
 .search-controls button:hover,
 .event-card-actions button:hover {
-  background: #0b101b;
+  background: var(--color-primary-hover);
 }
 
 .search-controls button:disabled {
-  background: #9ca3af;
+  background: var(--color-text-subtle);
   cursor: not-allowed;
 }
 
 .search-message {
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--color-danger-border);
+  border-radius: 8px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
   padding: 10px 12px;
   font-size: 0.9rem;
   overflow-wrap: anywhere;
@@ -78,7 +78,7 @@
 
 .event-card {
   min-width: 0;
-  border: 1px solid #d8e0ed;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #ffffff;
   padding: 14px;
@@ -99,14 +99,14 @@
   min-width: 0;
   font-size: 1rem;
   line-height: 1.25;
-  color: #172033;
+  color: var(--color-text);
 }
 
 .price-pill {
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--color-primary-tint);
+  color: var(--color-primary-deep);
   padding: 5px 9px;
   font-size: 0.8rem;
   font-weight: 700;
@@ -117,13 +117,13 @@
   display: grid;
   gap: 4px;
   margin-top: 8px;
-  color: #586174;
+  color: var(--color-text-muted);
   font-size: 0.86rem;
 }
 
 .event-card p {
   margin: 10px 0 0;
-  color: #2f3747;
+  color: var(--color-text);
   font-size: 0.9rem;
   line-height: 1.45;
 }
@@ -137,7 +137,7 @@
 }
 
 .event-card-actions a {
-  color: #2f6fed;
+  color: var(--color-primary);
   font-weight: 700;
   text-decoration: none;
   overflow-wrap: anywhere;
