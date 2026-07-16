@@ -122,6 +122,7 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
+        categoryName: selectedEvent.extendedProps['categoryName'],
         creatorUsername: selectedEvent.extendedProps['creatorUsername'],
         start: selectedEvent.startStr.substring(0,16),
         end: selectedEvent.endStr.substring(0,16)
@@ -171,6 +172,7 @@ export class CalendarComponent implements OnInit {
           extendedProps: {
             kosten: event.kosten,
             tripId: event.tripId,
+            categoryName: event.categoryName,
             creatorUsername: localStorage.getItem('sepUser'),
           },
         },
@@ -198,6 +200,7 @@ export class CalendarComponent implements OnInit {
     });
     calendarEvent.setExtendedProp('kosten', event.kosten);
     calendarEvent.setExtendedProp('tripId', event.tripId);
+    calendarEvent.setExtendedProp('categoryName', event.categoryName);
   }
 
   /**
@@ -247,6 +250,7 @@ export class CalendarComponent implements OnInit {
         title: selectedEvent.title,
         kosten: selectedEvent.extendedProps['kosten'],
         tripId: selectedEvent.extendedProps['tripId'],
+        categoryName: selectedEvent.extendedProps['categoryName'],
         creatorUsername: selectedEvent.extendedProps['creatorUsername'],
         start: selectedEvent.startStr.substring(0, 16),
         end: selectedEvent.endStr.substring(0, 16)}
@@ -322,6 +326,7 @@ export class CalendarComponent implements OnInit {
               type: 'event',
               kosten: event.kosten,
               tripId: event.tripId,
+              categoryName: event.categoryName,
               creatorUsername: event.creatorUsername,
             }
           };

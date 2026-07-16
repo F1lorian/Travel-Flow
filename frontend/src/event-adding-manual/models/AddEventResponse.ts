@@ -3,6 +3,7 @@ export interface AddEventResponse {
   name: string;
   kosten: number;
   tripId: number;
+  categoryName?: string;
   start: string;
   end: string;
 }

@@ -31,6 +31,7 @@ import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.tripManagement.services.CategoryService;
 import jakarta.persistence.EntityNotFoundException;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -68,6 +69,8 @@ class EventServiceTest {
   @Mock private EmailNotificationService emailNotificationService;
 
   @Mock private EventInviteNotificationService notificationService;
+
+  @Mock private CategoryService categoryService;
 
   @InjectMocks private EventService eventService;
 
@@ -984,7 +987,8 @@ class EventServiceTest {
         new ObjectMapper(),
         userEventRepository,
         notificationService,
-        emailNotificationService);
+        emailNotificationService,
+        categoryService);
   }
 
   private User userWithEvents(long id) {

@@ -7,6 +7,7 @@ public class EventRequestDTO {
   private String name;
   private double kosten;
   private Long tripId;
+  private String categoryName;
   private LocalDateTime start;
   private LocalDateTime end;
 
@@ -94,6 +95,14 @@ public class EventRequestDTO {
    */
   public void setTripId(Long tripId) {
     this.tripId = tripId;
+  }
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
   }
 
   /**

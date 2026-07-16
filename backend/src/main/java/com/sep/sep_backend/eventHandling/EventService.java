@@ -9,6 +9,7 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.HttpOptions;
 import com.google.genai.types.ThinkingConfig;
 import com.sep.sep_backend.ausgabe.AusgabeService;
+import com.sep.sep_backend.entities.Categories;
 import com.sep.sep_backend.entities.Event;
 import com.sep.sep_backend.entities.Trip;
 import com.sep.sep_backend.entities.User;
@@ -24,6 +25,7 @@ import com.sep.sep_backend.repos.EventRepository;
 import com.sep.sep_backend.repos.TripRepository;
 import com.sep.sep_backend.repos.UserEventRepository;
 import com.sep.sep_backend.repos.UserRepository;
+import com.sep.sep_backend.tripManagement.services.CategoryService;
 import jakarta.mail.Address;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
@@ -115,6 +117,7 @@ public class EventService {
   private final UserEventRepository userEventRepository;
   private final EventInviteNotificationService notificationService;
   private final EmailNotificationService emailNotificationService;
+  private final CategoryService categoryService;
 
   @Value("${gemini.api-key}")
   private String geminiApiKey;
@@ -187,7 +190,8 @@ public class EventService {
       ObjectMapper objectMapper,
       UserEventRepository userEventRepository,
       EventInviteNotificationService notificationService,
-      EmailNotificationService emailNotificationService) {
+      EmailNotificationService emailNotificationService,
+      CategoryService categoryService) {
     this.eventRepository = eventRepository;
     this.tripRepository = triprepository;
     this.ausgabeService = ausgabeService;
@@ -196,6 +200,7 @@ public class EventService {
     this.userEventRepository = userEventRepository;
     this.notificationService = notificationService;
     this.emailNotificationService = emailNotificationService;
+    this.categoryService = categoryService;
   }
 
   /**
@@ -219,6 +224,7 @@ public class EventService {
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     Event newEvent = new Event(dto.getName(), eventStart, eventEnd, dto.getKosten(), matchingTrip);
+    applyCategory(newEvent, dto.getCategoryName());
     newEvent.setOwner(creator);
     Event savedEvent = eventRepository.save(newEvent);
 
@@ -286,6 +292,7 @@ public class EventService {
           tripRepository.findById(dto.getTripId()).orElseThrow(() -> new RuntimeException());
       event.setTrip(newTrip);
     }
+    applyCategory(event, dto.getCategoryName());
     eventRepository.save(event);
 
     return mapToResponseDTO(event);
@@ -342,7 +349,8 @@ public class EventService {
                     event.getStartTime(),
                     event.getEndTime(),
                     event.getTripId(),
-                    event.getOwner() != null ? event.getOwner().getName() : null))
+                    event.getOwner() != null ? event.getOwner().getName() : null,
+                    event.getCategorie() != null ? event.getCategorie().getName() : null))
         .toList();
   }
 
@@ -1327,7 +1335,18 @@ public class EventService {
         event.getKosten(),
         event.getStartTime(),
         event.getEndTime(),
-        event.getTripId());
+        event.getTripId(),
+        event.getCategorie() != null ? event.getCategorie().getName() : null);
+  }
+
+  private void applyCategory(Event event, String categoryName) {
+    if (categoryName == null || categoryName.isBlank()) {
+      event.setCategorie(null);
+      return;
+    }
+
+    Categories category = categoryService.getOrCreate(categoryName);
+    event.setCategorie(category);
   }
 
   private String extractText(Part part) throws Exception {

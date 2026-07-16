@@ -11,6 +11,7 @@ public class EventCalendarDTO {
   private LocalDateTime start;
   private LocalDateTime end;
   private String creatorUsername;
+  private String categoryName;
 
   /** Creates an empty calendar event DTO for serialization and deserialization. */
   public EventCalendarDTO() {}
@@ -33,6 +34,18 @@ public class EventCalendarDTO {
       LocalDateTime end,
       Long tripId,
       String creatorUsername) {
+    this(id, title, kosten, start, end, tripId, creatorUsername, null);
+  }
+
+  public EventCalendarDTO(
+      String id,
+      String title,
+      double kosten,
+      LocalDateTime start,
+      LocalDateTime end,
+      Long tripId,
+      String creatorUsername,
+      String categoryName) {
     this.id = id;
     this.title = title;
     this.start = start;
@@ -40,6 +53,7 @@ public class EventCalendarDTO {
     this.kosten = kosten;
     this.tripId = tripId;
     this.creatorUsername = creatorUsername;
+    this.categoryName = categoryName;
   }
 
   /**
@@ -156,5 +170,13 @@ public class EventCalendarDTO {
 
   public void setCreatorUsername(String name) {
     this.creatorUsername = name;
+  }
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
   }
 }

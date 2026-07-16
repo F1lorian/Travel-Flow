@@ -134,6 +134,7 @@ export class TripDetail implements OnInit {
         title: event.name,
         kosten: event.kosten,
         tripId: this.trip()?.id,
+        categoryName: event.categoryName,
         creatorUsername: event.ownerUsername,
         start: event.startTime?.substring(0, 16),
         end: event.endTime?.substring(0, 16),
@@ -163,6 +164,7 @@ export class TripDetail implements OnInit {
         title: event.name,
         kosten: event.kosten,
         tripId: this.trip()?.id,
+        categoryName: event.categoryName,
         creatorUsername: event.ownerUsername,
         start: event.startTime?.substring(0, 16),
         end: event.endTime?.substring(0, 16),
@@ -179,6 +181,7 @@ export class TripDetail implements OnInit {
               kosten: result.event.kosten,
               startTime: result.event.start,
               endTime: result.event.end,
+              categoryName: result.event.categoryName,
             }
             : e
           )
