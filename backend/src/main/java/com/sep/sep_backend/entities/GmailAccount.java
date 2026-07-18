@@ -32,11 +32,14 @@ public class GmailAccount {
   @Column(nullable = false, length = 2048)
   private String encryptedRefreshToken;
 
+  /** Space-separated OAuth scopes Google granted, kept to detect a consent that fell short. */
   private String scope;
 
+  /** When the account was first connected. */
   @Column(nullable = false)
   private LocalDateTime connectedAt;
 
+  /** When the stored token was last replaced, e.g. by reconnecting or switching account. */
   @Column(nullable = false)
   private LocalDateTime updatedAt;
 

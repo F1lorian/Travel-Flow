@@ -14,6 +14,10 @@ package com.sep.sep_backend.exception;
  */
 public class GeminiQuotaExhaustedException extends RuntimeException {
 
+  /**
+   * @param message the German text shown to the user
+   * @param cause the underlying 429 from the Gemini client
+   */
   public GeminiQuotaExhaustedException(String message, Throwable cause) {
     super(message, cause);
   }
