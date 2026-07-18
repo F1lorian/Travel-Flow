@@ -29,10 +29,19 @@ public class TokenCipher {
     this.encryptor = Encryptors.delux(key, SALT);
   }
 
+  /** Encrypts a refresh token for storage. Repeated calls on the same input differ, by design. */
   public String encrypt(String plaintext) {
     return encryptor.encrypt(plaintext);
   }
 
+  /**
+   * Decrypts a stored refresh token.
+   *
+   * <p>Throws if the ciphertext was tampered with or was written under a different secret — GCM
+   * authenticates as well as encrypts. In practice the second case is what you hit: rotating {@code
+   * gmail.token.encryption-secret} makes every stored token undecryptable, and affected users have
+   * to reconnect their Gmail account.
+   */
   public String decrypt(String ciphertext) {
     return encryptor.decrypt(ciphertext);
   }

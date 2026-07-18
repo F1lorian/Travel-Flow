@@ -7,10 +7,17 @@ package com.sep.sep_backend.exception;
  */
 public class EventDetectionException extends RuntimeException {
 
+  /**
+   * @param message why the detection could not run
+   */
   public EventDetectionException(String message) {
     super(message);
   }
 
+  /**
+   * @param message why the detection could not run
+   * @param cause the underlying failure, e.g. a transport error from the Gemini client
+   */
   public EventDetectionException(String message, Throwable cause) {
     super(message, cause);
   }
