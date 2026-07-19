@@ -3,6 +3,7 @@ package com.sep.sep_backend.entities;
 import jakarta.persistence.*;
 import java.util.List;
 
+/** JPA entity for reusable expense and event categories. */
 @Entity
 public class Categories {
   @Id

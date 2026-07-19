@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+/** Validates the JWT query parameter before allowing a STOMP WebSocket handshake. */
 @Component
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
@@ -20,6 +21,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     this.jwtService = jwtService;
   }
 
+  /** Stores a Principal in the handshake attributes when the token is valid. */
   @Override
   public boolean beforeHandshake(
       ServerHttpRequest request,
@@ -44,6 +46,9 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     return false;
   }
 
+  /**
+   * No-op hook after the handshake; authentication is handled before the connection is accepted.
+   */
   @Override
   public void afterHandshake(
       ServerHttpRequest request,

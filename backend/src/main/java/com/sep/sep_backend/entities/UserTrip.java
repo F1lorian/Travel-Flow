@@ -2,10 +2,12 @@ package com.sep.sep_backend.entities;
 
 import jakarta.persistence.*;
 
+/** JPA entity that links a user to a trip and stores membership, invite, and budget data. */
 @Entity
 @Table(name = "user_trips")
 public class UserTrip {
 
+  /** Status of a user's trip membership or invitation. */
   public enum InviteStatus {
     PENDING,
     ACCEPTED,

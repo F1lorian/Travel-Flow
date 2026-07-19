@@ -64,7 +64,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Service for creating, importing, listing, editing, and deleting events. */
+/**
+ * Service for the event workflow: manual creation, mail import, calendar queries, conflict
+ * detection, participant invitations, and owner-restricted edits.
+ */
 @Service
 public class EventService {
   private static final ZoneId MAIL_REFERENCE_ZONE = ZoneId.of("Europe/Berlin");
@@ -179,7 +182,12 @@ public class EventService {
    * @param eventRepository repository used to store and load events
    * @param triprepository repository used to load trips for events
    * @param ausgabeService service for expense-related event handling
+   * @param userRepository repository used to resolve event owners and invited users
    * @param objectMapper JSON mapper used for event import payloads
+   * @param userEventRepository repository used to manage event participation rows
+   * @param notificationService service for event invite WebSocket notifications
+   * @param emailNotificationService service for best-effort event invite emails
+   * @param categoryService service used to find or create event categories
    */
   @Autowired
   public EventService(
@@ -204,10 +212,12 @@ public class EventService {
   }
 
   /**
-   * Saves a manually created event for the trip referenced by the request.
+   * Saves a manually created event and creates an accepted participant row for the owner.
    *
-   * @param dto request data containing event values and the trip identifier
-   * @param userId is the id of the creating user
+   * <p>If the request references a trip, the event must lie within that trip's date range.
+   *
+   * @param dto request data containing event values, category, and optional trip identifier
+   * @param userId id of the creating user
    * @return response data of the saved event
    */
   public EventResponseDTO SaveEventToDB(EventRequestDTO dto, Long userId) {
@@ -236,9 +246,10 @@ public class EventService {
   }
 
   /**
-   * Deletes the event with the given identifier.
+   * Deletes an event after verifying that the requesting user owns it.
    *
    * @param eventId identifier of the event to delete
+   * @param userId id of the user requesting the deletion
    */
   @Transactional
   public void DeleteEventFromDB(Long eventId, Long userId) {
@@ -257,10 +268,13 @@ public class EventService {
   }
 
   /**
-   * Updates an existing event with the values provided in the request.
+   * Updates an existing event after verifying that the requesting user owns it.
+   *
+   * <p>Only non-null fields are applied. A cost value of {@code -1} means "leave costs unchanged".
    *
    * @param eventId identifier of the event to update
    * @param dto request data containing the new event values
+   * @param userId id of the user requesting the update
    * @return response data of the updated event
    */
   public EventResponseDTO EditEvent(Long eventId, EventRequestDTO dto, Long userId) {
@@ -301,9 +315,12 @@ public class EventService {
   /**
    * Saves an imported event after the client has parsed it and handled possible conflicts.
    *
+   * <p>The saved event is owned by {@code UserID}; an accepted participant row for that user is
+   * created as well.
+   *
    * @param dto parsed imported event values
    * @param tripId optional identifier of the trip the event belongs to
-   * @param UserID is the id of the creating user
+   * @param UserID id of the creating user
    * @return response data of the saved event
    */
   public EventResponseDTO SaveEventResponseToDB(EventResponseDTO dto, Long tripId, Long UserID) {
@@ -333,9 +350,9 @@ public class EventService {
   }
 
   /**
-   * Returns all stored events in the format used by the calendar view.
+   * Returns all events visible to the user in the format used by the calendar view.
    *
-   * @param userId is the id of the requesting user
+   * @param userId id of the requesting user
    * @return list of calendar event DTOs
    */
   public List<EventCalendarDTO> getAllEventsFromDb(Long userId) {
@@ -355,10 +372,11 @@ public class EventService {
   }
 
   /**
-   * Finds all saved events whose time interval overlaps the given interval.
+   * Finds the user's pending or accepted events whose time interval overlaps the given interval.
    *
    * @param eventStart start date and time of the event being checked
    * @param eventEnd end date and time of the event being checked
+   * @param userId id of the user whose events should be checked
    * @return response data for all conflicting events
    */
   public List<EventResponseDTO> conflictCheck(
@@ -373,11 +391,14 @@ public class EventService {
   }
 
   /**
-   * sends an invitation to an event to a friend
+   * Invites a friend to an event owned by the requesting user.
    *
-   * @param eventId
-   * @param friendUserId
-   * @param requestingUserId
+   * <p>The method rejects duplicate participation rows and sends both WebSocket and email
+   * notifications after storing the pending invite.
+   *
+   * @param eventId event to invite the friend to
+   * @param friendUserId user id of the invited friend
+   * @param requestingUserId user id of the event owner sending the invite
    */
   public void inviteFriendToEvent(Long eventId, Long friendUserId, Long requestingUserId) {
     Event event =
@@ -445,11 +466,14 @@ public class EventService {
   }
 
   /**
-   * responds to the invitation
+   * Accepts or declines the user's event invitation.
    *
-   * @param eventId
-   * @param userId
-   * @param status can be PENDING, ACCEPTED or DECLINED
+   * <p>{@link UserEvent.InviteStatus#PENDING} is rejected because answered invites cannot be reset
+   * to pending through this path.
+   *
+   * @param eventId invited event identifier
+   * @param userId id of the invitee answering the invitation
+   * @param status final status, either {@code ACCEPTED} or {@code DECLINED}
    */
   public void respondToInvite(Long eventId, Long userId, UserEvent.InviteStatus status) {
     if (status == UserEvent.InviteStatus.PENDING) {
@@ -483,9 +507,9 @@ public class EventService {
   }
 
   /**
-   * returns all pending invites for a user
+   * Returns all event invitations still waiting for the user's answer.
    *
-   * @param userId
+   * @param userId id of the invited user
    * @return the user's pending event invitations
    */
   public List<UserEvent> getIncomingEventInvites(Long userId) {
@@ -493,9 +517,11 @@ public class EventService {
   }
 
   /**
-   * @param eventId
-   * @param requestingUserId
-   * @return gives a list of every invitation sent by a user for a single event
+   * Lists event invitation rows created by a user for one event.
+   *
+   * @param eventId event whose outgoing invites should be listed
+   * @param requestingUserId id of the user who sent the invites
+   * @return invitations for the event that were created by the requesting user
    */
   public List<UserEvent> getInvitesSentByUser(Long eventId, Long requestingUserId) {
     return userEventRepository.findByEvent_Id(eventId).stream()
@@ -503,15 +529,21 @@ public class EventService {
         .toList();
   }
 
+  /**
+   * Lists every participation row for an event, including pending, accepted, and declined users.
+   *
+   * @param eventId event whose participants should be listed
+   * @return participation rows for the event
+   */
   public List<UserEvent> getParticipants(Long eventId) {
     return userEventRepository.findByEvent_Id(eventId);
   }
 
   /**
-   * checks if the user is the creator of the event
+   * Verifies that the user owns the event.
    *
-   * @param event
-   * @param userId
+   * @param event event whose owner should be checked
+   * @param userId id of the user performing the action
    */
   private void requireOwner(Event event, Long userId) {
     if (event.getOwner() == null || event.getOwner().getId() != userId) {

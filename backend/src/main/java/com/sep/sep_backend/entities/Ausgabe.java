@@ -3,6 +3,7 @@ package com.sep.sep_backend.entities;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
+/** JPA entity for a manually entered expense assigned to a user, category, and optional trip. */
 @Entity
 public class Ausgabe {
   @Id

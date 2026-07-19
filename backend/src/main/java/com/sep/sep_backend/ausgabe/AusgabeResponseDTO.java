@@ -6,6 +6,12 @@ import com.sep.sep_backend.entities.Trip;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Response DTO for entries in the cashbook view.
+ *
+ * <p>The same shape is used for manually stored expenses and event costs. {@code sourceType}
+ * distinguishes the origin.
+ */
 public class AusgabeResponseDTO {
   private long id;
   private double kosten;

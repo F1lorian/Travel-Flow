@@ -2,10 +2,12 @@ package com.sep.sep_backend.entities;
 
 import jakarta.persistence.*;
 
+/** JPA entity that links a user to an event and stores the invitation status. */
 @Entity
 @Table(name = "user_events")
 public class UserEvent {
 
+  /** Status of a user's event participation or invitation. */
   public enum InviteStatus {
     PENDING,
     ACCEPTED,

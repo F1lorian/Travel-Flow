@@ -3,6 +3,7 @@ package com.sep.sep_backend.ausgabe;
 import com.sep.sep_backend.entities.Trip;
 import java.time.LocalDate;
 
+/** Request DTO for creating an expense with amount, trip, date, and category. */
 public class AusgabeRequestDTO {
   private long id;
   private double kosten;

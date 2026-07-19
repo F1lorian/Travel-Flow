@@ -1,5 +1,6 @@
 package com.sep.sep_backend.ausgabe;
 
+/** Aggregated expense total for one category. */
 public class KategorieSummeDTO {
   private String category;
   private double cost;

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/** Repository for querying manual expenses by date, trip, and owner. */
 public interface AusgabeRepository extends JpaRepository<Ausgabe, Long> {
 
   List<Ausgabe> findByDateBetween(LocalDate start, LocalDate end);

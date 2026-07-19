@@ -3,13 +3,13 @@ package com.sep.sep_backend.tripManagement.dto;
 import com.sep.sep_backend.entities.UserTrip;
 
 /**
- * DTO used for the invites to trips
+ * DTO returned for a pending trip invitation.
  *
- * @param tripId
- * @param tripName
- * @param invitedByUserId
- * @param invitedByUsername
- * @param status can be ACCEPTED, PENDING, DECLINED
+ * @param tripId invited trip identifier
+ * @param tripName invited trip name
+ * @param invitedByUserId user id of the inviter, or {@code 0} when no inviter is stored
+ * @param invitedByUsername username of the inviter, or {@code null} when no inviter is stored
+ * @param status current invitation status
  */
 public record TripInviteDTO(
     long tripId,
@@ -18,6 +18,7 @@ public record TripInviteDTO(
     String invitedByUsername,
     UserTrip.InviteStatus status) {
 
+  /** Builds an invite DTO from the user-trip membership row. */
   public static TripInviteDTO from(UserTrip userTrip) {
     return new TripInviteDTO(
         userTrip.getTrip().getId(),

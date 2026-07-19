@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** Repository for loading trips directly and through user membership rows. */
 public interface TripRepository extends JpaRepository<Trip, Long> {
   Trip findByName(String name);
 
