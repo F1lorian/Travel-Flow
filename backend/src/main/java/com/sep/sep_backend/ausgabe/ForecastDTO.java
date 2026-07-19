@@ -1,5 +1,6 @@
 package com.sep.sep_backend.ausgabe;
 
+/** Forecast values for projected daily and weekly spending. */
 public class ForecastDTO {
   private double daily;
   private double week;
