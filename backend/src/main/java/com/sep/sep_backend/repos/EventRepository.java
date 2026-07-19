@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/** Repository for querying events by trip, user participation, time range, and conflicts. */
 public interface EventRepository extends JpaRepository<Event, Long> {
   List<Event> findByTrip_Id(Long tripId);
 

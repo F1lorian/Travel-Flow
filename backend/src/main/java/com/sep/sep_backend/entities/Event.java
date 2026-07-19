@@ -3,6 +3,7 @@ package com.sep.sep_backend.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/** JPA entity for a calendar event with optional trip assignment, owner, category, and costs. */
 @Entity
 public class Event {
   @Id
