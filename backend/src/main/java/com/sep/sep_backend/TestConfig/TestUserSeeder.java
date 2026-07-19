@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/** Seeds deterministic demo users, trips, events, and invitations when the test-users profile runs. */
 @Configuration
 @Profile("test-users")
 public class TestUserSeeder {

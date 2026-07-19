@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/** JPA entity for application accounts, including profile fields, login state, and friendships. */
 @Entity
 @Table(name = "users")
 public class User {
