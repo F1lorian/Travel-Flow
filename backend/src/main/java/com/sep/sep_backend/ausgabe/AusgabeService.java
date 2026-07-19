@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Service for user-scoped expenses, event costs, category totals, budgets, and spending forecasts. */
+/**
+ * Service for user-scoped expenses, event costs, category totals, budgets, and spending forecasts.
+ */
 @Service
 public class AusgabeService {
 

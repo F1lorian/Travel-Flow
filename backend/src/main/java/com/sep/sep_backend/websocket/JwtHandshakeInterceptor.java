@@ -46,7 +46,9 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     return false;
   }
 
-  /** No-op hook after the handshake; authentication is handled before the connection is accepted. */
+  /**
+   * No-op hook after the handshake; authentication is handled before the connection is accepted.
+   */
   @Override
   public void afterHandshake(
       ServerHttpRequest request,
