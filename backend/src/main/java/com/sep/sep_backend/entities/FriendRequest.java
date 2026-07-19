@@ -4,6 +4,7 @@ import com.sep.sep_backend.friends.FriendRequestStatus;
 import jakarta.persistence.*;
 import java.time.Instant;
 
+/** JPA entity representing a pending or answered friend request between two users. */
 @Entity
 @Table(name = "friend_requests")
 public class FriendRequest {
