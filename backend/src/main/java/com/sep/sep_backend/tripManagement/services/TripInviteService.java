@@ -52,14 +52,17 @@ public class TripInviteService {
   }
 
   /**
-   * sends an invitation to the friend (friendId)
+   * Sends a pending trip invitation from the authenticated trip owner to one friend.
    *
-   * @param currentUsername
-   * @param tripId
-   * @param friendId
+   * <p>The method rejects self-invites, non-friends, non-owner callers, existing accepted
+   * memberships, and duplicate pending invites. Declined invites are reopened as pending.
+   *
+   * @param currentUsername username or email of the authenticated inviter
+   * @param tripId id of the trip to invite into
+   * @param friendId id of the friend to invite
    * @param includeEvents when true, accepting the trip invite also adds the friend to all events of
-   *     the trip (chosen by the inviter)
-   * @return responseDTO with the tripId, friendId and a "trip invite sent" message
+   *     the trip
+   * @return response containing the trip id, friend id, and result message
    */
   @Transactional
   public TripInviteResponseDTO inviteFriendToTrip(
@@ -118,13 +121,15 @@ public class TripInviteService {
   }
 
   /**
-   * lets the user respond to the invite and either accept or decline it
+   * Accepts or declines the authenticated user's pending trip invitation.
    *
-   * @param currentUsername
-   * @param tripId
-   * @param accept either true => ACCEPTED or false => DECLINED
-   * @return returns a TripInviteResponseDTO with the tripId, the userId and a message with either
-   *     accepted or declined
+   * <p>When the invite is accepted and {@code includeEvents} was set by the inviter, the user is
+   * also added as an accepted participant to every event of the trip.
+   *
+   * @param currentUsername username or email of the invited user
+   * @param tripId id of the invited trip
+   * @param accept {@code true} to accept the invite, {@code false} to decline it
+   * @return response containing the trip id, user id, and result message
    */
   @Transactional
   public TripInviteResponseDTO respondToTripInvite(
@@ -175,10 +180,10 @@ public class TripInviteService {
   }
 
   /**
-   * returns a list of all incoming and unanswered tripInvite a user currently has
+   * Returns all pending trip invitations for the authenticated user.
    *
-   * @param currentUsername
-   * @return
+   * @param currentUsername username or email of the invited user
+   * @return pending trip membership rows
    */
   public List<UserTrip> getIncomingTripInvites(String currentUsername) {
     User currentUser = getCurrentUserOrThrow(currentUsername);
@@ -208,10 +213,10 @@ public class TripInviteService {
   }
 
   /**
-   * searches the user from the database using the username
+   * Resolves the authenticated user by username or email.
    *
-   * @param username
-   * @return
+   * @param username username or email from the security context
+   * @return the matching user
    */
   private User getCurrentUserOrThrow(String username) {
     return userRepository
@@ -221,10 +226,10 @@ public class TripInviteService {
   }
 
   /**
-   * searches the user from the database using the id
+   * Loads a user by id.
    *
-   * @param userId
-   * @return
+   * @param userId id of the user to load
+   * @return the matching user
    */
   private User getUserOrThrow(long userId) {
     return userRepository
@@ -233,10 +238,10 @@ public class TripInviteService {
   }
 
   /**
-   * searches the trip from the database with the id
+   * Loads a trip by id.
    *
-   * @param tripId
-   * @return
+   * @param tripId id of the trip to load
+   * @return the matching trip
    */
   private Trip getTripOrThrow(long tripId) {
     return tripRepository
@@ -245,11 +250,11 @@ public class TripInviteService {
   }
 
   /**
-   * checks if the 2 users are friends
+   * Checks whether the target user is already in the current user's friend set.
    *
-   * @param currentUser
-   * @param friend
-   * @return
+   * @param currentUser user sending the invite
+   * @param friend user that should receive the invite
+   * @return {@code true} when both users are friends
    */
   private boolean isFriend(User currentUser, User friend) {
     return currentUser.getFriends().stream()
@@ -257,10 +262,10 @@ public class TripInviteService {
   }
 
   /**
-   * checks if the user is the owner of the trip, if not it forbids further access
+   * Verifies that the user owns the trip before allowing invite management.
    *
-   * @param trip
-   * @param user
+   * @param trip trip whose owner should be checked
+   * @param user user performing the action
    */
   private void requireOwner(Trip trip, User user) {
     if (trip.getOwner() == null || trip.getOwner().getId() != user.getId()) {
