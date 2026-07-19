@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+/** Repository for trip membership and invitation rows keyed by user and trip. */
 public interface UserTripRepository extends JpaRepository<UserTrip, UserTripId> {
   boolean existsByIdUserIdAndIdTripId(Long userId, Long tripId);
 

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
 
+/** JPA entity for a trip with date range, owner, events, expenses, and user memberships. */
 @Entity
 public class Trip {
   @Id

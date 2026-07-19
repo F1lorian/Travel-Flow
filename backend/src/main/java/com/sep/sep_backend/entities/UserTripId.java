@@ -5,6 +5,7 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+/** Composite primary key for the user-trip membership table. */
 @Embeddable
 public class UserTripId implements Serializable {
   @Column(name = "user_id")
